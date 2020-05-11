@@ -4,6 +4,7 @@
 # This add-on is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for details.
 # You should have received a copy of the GNU Affero General Public License along with this plug-in. If not, see <https://gnu.org/licenses/>.
 
+import bpy  # The Blender API.
 import bpy.props  # To define metadata properties for the operator.
 import bpy.types  # This class is an operator in Blender.
 import bpy_extras.io_utils  # Helper functions to import meshes more easily.
@@ -27,4 +28,30 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
 	global_scale: bpy.props.FloatProperty(name="Scale", soft_min=0.001, soft_max=1000.0, min=1e-6, max=1e6)
 
 	def execute(self, context):
-		print("TODO: Actually import the 3MF file.")
+		"""
+		The main routine that reads out the 3MF file.
+
+		This function serves as a high-level overview of the steps involved to
+		read the 3MF file.
+		:param context: The Blender context.
+		:return: A set of status flags to indicate whether the operation
+		succeeded or not.
+		"""
+		import os.path  # To take file paths relative to the selected directory.
+
+		# Preparation of the input parameters.
+		paths = [os.path.join(self.directory, name.name) for name in self.files]
+		if not paths:
+			paths.append(self.filepath)
+
+		if bpy.ops.object.mode_set.poll():
+			bpy.ops.object.mode_set(mode="OBJECT")  # Switch to object mode to view the new file.
+		if bpy.ops.object.select_all.poll():
+			bpy.ops.object.select_all(action="DESELECT")  # Deselect other files.
+
+		archive = self.open_archive()
+
+		return {"FINISHED"}
+
+	def open_archive(self):
+		print("TODO!")
