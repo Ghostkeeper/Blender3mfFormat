@@ -57,6 +57,8 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
 				# This file is corrupt or we can't read it. There is no error code to communicate this to blender though.
 				continue  # Leave the scene empty / skip this file.
 
+			self.create_mesh()
+
 		return {"FINISHED"}
 
 	# The rest of the functions are in order of when they are called.
@@ -79,3 +81,14 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
 					return xml.etree.ElementTree.ElementTree(file=f)
 		except (zipfile.BadZipFile, EnvironmentError):  # File is corrupt, or the OS prevents us from reading it (doesn't exist, no permissions, etc.)
 			return None
+
+	def create_mesh(self):
+		"""
+		Constructs a Blender mesh with the result of our import.
+		"""
+		# TODO: This is currently a placeholder wherein I can see intermediary output of the module.
+		mesh = bpy.data.meshes.new("3MF Mesh")
+		obj = bpy.data.objects.new("3MF Object", mesh)
+		bpy.context.collection.objects.link(obj)
+		bpy.context.view_layer.objects.active = obj
+		obj.select_set(True)
