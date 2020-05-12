@@ -8,6 +8,9 @@ import bpy  # The Blender API.
 import bpy.props  # To define metadata properties for the operator.
 import bpy.types  # This class is an operator in Blender.
 import bpy_extras.io_utils  # Helper functions to import meshes more easily.
+import os.path  # To take file paths relative to the selected directory.
+import xml.etree.ElementTree  # To parse the 3dmodel.model file.
+import zipfile  # To read the 3MF files which are secretly zip archives.
 
 class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
 	"""
@@ -37,7 +40,6 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
 		:return: A set of status flags to indicate whether the operation
 		succeeded or not.
 		"""
-		import os.path  # To take file paths relative to the selected directory.
 
 		# Preparation of the input parameters.
 		paths = [os.path.join(self.directory, name.name) for name in self.files]
@@ -49,9 +51,31 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
 		if bpy.ops.object.select_all.poll():
 			bpy.ops.object.select_all(action="DESELECT")  # Deselect other files.
 
-		archive = self.open_archive()
+		for path in paths:
+			document = self.read_archive(path)
+			if document is None:
+				# This file is corrupt or we can't read it. There is no error code to communicate this to blender though.
+				continue  # Leave the scene empty / skip this file.
 
 		return {"FINISHED"}
 
-	def open_archive(self):
-		print("TODO!")
+	# The rest of the functions are in order of when they are called.
+
+	def read_archive(self, path):
+		"""
+		Reads out all of the relevant information from the zip archive of the
+		3MF document.
+
+		After this stage, the zip archive can be discarded. All of it will be in
+		memory. Error handling about reading the file only need to be put around
+		this function.
+		:param path: The path to the archive to read.
+		:return: An ElementTree representing the contents of the 3dmodel.model
+		file in the archive. If reading fails, `None` is returned.
+		"""
+		try:
+			with zipfile.ZipFile(path) as archive:
+				with archive.open("3D/3dmodel.model") as f:
+					return xml.etree.ElementTree.ElementTree(file=f)
+		except (zipfile.BadZipFile, EnvironmentError):  # File is corrupt, or the OS prevents us from reading it (doesn't exist, no permissions, etc.)
+			return None
