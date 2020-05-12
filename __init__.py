@@ -35,7 +35,7 @@ def menu_import(self, _):
 	"""
 	Calls the 3MF operator.
 	"""
-	self.layout.operator(Import3MF.bl_idname, text="3MF (.3mf)")
+	self.layout.operator(Import3MF.bl_idname, text="3D Manufacturing Format (.3mf)")
 
 classes = (
 	Import3MF,
