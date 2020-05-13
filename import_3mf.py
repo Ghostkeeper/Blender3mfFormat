@@ -71,6 +71,10 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
 				object_type = object_node.attrib.get("type", "model")
 				if object_type in {"support", "solidsupport"}:
 					continue  # We ignore support objects.
+				try:
+					object_id = int(object_node.attrib["id"])
+				except (KeyError, ValueError):
+					continue  # ID is required (otherwise the build can't refer to it) and must be integer.
 
 				vertices = self.read_vertices(object_node)
 				triangles = self.read_triangles(object_node)
