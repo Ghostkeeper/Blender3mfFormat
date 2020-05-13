@@ -128,7 +128,20 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
 		"""
 		result = []
 		for vertex in object_node.iterfind("./3mf:mesh/3mf:vertices/3mf:vertex", namespaces):
-			result.append((vertex.attrib.get("x", 0), vertex.attrib.get("y", 0), vertex.attrib.get("z", 0)))
+			attrib = vertex.attrib
+			try:
+				x = float(attrib.get("x", 0))
+			except ValueError:  # Not a float.
+				x = 0
+			try:
+				y = float(attrib.get("y", 0))
+			except ValueError:
+				y = 0
+			try:
+				z = float(attrib.get("z", 0))
+			except ValueError:
+				z = 0
+			result.append((x, y, z))
 		return result
 
 	def create_mesh(self):
