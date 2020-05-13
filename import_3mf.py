@@ -69,6 +69,7 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
 
 			for object_node in root.iterfind("./3mf:resources/3mf:object", namespaces):
 				vertices = self.read_vertices(object_node)
+				triangles = self.read_triangles(object_node)
 
 			self.create_mesh()
 
@@ -122,6 +123,10 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
 	def read_vertices(self, object_node):
 		"""
 		Reads out the vertices from an XML node of an object.
+
+		If any vertex is corrupt, like with a coordinate missing or not proper
+		floats, then the 0 coordinate will be used. This is to prevent messing
+		up the list of indices.
 		:param object_node: An <object> element from the 3dmodel.model file.
 		:return: List of vertices in that object. Each vertex is a tuple of 3
 		floats for X, Y and Z.
@@ -142,6 +147,25 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
 			except ValueError:
 				z = 0
 			result.append((x, y, z))
+		return result
+
+	def read_triangles(self, object_node):
+		"""
+		Reads out the triangles from an XML node of an object.
+
+		These triangles always consist of 3 vertices each. Each vertex is an
+		index to the list of vertices read previously.
+		:param object_node: An <object> element from the 3dmodel.model file.
+		:return: List of triangles in that object. Each triangle is a tuple of 3
+		integers for the first, second and third vertex of the triangle.
+		"""
+		result = []
+		for triangle in object_node.iterfind("./3mf:mesh/3mf:triangles/3mf:triangle", namespaces):
+			attrib = triangle.attrib
+			try:
+				result.append((int(attrib["v1"]), int(attrib["v2"]), int(attrib["v3"])))
+			except (KeyError, ValueError):  # Vertex is missing, or not an integer.
+				continue  # No fallback this time. Leave out the entire triangle.
 		return result
 
 	def create_mesh(self):
