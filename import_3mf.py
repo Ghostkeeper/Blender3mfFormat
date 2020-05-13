@@ -68,6 +68,10 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
 			scale = self.unit_scale(context, root)
 
 			for object_node in root.iterfind("./3mf:resources/3mf:object", namespaces):
+				object_type = object_node.attrib.get("type", "model")
+				if object_type in {"support", "solidsupport"}:
+					continue  # We ignore support objects.
+
 				vertices = self.read_vertices(object_node)
 				triangles = self.read_triangles(object_node)
 
