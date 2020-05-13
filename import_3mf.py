@@ -17,6 +17,8 @@ from .unit_conversions import blender_to_metre, threemf_to_metre  # To convert t
 
 log = logging.getLogger(__name__)
 
+namespaces = {"3mf": "http://schemas.microsoft.com/3dmanufacturing/core/2015/02"}
+
 class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
 	"""
 	Class that imports a 3MF file into Blender.
@@ -64,6 +66,9 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
 			root = document.getroot()
 
 			scale = self.unit_scale(context, root)
+
+			for object_node in root.iterfind("./3mf:resources/3mf:object", namespaces):
+				vertices = self.read_vertices(object_node)
 
 			self.create_mesh()
 
@@ -113,6 +118,18 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
 		scale /= blender_to_metre[blender_unit]  # Convert metre to Blender's units.
 
 		return scale
+
+	def read_vertices(self, object_node):
+		"""
+		Reads out the vertices from an XML node of an object.
+		:param object_node: An <object> element from the 3dmodel.model file.
+		:return: List of vertices in that object. Each vertex is a tuple of 3
+		floats for X, Y and Z.
+		"""
+		result = []
+		for vertex in object_node.iterfind("./3mf:mesh/3mf:vertices/3mf:vertex", namespaces):
+			result.append((vertex.attrib.get("x", 0), vertex.attrib.get("y", 0), vertex.attrib.get("z", 0)))
+		return result
 
 	def create_mesh(self):
 		"""
