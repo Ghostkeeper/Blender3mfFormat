@@ -61,8 +61,9 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
 			if document is None:
 				# This file is corrupt or we can't read it. There is no error code to communicate this to blender though.
 				continue  # Leave the scene empty / skip this file.
+			root = document.getroot()
 
-			scale = self.unit_scale(context, document)
+			scale = self.unit_scale(context, root)
 
 			self.create_mesh()
 
@@ -89,12 +90,12 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
 		except (zipfile.BadZipFile, EnvironmentError):  # File is corrupt, or the OS prevents us from reading it (doesn't exist, no permissions, etc.)
 			return None
 
-	def unit_scale(self, context, document):
+	def unit_scale(self, context, root):
 		"""
 		Get the scaling factor we need to use for this document, according to
 		its unit.
 		:param context: The Blender context.
-		:param document: An ElementTree document containing the entire 3MF file.
+		:param root: An ElementTree root element containing the entire 3MF file.
 		:return: Floating point value that we need to scale this model by. A
 		small number (<1) means that we need to make the coordinates in Blender
 		smaller than the coordinates in the file. A large number (>1) means we
@@ -106,7 +107,7 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
 		if context.scene.unit_settings.scale_length != 0:
 			scale /= context.scene.unit_settings.scale_length  # Apply the global scale of the units in Blender.
 
-		threemf_unit = document.getroot().attrib.get("unit", "millimeter")
+		threemf_unit = root.attrib.get("unit", "millimeter")
 		blender_unit = context.scene.unit_settings.length_unit
 		scale *= threemf_to_metre[threemf_unit]  # Convert 3MF units to metre.
 		scale /= blender_to_metre[blender_unit]  # Convert metre to Blender's units.
