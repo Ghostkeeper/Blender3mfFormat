@@ -10,6 +10,7 @@ import bpy.types  # This class is an operator in Blender.
 import bpy_extras.io_utils  # Helper functions to import meshes more easily.
 import logging  # To debug and log progress.
 import collections  # For namedtuple.
+import mathutils  # For the transformation matrices.
 import os.path  # To take file paths relative to the selected directory.
 import xml.etree.ElementTree  # To parse the 3dmodel.model file.
 import zipfile  # To read the 3MF files which are secretly zip archives.
@@ -67,9 +68,9 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
 				continue  # Leave the scene empty / skip this file.
 			root = document.getroot()
 
-			scale = self.unit_scale(context, root)
+			scale_unit = self.unit_scale(context, root)
 			build_objects = self.read_objects(root)
-			items = self.build_items(root, build_objects)
+			items = self.build_items(root, build_objects, scale_unit)
 			for item in items:  # Put all items in the scene.
 				bpy.context.collection.objects.link(item)
 				bpy.context.view_layer.objects.active = item
@@ -193,13 +194,15 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
 				continue  # No fallback this time. Leave out the entire triangle.
 		return result
 
-	def build_items(self, root, build_objects):
+	def build_items(self, root, build_objects, scale_unit):
 		"""
 		Builds the scene. This places objects with certain transformations in
 		the scene.
 		:param root: The root node of the 3dmodel.model XML document.
 		:param build_objects: A dictionary of objects that can be placed in the
 		scene.
+		:param scale_unit: The scale to apply for the units of the model to be
+		transformed to Blender's units, as a float ratio.
 		:return: A sequence of Blender Objects that need to be placed in the
 		scene. Each mesh gets transformed appropriately.
 		"""
@@ -210,8 +213,11 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
 			except (KeyError, ValueError):  # ID is required, and it must be an integer in the available build_objects.
 				continue  # Ignore this invalid item.
 
+			transform = mathutils.Matrix.Scale(scale_unit, 4)
+
 			mesh = bpy.data.meshes.new("3MF Mesh")
 			mesh.from_pydata(obj.vertices, [], obj.triangles)
+			mesh.transform(transform)
 			mesh.update()
 			blender_object = bpy.data.objects.new("3MF Object", mesh)
 			yield blender_object
