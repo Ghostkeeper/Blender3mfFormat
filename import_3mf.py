@@ -9,6 +9,7 @@ import bpy.props  # To define metadata properties for the operator.
 import bpy.types  # This class is an operator in Blender.
 import bpy_extras.io_utils  # Helper functions to import meshes more easily.
 import logging  # To debug and log progress.
+import collections  # For namedtuple.
 import os.path  # To take file paths relative to the selected directory.
 import xml.etree.ElementTree  # To parse the 3dmodel.model file.
 import zipfile  # To read the 3MF files which are secretly zip archives.
@@ -18,6 +19,7 @@ from .unit_conversions import blender_to_metre, threemf_to_metre  # To convert t
 log = logging.getLogger(__name__)
 
 namespaces = {"3mf": "http://schemas.microsoft.com/3dmanufacturing/core/2015/02"}
+build_object = collections.namedtuple("build_object", ["vertices", "triangles"])
 
 class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
 	"""
@@ -66,18 +68,8 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
 			root = document.getroot()
 
 			scale = self.unit_scale(context, root)
-
-			for object_node in root.iterfind("./3mf:resources/3mf:object", namespaces):
-				object_type = object_node.attrib.get("type", "model")
-				if object_type in {"support", "solidsupport"}:
-					continue  # We ignore support objects.
-				try:
-					object_id = int(object_node.attrib["id"])
-				except (KeyError, ValueError):
-					continue  # ID is required (otherwise the build can't refer to it) and must be integer.
-
-				vertices = self.read_vertices(object_node)
-				triangles = self.read_triangles(object_node)
+			build_objects = self.read_objects(root)
+			log.debug("All objects: %s", str(build_objects))
 
 			self.create_mesh()
 
@@ -127,6 +119,29 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
 		scale /= blender_to_metre[blender_unit]  # Convert metre to Blender's units.
 
 		return scale
+
+	def read_objects(self, root):
+		"""
+		Reads all repeatable build objects from the resources of an XML root
+		node.
+		:param root: The root node of a 3dmodel.model XML file.
+		:return: A dictionary of build objects, keyed with their objectids.
+		"""
+		result = {}
+		for object_node in root.iterfind("./3mf:resources/3mf:object", namespaces):
+			object_type = object_node.attrib.get("type", "model")
+			if object_type in {"support", "solidsupport"}:
+				continue  # We ignore support objects.
+			try:
+				objectid = int(object_node.attrib["id"])
+			except (KeyError, ValueError):
+				continue  # ID is required (otherwise the build can't refer to it) and must be integer.
+
+			vertices = self.read_vertices(object_node)
+			triangles = self.read_triangles(object_node)
+
+			result[objectid] = build_object(vertices=vertices, triangles=triangles)
+		return result
 
 	def read_vertices(self, object_node):
 		"""
