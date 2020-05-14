@@ -69,9 +69,11 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
 
 			scale = self.unit_scale(context, root)
 			build_objects = self.read_objects(root)
-			log.debug("All objects: %s", str(build_objects))
-
-			self.create_mesh()
+			items = self.build_items(root, build_objects)
+			for item in items:  # Put all items in the scene.
+				bpy.context.collection.objects.link(item)
+				bpy.context.view_layer.objects.active = item
+				item.select_set(True)
 
 		return {"FINISHED"}
 
@@ -191,13 +193,25 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
 				continue  # No fallback this time. Leave out the entire triangle.
 		return result
 
-	def create_mesh(self):
+	def build_items(self, root, build_objects):
 		"""
-		Constructs a Blender mesh with the result of our import.
+		Builds the scene. This places objects with certain transformations in
+		the scene.
+		:param root: The root node of the 3dmodel.model XML document.
+		:param build_objects: A dictionary of objects that can be placed in the
+		scene.
+		:return: A sequence of Blender Objects that need to be placed in the
+		scene. Each mesh gets transformed appropriately.
 		"""
-		# TODO: This is currently a placeholder wherein I can see intermediary output of the module.
-		mesh = bpy.data.meshes.new("3MF Mesh")
-		obj = bpy.data.objects.new("3MF Object", mesh)
-		bpy.context.collection.objects.link(obj)
-		bpy.context.view_layer.objects.active = obj
-		obj.select_set(True)
+		for build_item in root.iterfind("./3mf:build/3mf:item", namespaces):
+			try:
+				objectid = int(build_item.attrib["objectid"])
+				obj = build_objects[objectid]
+			except (KeyError, ValueError):  # ID is required, and it must be an integer in the available build_objects.
+				continue  # Ignore this invalid item.
+
+			mesh = bpy.data.meshes.new("3MF Mesh")
+			mesh.from_pydata(obj.vertices, [], obj.triangles)
+			mesh.update()
+			blender_object = bpy.data.objects.new("3MF Object", mesh)
+			yield blender_object
