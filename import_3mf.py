@@ -51,6 +51,8 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
 		:return: A set of status flags to indicate whether the operation
 		succeeded or not.
 		"""
+		# Reset state.
+		self.resource_objects = {}
 
 		# Preparation of the input parameters.
 		paths = [os.path.join(self.directory, name.name) for name in self.files]
@@ -70,12 +72,8 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
 			root = document.getroot()
 
 			scale_unit = self.unit_scale(context, root)
-			resource_objects = self.read_objects(root)
-			items = self.build_items(root, resource_objects, scale_unit)
-			for item in items:  # Put all items in the scene.
-				bpy.context.collection.objects.link(item)
-				bpy.context.view_layer.objects.active = item
-				item.select_set(True)
+			self.read_objects(root)
+			self.build_items(root, scale_unit)
 
 		return {"FINISHED"}
 
@@ -128,10 +126,10 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
 		"""
 		Reads all repeatable build objects from the resources of an XML root
 		node.
+
+		This stores them in the resource_objects field.
 		:param root: The root node of a 3dmodel.model XML file.
-		:return: A dictionary of build objects, keyed with their objectids.
 		"""
-		result = {}
 		for object_node in root.iterfind("./3mf:resources/3mf:object", namespaces):
 			object_type = object_node.attrib.get("type", "model")
 			if object_type in {"support", "solidsupport"}:
@@ -145,8 +143,7 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
 			triangles = self.read_triangles(object_node)
 			components = self.read_components(object_node)
 
-			result[objectid] = ResourceObject(vertices=vertices, triangles=triangles, components=components)
-		return result
+			self.resource_objects[objectid] = ResourceObject(vertices=vertices, triangles=triangles, components=components)
 
 	def read_vertices(self, object_node):
 		"""
@@ -215,13 +212,11 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
 			result.append(Component(resource_object=objectid, transformation=mathutils.Matrix()))
 		return result
 
-	def build_items(self, root, resource_objects, scale_unit):
+	def build_items(self, root, scale_unit):
 		"""
 		Builds the scene. This places objects with certain transformations in
 		the scene.
 		:param root: The root node of the 3dmodel.model XML document.
-		:param resource_objects: A dictionary of objects that can be placed in the
-		scene.
 		:param scale_unit: The scale to apply for the units of the model to be
 		transformed to Blender's units, as a float ratio.
 		:return: A sequence of Blender Objects that need to be placed in the
@@ -230,15 +225,54 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
 		for build_item in root.iterfind("./3mf:build/3mf:item", namespaces):
 			try:
 				objectid = int(build_item.attrib["objectid"])
-				resource_object = resource_objects[objectid]
+				resource_object = self.resource_objects[objectid]
 			except (KeyError, ValueError):  # ID is required, and it must be an integer in the available resource_objects.
 				continue  # Ignore this invalid item.
 
 			transform = mathutils.Matrix.Scale(scale_unit, 4)
 
-			mesh = bpy.data.meshes.new("3MF Mesh")
-			mesh.from_pydata(resource_object.vertices, [], resource_object.triangles)
-			mesh.transform(transform)
-			mesh.update()
-			blender_object = bpy.data.objects.new("3MF Object", mesh)
-			yield blender_object
+			self.build_object(resource_object, transform, [objectid])
+
+	def build_object(self, resource_object, transformation, objectid_stack_trace, parent=None):
+		"""
+		Converts a resource object into a Blender object.
+
+		This resource object may refer to components that need to be built
+		along. These components may again have subcomponents, and so on. These
+		will be built recursively. A "stack trace" will be traced in order to
+		prevent going into an infinite recursion.
+		:param resource_object: The resource object that needs to be converted.
+		:param transformation: A transformation matrix to apply to this resource
+		object.
+		:param objectid_stack_trace: A list of all object IDs that have been
+		processed so far, including the object ID we're processing now.
+		:param parent: The resulting object must be marked as a child of this
+		Blender object.
+		:return: A sequence of Blender objects. These objects may be "nested" in
+		the sense that they sometimes refer to other objects as their parents.
+		"""
+		# Create a mesh.
+		mesh = bpy.data.meshes.new("3MF Mesh")
+		mesh.from_pydata(resource_object.vertices, [], resource_object.triangles)
+		mesh.transform(transformation)
+		mesh.update()
+
+		# Create an object.
+		blender_object = bpy.data.objects.new("3MF Object", mesh)
+		if parent is not None:
+			blender_object.parent = parent
+		bpy.context.collection.objects.link(blender_object)
+		bpy.context.view_layer.objects.active = blender_object
+		blender_object.select_set(True)
+
+		# Recurse for all components.
+		for component in resource_object.components:
+			if component.resource_object in objectid_stack_trace:  # These object IDs refer to each other in a loop. Don't go in there!
+				continue
+			try:
+				child_object = self.resource_objects[component.resource_object]
+			except KeyError:  # Invalid resource ID. Doesn't exist!
+				continue
+			objectid_stack_trace.append(component.resource_object)
+			self.build_object(child_object, transformation, objectid_stack_trace, blender_object)
+			objectid_stack_trace.pop()
