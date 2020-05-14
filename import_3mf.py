@@ -20,7 +20,7 @@ from .unit_conversions import blender_to_metre, threemf_to_metre  # To convert t
 log = logging.getLogger(__name__)
 
 namespaces = {"3mf": "http://schemas.microsoft.com/3dmanufacturing/core/2015/02"}
-build_object = collections.namedtuple("build_object", ["vertices", "triangles"])
+resource_object = collections.namedtuple("resource_object", ["vertices", "triangles"])
 
 class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
 	"""
@@ -69,8 +69,8 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
 			root = document.getroot()
 
 			scale_unit = self.unit_scale(context, root)
-			build_objects = self.read_objects(root)
-			items = self.build_items(root, build_objects, scale_unit)
+			resource_objects = self.read_objects(root)
+			items = self.build_items(root, resource_objects, scale_unit)
 			for item in items:  # Put all items in the scene.
 				bpy.context.collection.objects.link(item)
 				bpy.context.view_layer.objects.active = item
@@ -143,7 +143,7 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
 			vertices = self.read_vertices(object_node)
 			triangles = self.read_triangles(object_node)
 
-			result[objectid] = build_object(vertices=vertices, triangles=triangles)
+			result[objectid] = resource_object(vertices=vertices, triangles=triangles)
 		return result
 
 	def read_vertices(self, object_node):
@@ -194,12 +194,12 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
 				continue  # No fallback this time. Leave out the entire triangle.
 		return result
 
-	def build_items(self, root, build_objects, scale_unit):
+	def build_items(self, root, resource_objects, scale_unit):
 		"""
 		Builds the scene. This places objects with certain transformations in
 		the scene.
 		:param root: The root node of the 3dmodel.model XML document.
-		:param build_objects: A dictionary of objects that can be placed in the
+		:param resource_objects: A dictionary of objects that can be placed in the
 		scene.
 		:param scale_unit: The scale to apply for the units of the model to be
 		transformed to Blender's units, as a float ratio.
@@ -209,7 +209,7 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
 		for build_item in root.iterfind("./3mf:build/3mf:item", namespaces):
 			try:
 				objectid = int(build_item.attrib["objectid"])
-				obj = build_objects[objectid]
+				obj = resource_objects[objectid]
 			except (KeyError, ValueError):  # ID is required, and it must be an integer in the available build_objects.
 				continue  # Ignore this invalid item.
 
