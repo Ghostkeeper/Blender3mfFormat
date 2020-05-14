@@ -20,7 +20,7 @@ from .unit_conversions import blender_to_metre, threemf_to_metre  # To convert t
 log = logging.getLogger(__name__)
 
 namespaces = {"3mf": "http://schemas.microsoft.com/3dmanufacturing/core/2015/02"}
-resource_object = collections.namedtuple("resource_object", ["vertices", "triangles"])
+resource_object = collections.namedtuple("resource_object", ["vertices", "triangles", "transformation"])
 
 class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
 	"""
@@ -143,7 +143,7 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
 			vertices = self.read_vertices(object_node)
 			triangles = self.read_triangles(object_node)
 
-			result[objectid] = resource_object(vertices=vertices, triangles=triangles)
+			result[objectid] = resource_object(vertices=vertices, triangles=triangles, transformation=mathutils.Matrix())
 		return result
 
 	def read_vertices(self, object_node):
@@ -209,14 +209,15 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
 		for build_item in root.iterfind("./3mf:build/3mf:item", namespaces):
 			try:
 				objectid = int(build_item.attrib["objectid"])
-				obj = resource_objects[objectid]
+				resource_object = resource_objects[objectid]
 			except (KeyError, ValueError):  # ID is required, and it must be an integer in the available build_objects.
 				continue  # Ignore this invalid item.
 
 			transform = mathutils.Matrix.Scale(scale_unit, 4)
+			transform @= resource_object.transformation
 
 			mesh = bpy.data.meshes.new("3MF Mesh")
-			mesh.from_pydata(obj.vertices, [], obj.triangles)
+			mesh.from_pydata(resource_object.vertices, [], resource_object.triangles)
 			mesh.transform(transform)
 			mesh.update()
 			blender_object = bpy.data.objects.new("3MF Object", mesh)
