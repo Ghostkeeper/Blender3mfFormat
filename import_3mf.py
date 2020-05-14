@@ -20,7 +20,8 @@ from .unit_conversions import blender_to_metre, threemf_to_metre  # To convert t
 log = logging.getLogger(__name__)
 
 namespaces = {"3mf": "http://schemas.microsoft.com/3dmanufacturing/core/2015/02"}
-resource_object = collections.namedtuple("resource_object", ["vertices", "triangles", "transformation"])
+ResourceObject = collections.namedtuple("ResourceObject", ["vertices", "triangles", "components"])
+Component = collections.namedtuple("Component", ["resource_object", "transformation"])
 
 class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
 	"""
@@ -142,8 +143,9 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
 
 			vertices = self.read_vertices(object_node)
 			triangles = self.read_triangles(object_node)
+			components = self.read_components(object_node)
 
-			result[objectid] = resource_object(vertices=vertices, triangles=triangles, transformation=mathutils.Matrix())
+			result[objectid] = ResourceObject(vertices=vertices, triangles=triangles, components=components)
 		return result
 
 	def read_vertices(self, object_node):
@@ -194,6 +196,25 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
 				continue  # No fallback this time. Leave out the entire triangle.
 		return result
 
+	def read_components(self, object_node):
+		"""
+		Reads out the components from an XML node of an object.
+
+		These components refer to other resource objects, with a transformation
+		applied. They will eventually appear in the scene as subobjects.
+		:param object_node: An <object> element from the 3dmodel.model file.
+		:return: List of components in this object node.
+		"""
+		result = []
+		for component_node in object_node.iterfind("./3mf:components/3mf:component", namespaces):
+			try:
+				objectid = int(component_node.attrib["objectid"])
+			except (KeyError, ValueError):  # ID is required, and must be an integer.
+				continue  # Ignore this invalid component.
+
+			result.append(Component(resource_object=objectid, transformation=mathutils.Matrix()))
+		return result
+
 	def build_items(self, root, resource_objects, scale_unit):
 		"""
 		Builds the scene. This places objects with certain transformations in
@@ -210,11 +231,10 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
 			try:
 				objectid = int(build_item.attrib["objectid"])
 				resource_object = resource_objects[objectid]
-			except (KeyError, ValueError):  # ID is required, and it must be an integer in the available build_objects.
+			except (KeyError, ValueError):  # ID is required, and it must be an integer in the available resource_objects.
 				continue  # Ignore this invalid item.
 
 			transform = mathutils.Matrix.Scale(scale_unit, 4)
-			transform @= resource_object.transformation
 
 			mesh = bpy.data.meshes.new("3MF Mesh")
 			mesh.from_pydata(resource_object.vertices, [], resource_object.triangles)
