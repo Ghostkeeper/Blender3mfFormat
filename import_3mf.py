@@ -208,8 +208,46 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
 				objectid = int(component_node.attrib["objectid"])
 			except (KeyError, ValueError):  # ID is required, and must be an integer.
 				continue  # Ignore this invalid component.
+			transform = self.parse_transformation(component_node.attrib.get("transform", ""))
 
-			result.append(Component(resource_object=objectid, transformation=mathutils.Matrix()))
+			result.append(Component(resource_object=objectid, transformation=transform))
+		return result
+
+	def parse_transformation(self, transformation_str):
+		"""
+		Parses a transformation matrix as written in the 3MF files.
+
+		Transformations in 3MF files are written in the form:
+		`m00 m01 m01 m10 m11 m12 m20 m21 m22 m30 m31 m32`
+
+		This would then result in a row-major matrix of the form:
+		```
+		_                 _
+		| m00 m01 m02 0.0 |
+		| m10 m11 m12 0.0 |
+		| m20 m21 m22 0.0 |
+		| m30 m31 m32 1.0 |
+		-                 -
+		```
+		:param transformation_str: A transformation as represented in 3MF.
+		:return: A `Matrix` object with the correct transformation.
+		"""
+		components = transformation_str.split(" ")
+		result = mathutils.Matrix.Identity(4)
+		row = -1
+		col = 0
+		for component in components:
+			row += 1
+			if row > 2:
+				col += 1
+				row = 0
+				if col > 3:
+					break  # Too many components. Ignore the rest.
+			try:
+				component_float = float(component)
+			except ValueError:  # Not a proper float. Skip this one.
+				continue
+			result[row][col] = component_float
 		return result
 
 	def build_items(self, root, scale_unit):
@@ -273,6 +311,7 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
 				child_object = self.resource_objects[component.resource_object]
 			except KeyError:  # Invalid resource ID. Doesn't exist!
 				continue
+			transform = component.transformation @ transformation  # Apply the child's transformation and pass it on.
 			objectid_stack_trace.append(component.resource_object)
-			self.build_object(child_object, transformation, objectid_stack_trace, blender_object)
+			self.build_object(child_object, transform, objectid_stack_trace, blender_object)
 			objectid_stack_trace.pop()
