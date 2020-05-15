@@ -25,7 +25,7 @@ Component = collections.namedtuple("Component", ["resource_object", "transformat
 
 class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
 	"""
-	Class that imports a 3MF file into Blender.
+	Operator that imports a 3MF file into Blender.
 	"""
 
 	# Metadata.
