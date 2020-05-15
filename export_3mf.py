@@ -8,10 +8,14 @@ import bpy  # The Blender API.
 import bpy.props  # To define metadata properties for the operator.
 import bpy.types  # This class is an operator in Blender.
 import bpy_extras.io_utils  # Helper functions to export meshes more easily.
-import os.path  # To create a correct file path to save to.
 import zipfile  # To write zip archives, the shell of the 3MF file.
 
-from .constants import threemf_content_types_location, threemf_content_types_xml
+from .constants import (
+	threemf_content_types_location,
+	threemf_content_types_xml,
+	threemf_rels_location,
+	threemf_rels_xml
+)
 
 class Export3MF(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
 	"""
@@ -58,5 +62,7 @@ class Export3MF(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
 
 		with archive.open(threemf_content_types_location, "w") as content_types:
 			content_types.write(threemf_content_types_xml.encode("UTF-8"))
+		with archive.open(threemf_rels_location, "w") as rels:
+			rels.write(threemf_rels_xml.encode("UTF-8"))
 
 		return archive
