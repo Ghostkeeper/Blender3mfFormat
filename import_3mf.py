@@ -16,10 +16,10 @@ import xml.etree.ElementTree  # To parse the 3dmodel.model file.
 import zipfile  # To read the 3MF files which are secretly zip archives.
 
 from .unit_conversions import blender_to_metre, threemf_to_metre  # To convert to Blender's units.
+from .constants import threemf_3dmodel_location, threemf_default_unit, threemf_namespaces  # Constants associated with the 3MF file format.
 
 log = logging.getLogger(__name__)
 
-namespaces = {"3mf": "http://schemas.microsoft.com/3dmanufacturing/core/2015/02"}
 ResourceObject = collections.namedtuple("ResourceObject", ["vertices", "triangles", "components"])
 Component = collections.namedtuple("Component", ["resource_object", "transformation"])
 
@@ -93,7 +93,7 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
 		"""
 		try:
 			with zipfile.ZipFile(path) as archive:
-				with archive.open("3D/3dmodel.model") as f:
+				with archive.open(threemf_3dmodel_location) as f:
 					return xml.etree.ElementTree.ElementTree(file=f)
 		except (zipfile.BadZipFile, EnvironmentError):  # File is corrupt, or the OS prevents us from reading it (doesn't exist, no permissions, etc.)
 			return None
@@ -115,7 +115,7 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
 		if context.scene.unit_settings.scale_length != 0:
 			scale /= context.scene.unit_settings.scale_length  # Apply the global scale of the units in Blender.
 
-		threemf_unit = root.attrib.get("unit", "millimeter")
+		threemf_unit = root.attrib.get("unit", threemf_default_unit)
 		blender_unit = context.scene.unit_settings.length_unit
 		scale *= threemf_to_metre[threemf_unit]  # Convert 3MF units to metre.
 		scale /= blender_to_metre[blender_unit]  # Convert metre to Blender's units.
@@ -130,7 +130,7 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
 		This stores them in the resource_objects field.
 		:param root: The root node of a 3dmodel.model XML file.
 		"""
-		for object_node in root.iterfind("./3mf:resources/3mf:object", namespaces):
+		for object_node in root.iterfind("./3mf:resources/3mf:object", threemf_namespaces):
 			object_type = object_node.attrib.get("type", "model")
 			if object_type in {"support", "solidsupport"}:
 				continue  # We ignore support objects.
@@ -157,7 +157,7 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
 		floats for X, Y and Z.
 		"""
 		result = []
-		for vertex in object_node.iterfind("./3mf:mesh/3mf:vertices/3mf:vertex", namespaces):
+		for vertex in object_node.iterfind("./3mf:mesh/3mf:vertices/3mf:vertex", threemf_namespaces):
 			attrib = vertex.attrib
 			try:
 				x = float(attrib.get("x", 0))
@@ -185,7 +185,7 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
 		integers for the first, second and third vertex of the triangle.
 		"""
 		result = []
-		for triangle in object_node.iterfind("./3mf:mesh/3mf:triangles/3mf:triangle", namespaces):
+		for triangle in object_node.iterfind("./3mf:mesh/3mf:triangles/3mf:triangle", threemf_namespaces):
 			attrib = triangle.attrib
 			try:
 				result.append((int(attrib["v1"]), int(attrib["v2"]), int(attrib["v3"])))
@@ -203,7 +203,7 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
 		:return: List of components in this object node.
 		"""
 		result = []
-		for component_node in object_node.iterfind("./3mf:components/3mf:component", namespaces):
+		for component_node in object_node.iterfind("./3mf:components/3mf:component", threemf_namespaces):
 			try:
 				objectid = int(component_node.attrib["objectid"])
 			except (KeyError, ValueError):  # ID is required, and must be an integer.
@@ -262,7 +262,7 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
 		"""
 		global_transform = mathutils.Matrix.Scale(scale_unit, 4)
 
-		for build_item in root.iterfind("./3mf:build/3mf:item", namespaces):
+		for build_item in root.iterfind("./3mf:build/3mf:item", threemf_namespaces):
 			try:
 				objectid = int(build_item.attrib["objectid"])
 				resource_object = self.resource_objects[objectid]
