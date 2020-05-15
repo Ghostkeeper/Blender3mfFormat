@@ -11,6 +11,8 @@ import bpy_extras.io_utils  # Helper functions to export meshes more easily.
 import os.path  # To create a correct file path to save to.
 import zipfile  # To write zip archives, the shell of the 3MF file.
 
+from .constants import threemf_content_types_location, threemf_content_types_xml
+
 class Export3MF(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
 	"""
 	Operator that exports a 3MF file from Blender.
@@ -38,8 +40,9 @@ class Export3MF(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
 		:return: A set of status flags to indicate whether the write succeeded
 		or not.
 		"""
-		self.create_archive(self.filepath)
+		archive = self.create_archive(self.filepath)
 
+		archive.close()
 		return {"FINISHED"}
 
 	def create_archive(self, filepath):
@@ -52,4 +55,8 @@ class Export3MF(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
 		:return: A zip archive that other functions can add things to.
 		"""
 		archive = zipfile.ZipFile(filepath, "w")
+
+		with archive.open(threemf_content_types_location, "w") as content_types:
+			content_types.write(threemf_content_types_xml.encode("UTF-8"))
+
 		return archive
