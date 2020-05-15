@@ -8,6 +8,8 @@ import bpy  # The Blender API.
 import bpy.props  # To define metadata properties for the operator.
 import bpy.types  # This class is an operator in Blender.
 import bpy_extras.io_utils  # Helper functions to export meshes more easily.
+import os.path  # To create a correct file path to save to.
+import zipfile  # To write zip archives, the shell of the 3MF file.
 
 class Export3MF(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
 	"""
@@ -27,4 +29,27 @@ class Export3MF(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
 	use_mesh_modifiers: bpy.props.BoolProperty(name="Apply Modifiers", description="Apply the modifiers before saving", default=True)
 
 	def execute(self, context):
-		pass  # TODO.
+		"""
+		The main routine that writes the 3MF archive.
+
+		This function serves as a high-level overview of the steps involved to
+		write a 3MF file.
+		:param context: The Blender context.
+		:return: A set of status flags to indicate whether the write succeeded
+		or not.
+		"""
+		self.create_archive(self.filepath)
+
+		return {"FINISHED"}
+
+	def create_archive(self, filepath):
+		"""
+		Creates an empty 3MF archive.
+
+		The archive is complete according to the 3MF specs except that the
+		actual 3dmodel.model file is missing.
+		:param filepath: The path to write the file to.
+		:return: A zip archive that other functions can add things to.
+		"""
+		archive = zipfile.ZipFile(filepath, "w")
+		return archive
