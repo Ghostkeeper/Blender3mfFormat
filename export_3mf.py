@@ -8,14 +8,20 @@ import bpy  # The Blender API.
 import bpy.props  # To define metadata properties for the operator.
 import bpy.types  # This class is an operator in Blender.
 import bpy_extras.io_utils  # Helper functions to export meshes more easily.
+import logging  # To debug and log progress.
+import xml.etree.ElementTree  # To write XML documents with the 3D model data.
 import zipfile  # To write zip archives, the shell of the 3MF file.
 
 from .constants import (
+	threemf_3dmodel_location,
 	threemf_content_types_location,
 	threemf_content_types_xml,
+	threemf_default_namespace,
 	threemf_rels_location,
 	threemf_rels_xml
 )
+
+log = logging.getLogger(__name__)
 
 class Export3MF(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
 	"""
@@ -44,10 +50,29 @@ class Export3MF(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
 		:return: A set of status flags to indicate whether the write succeeded
 		or not.
 		"""
+		# Reset state.
+		self.next_resource_id = 1  # Starts counting at 1 for some inscrutable reason.
+
 		archive = self.create_archive(self.filepath)
 
+		if self.use_selection:
+			blender_objects = context.selected_objects
+		else:
+			blender_objects = context.scene.objects
+
+		# Due to an open bug in Python (as of Blender's version) we need to prefix all elements with the namespace.
+		# Bug: https://bugs.python.org/issue17088
+		# Workaround: https://stackoverflow.com/questions/4997848/emitting-namespace-specifications-with-elementtree-in-python/4999510#4999510
+		root = xml.etree.ElementTree.Element("{{{ns}}}model".format(ns=threemf_default_namespace))
+		self.write_objects(root, blender_objects)
+
+		document = xml.etree.ElementTree.ElementTree(root)
+		with archive.open(threemf_3dmodel_location, "w") as f:
+			document.write(f, xml_declaration=True, encoding="UTF-8", default_namespace=threemf_default_namespace)
 		archive.close()
 		return {"FINISHED"}
+
+	# The rest of the functions are in order of when they are called.
 
 	def create_archive(self, filepath):
 		"""
@@ -66,3 +91,40 @@ class Export3MF(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
 			rels.write(threemf_rels_xml.encode("UTF-8"))
 
 		return archive
+
+	def write_objects(self, root, blender_objects):
+		"""
+		Writes a group of objects into the 3MF archive.
+		:param root: An XML root element to write the objects into.
+		:param blender_objects: A list of Blender objects that need to be
+		written to that XML element.
+		"""
+		resources_element = xml.etree.ElementTree.SubElement(root, "{{{ns}}}resources".format(ns=threemf_default_namespace))
+		for blender_object in blender_objects:
+			if blender_object.parent is None:  # Only write objects that have no parent, since we'll get the child objects recursively.
+				objectid = self.write_object_resource(resources_element, blender_object)
+
+	def write_object_resource(self, resources_element, blender_object):
+		"""
+		Write a single Blender object and all of its children to the resources
+		of a 3MF document.
+		:param resources_element: The <resources> element of the 3MF document to
+		write into.
+		:param blender_object: A Blender object to write to that XML element.
+		:return: The object ID of the newly written resource.
+		"""
+		new_resource_id = self.next_resource_id
+		self.next_resource_id += 1
+		object_element = xml.etree.ElementTree.SubElement(resources_element, "{{{ns}}}object".format(ns=threemf_default_namespace))
+		object_element.attrib["{{{ns}}}type".format(ns=threemf_default_namespace)] = "model"
+		object_element.attrib["{{{ns}}}id".format(ns=threemf_default_namespace)] = str(new_resource_id)
+
+		child_objects = blender_object.children
+		if child_objects:  # Only write the <components> tag if there are actually components.
+			components_element = xml.etree.ElementTree.SubElement(object_element, "{{{ns}}}components".format(ns=threemf_default_namespace))
+			for child in blender_object.children:
+				child_id = self.write_object_resource(resources_element, child)  # Recursively write children to the resources.
+				component_element = xml.etree.ElementTree.SubElement(components_element, "{{{ns}}}component".format(ns=threemf_default_namespace))
+				component_element.attrib["{{{ns}}}objectid".format(ns=threemf_default_namespace)] = str(child_id)
+
+		return new_resource_id

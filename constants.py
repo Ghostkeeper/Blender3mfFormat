@@ -10,8 +10,9 @@ This module defines some constants for 3MF's file structure.
 These are the constants that are inherent to the 3MF file format.
 """
 
+threemf_default_namespace = "http://schemas.microsoft.com/3dmanufacturing/core/2015/02"
 threemf_namespaces = {  # Namespaces used for the 3MF file.
-	"3mf": "http://schemas.microsoft.com/3dmanufacturing/core/2015/02"  # Actually the default namespace.
+	"3mf": threemf_default_namespace
 }
 threemf_3dmodel_location = "3D/3dmodel.model"  # Conventional location for the 3D model data.
 threemf_default_unit = "millimeter"  # If the unit is missing, it will be this.
