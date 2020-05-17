@@ -314,7 +314,7 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
 				child_object = self.resource_objects[component.resource_object]
 			except KeyError:  # Invalid resource ID. Doesn't exist!
 				continue
-			transform = component.transformation @ transformation  # Apply the child's transformation and pass it on.
+			transform = transformation @ component.transformation  # Apply the child's transformation and pass it on.
 			objectid_stack_trace.append(component.resource_object)
 			self.build_object(child_object, transform, objectid_stack_trace, blender_object)
 			objectid_stack_trace.pop()
