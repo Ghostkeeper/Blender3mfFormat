@@ -110,7 +110,7 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
 		need to make the coordinates in Blender larger than the coordinates in
 		the file.
 		"""
-		scale = 1.0
+		scale = self.global_scale
 
 		if context.scene.unit_settings.scale_length != 0:
 			scale /= context.scene.unit_settings.scale_length  # Apply the global scale of the units in Blender.
