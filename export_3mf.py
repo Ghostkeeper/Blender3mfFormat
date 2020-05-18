@@ -129,7 +129,7 @@ class Export3MF(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
 		:param global_scale: A scaling factor to apply to all objects to convert
 		the units.
 		"""
-		transformation = mathutils.Matrix.Scale(global_scale)
+		transformation = mathutils.Matrix.Scale(global_scale, 4)
 
 		resources_element = xml.etree.ElementTree.SubElement(root, "{{{ns}}}resources".format(ns=threemf_default_namespace))
 		for blender_object in blender_objects:
@@ -192,5 +192,5 @@ class Export3MF(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
 		:param transformation: The transformation matrix to format.
 		:return: A serialisation of the transformation matrix.
 		"""
-		pieces = ((str(col) for col in row[0:2]) for row in transformation)  # Convert the whole thing to strings, except the 4th column.
+		pieces = ((str(col) for col in row[:3]) for row in transformation)  # Convert the whole thing to strings, except the 4th column.
 		return " ".join(itertools.chain.from_iterable(pieces))
