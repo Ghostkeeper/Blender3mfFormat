@@ -182,6 +182,12 @@ class Export3MF(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
 		if mesh is None:
 			return new_resource_id
 
+		mesh.calc_loop_triangles()  # Need to convert this to triangles-only, because 3MF doesn't support faces with more than 3 vertices.
+		if len(mesh.vertices) > 0:
+			mesh_element = xml.etree.ElementTree.SubElement(object_element, "{{{ns}}}mesh".format(ns=threemf_default_namespace))
+			self.write_vertices(mesh_element, mesh.vertices)
+			self.write_triangles(mesh_element, mesh.loop_triangles)
+
 		mesh_transformation = blender_object.matrix_world
 		return new_resource_id, mesh_transformation
 
@@ -195,3 +201,24 @@ class Export3MF(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
 		"""
 		pieces = ((str(col) for col in row[:3]) for row in transformation)  # Convert the whole thing to strings, except the 4th column.
 		return " ".join(itertools.chain.from_iterable(pieces))
+
+	def write_vertices(self, mesh_element, vertices):
+		"""
+		Writes a list of vertices into the specified mesh element.
+
+		This then becomes a resource that can be used in a build.
+		:param mesh_element: The <mesh> element of the 3MF document.
+		:param vertices: A list of Blender vertices to add.
+		"""
+		pass  # TODO.
+
+	def write_triangles(self, mesh_element, triangles):
+		"""
+		Writes a list of triangles into the specified mesh element.
+
+		This then becomes a resource that can be used in a build.
+		:param mesh_element: The <mesh> element of the 3MF document.
+		:param triangles: A list of triangles. Each list is a list of indices to
+		the list of vertices.
+		"""
+		pass  # TODO.
