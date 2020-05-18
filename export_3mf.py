@@ -151,6 +151,14 @@ class Export3MF(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
 			dependency_graph = bpy.context.evaluated_depsgraph_get()
 			blender_object = blender_object.evaluated_get(dependency_graph)
 
+		# Object.to_mesh() is not guaranteed to return Optional[Mesh], apparently.
+		try:
+			mesh = blender_object.to_mesh()
+		except RuntimeError:
+			return new_resource_id
+		if mesh is None:
+			return new_resource_id
+
 		return new_resource_id
 
 	def unit_scale(self, context):
