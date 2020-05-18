@@ -8,6 +8,7 @@ import bpy  # The Blender API.
 import bpy.props  # To define metadata properties for the operator.
 import bpy.types  # This class is an operator in Blender, and to find meshes in the scene.
 import bpy_extras.io_utils  # Helper functions to export meshes more easily.
+import itertools
 import logging  # To debug and log progress.
 import mathutils  # For the transformation matrices.
 import xml.etree.ElementTree  # To write XML documents with the 3D model data.
@@ -135,17 +136,15 @@ class Export3MF(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
 			if blender_object.parent is None:  # Only write objects that have no parent, since we'll get the child objects recursively.
 				if not isinstance(blender_object.data, bpy.types.Mesh):
 					continue
-				objectid = self.write_object_resource(resources_element, blender_object, transformation)
+				objectid, mesh_transformation = self.write_object_resource(resources_element, blender_object)
 
-	def write_object_resource(self, resources_element, blender_object, transformation):
+	def write_object_resource(self, resources_element, blender_object):
 		"""
 		Write a single Blender object and all of its children to the resources
 		of a 3MF document.
 		:param resources_element: The <resources> element of the 3MF document to
 		write into.
 		:param blender_object: A Blender object to write to that XML element.
-		:param transformation: A transformation to apply to this object before
-		writing it to the file.
 		:return: The object ID of the newly written resource.
 		"""
 		new_resource_id = self.next_resource_id
@@ -163,9 +162,10 @@ class Export3MF(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
 			for child in blender_object.children:
 				if not isinstance(child.data, bpy.types.Mesh):
 					continue
-				child_id = self.write_object_resource(resources_element, child, transformation)  # Recursively write children to the resources.
+				child_id, mesh_transformation = self.write_object_resource(resources_element, child)  # Recursively write children to the resources.
 				component_element = xml.etree.ElementTree.SubElement(components_element, "{{{ns}}}component".format(ns=threemf_default_namespace))
 				component_element.attrib["{{{ns}}}objectid".format(ns=threemf_default_namespace)] = str(child_id)
+				component_element.attrib["{{{ns}}}transform".format(ns=threemf_default_namespace)] = self.format_transformation(mesh_transformation)
 
 		# In the tail recursion, get the vertex data.
 		# This is necessary because we may need to apply the mesh modifiers, which causes these objects to lose their children.
@@ -181,4 +181,16 @@ class Export3MF(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
 		if mesh is None:
 			return new_resource_id
 
-		return new_resource_id
+		mesh_transformation = blender_object.matrix_world
+		return new_resource_id, mesh_transformation
+
+	def format_transformation(self, transformation):
+		"""
+		Formats a transformation matrix in 3MF's formatting.
+
+		This transformation matrix can then be written to an attribute.
+		:param transformation: The transformation matrix to format.
+		:return: A serialisation of the transformation matrix.
+		"""
+		pieces = ((str(col) for col in row[0:2]) for row in transformation)  # Convert the whole thing to strings, except the 4th column.
+		return " ".join(itertools.chain.from_iterable(pieces))
