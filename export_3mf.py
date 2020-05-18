@@ -145,6 +145,12 @@ class Export3MF(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
 				component_element = xml.etree.ElementTree.SubElement(components_element, "{{{ns}}}component".format(ns=threemf_default_namespace))
 				component_element.attrib["{{{ns}}}objectid".format(ns=threemf_default_namespace)] = str(child_id)
 
+		# In the tail recursion, get the vertex data.
+		# This is necessary because we may need to apply the mesh modifiers, which causes these objects to lose their children.
+		if self.use_mesh_modifiers:
+			dependency_graph = bpy.context.evaluated_depsgraph_get()
+			blender_object = blender_object.evaluated_get(dependency_graph)
+
 		return new_resource_id
 
 	def unit_scale(self, context):
