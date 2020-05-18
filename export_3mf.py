@@ -97,6 +97,28 @@ class Export3MF(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
 
 		return archive
 
+	def unit_scale(self, context):
+		"""
+		Get the scaling factor we need to transform the document to millimetres.
+		:param context: The Blender context to get the unit from.
+		:return: Floating point value that we need to scale this model by. A
+		small number (<1) means that we need to make the coordinates in the 3MF
+		file smaller than the coordinates in Blender. A large number (>1) means
+		we need to make the coordinates in the file larger than the coordinates
+		in Blender.
+		"""
+		scale = self.global_scale
+
+		if context.scene.unit_settings.scale_length != 0:
+			scale *= context.scene.unit_settings.scale_length  # Apply the global scale of the units in Blender.
+
+		threemf_unit = threemf_default_unit
+		blender_unit = context.scene.unit_settings.length_unit
+		scale /= threemf_to_metre[threemf_unit]  # Convert 3MF units to metre.
+		scale *= blender_to_metre[blender_unit]  # Convert metre to Blender's units.
+
+		return scale
+
 	def write_objects(self, root, blender_objects, global_scale):
 		"""
 		Writes a group of objects into the 3MF archive.
@@ -160,25 +182,3 @@ class Export3MF(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
 			return new_resource_id
 
 		return new_resource_id
-
-	def unit_scale(self, context):
-		"""
-		Get the scaling factor we need to transform the document to millimetres.
-		:param context: The Blender context to get the unit from.
-		:return: Floating point value that we need to scale this model by. A
-		small number (<1) means that we need to make the coordinates in the 3MF
-		file smaller than the coordinates in Blender. A large number (>1) means
-		we need to make the coordinates in the file larger than the coordinates
-		in Blender.
-		"""
-		scale = self.global_scale
-
-		if context.scene.unit_settings.scale_length != 0:
-			scale *= context.scene.unit_settings.scale_length  # Apply the global scale of the units in Blender.
-
-		threemf_unit = threemf_default_unit
-		blender_unit = context.scene.unit_settings.length_unit
-		scale /= threemf_to_metre[threemf_unit]  # Convert 3MF units to metre.
-		scale *= blender_to_metre[blender_unit]  # Convert metre to Blender's units.
-
-		return scale
