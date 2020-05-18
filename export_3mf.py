@@ -210,7 +210,19 @@ class Export3MF(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
 		:param mesh_element: The <mesh> element of the 3MF document.
 		:param vertices: A list of Blender vertices to add.
 		"""
-		pass  # TODO.
+		vertices_element = xml.etree.ElementTree.SubElement(mesh_element, "{{{ns}}}vertices".format(ns=threemf_default_namespace))
+
+		# Precompute some names for better performance.
+		vertex_name = "{{{ns}}}vertex".format(ns=threemf_default_namespace)
+		x_name = "{{{ns}}}x".format(ns=threemf_default_namespace)
+		y_name = "{{{ns}}}y".format(ns=threemf_default_namespace)
+		z_name = "{{{ns}}}z".format(ns=threemf_default_namespace)
+
+		for vertex in vertices:  # Create the <vertex> elements.
+			vertex_element = xml.etree.ElementTree.SubElement(vertices_element, vertex_name)
+			vertex_element.attrib[x_name] = str(vertex.co[0])
+			vertex_element.attrib[y_name] = str(vertex.co[1])
+			vertex_element.attrib[z_name] = str(vertex.co[2])
 
 	def write_triangles(self, mesh_element, triangles):
 		"""
