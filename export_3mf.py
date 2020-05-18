@@ -6,7 +6,7 @@
 
 import bpy  # The Blender API.
 import bpy.props  # To define metadata properties for the operator.
-import bpy.types  # This class is an operator in Blender.
+import bpy.types  # This class is an operator in Blender, and to find meshes in the scene.
 import bpy_extras.io_utils  # Helper functions to export meshes more easily.
 import logging  # To debug and log progress.
 import xml.etree.ElementTree  # To write XML documents with the 3D model data.
@@ -102,6 +102,8 @@ class Export3MF(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
 		resources_element = xml.etree.ElementTree.SubElement(root, "{{{ns}}}resources".format(ns=threemf_default_namespace))
 		for blender_object in blender_objects:
 			if blender_object.parent is None:  # Only write objects that have no parent, since we'll get the child objects recursively.
+				if not isinstance(blender_object.data, bpy.types.Mesh):
+					continue
 				objectid = self.write_object_resource(resources_element, blender_object)
 
 	def write_object_resource(self, resources_element, blender_object):
@@ -123,6 +125,8 @@ class Export3MF(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
 		if child_objects:  # Only write the <components> tag if there are actually components.
 			components_element = xml.etree.ElementTree.SubElement(object_element, "{{{ns}}}components".format(ns=threemf_default_namespace))
 			for child in blender_object.children:
+				if not isinstance(child.data, bpy.types.Mesh):
+					continue
 				child_id = self.write_object_resource(resources_element, child)  # Recursively write children to the resources.
 				component_element = xml.etree.ElementTree.SubElement(components_element, "{{{ns}}}component".format(ns=threemf_default_namespace))
 				component_element.attrib["{{{ns}}}objectid".format(ns=threemf_default_namespace)] = str(child_id)
