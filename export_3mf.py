@@ -165,7 +165,8 @@ class Export3MF(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
 				child_id, mesh_transformation = self.write_object_resource(resources_element, child)  # Recursively write children to the resources.
 				component_element = xml.etree.ElementTree.SubElement(components_element, "{{{ns}}}component".format(ns=threemf_default_namespace))
 				component_element.attrib["{{{ns}}}objectid".format(ns=threemf_default_namespace)] = str(child_id)
-				component_element.attrib["{{{ns}}}transform".format(ns=threemf_default_namespace)] = self.format_transformation(mesh_transformation)
+				if mesh_transformation != mathutils.Matrix.Identity(4):
+					component_element.attrib["{{{ns}}}transform".format(ns=threemf_default_namespace)] = self.format_transformation(mesh_transformation)
 
 		# In the tail recursion, get the vertex data.
 		# This is necessary because we may need to apply the mesh modifiers, which causes these objects to lose their children.
