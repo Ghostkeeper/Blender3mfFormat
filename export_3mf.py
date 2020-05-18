@@ -233,4 +233,16 @@ class Export3MF(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
 		:param triangles: A list of triangles. Each list is a list of indices to
 		the list of vertices.
 		"""
-		pass  # TODO.
+		triangles_element = xml.etree.ElementTree.SubElement(mesh_element, "{{{ns}}}triangles".format(ns=threemf_default_namespace))
+
+		# Precompute some names for better performance.
+		triangle_name = "{{{ns}}}triangle".format(ns=threemf_default_namespace)
+		v1_name = "{{{ns}}}v1".format(ns=threemf_default_namespace)
+		v2_name = "{{{ns}}}v2".format(ns=threemf_default_namespace)
+		v3_name = "{{{ns}}}v3".format(ns=threemf_default_namespace)
+
+		for triangle in triangles:
+			triangle_element = xml.etree.ElementTree.SubElement(triangles_element, triangle_name)
+			triangle_element.attrib[v1_name] = str(triangle.vertices[0])
+			triangle_element.attrib[v2_name] = str(triangle.vertices[1])
+			triangle_element.attrib[v3_name] = str(triangle.vertices[2])
