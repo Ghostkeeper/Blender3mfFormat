@@ -132,6 +132,9 @@ class Export3MF(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
 		object_element.attrib["{{{ns}}}type".format(ns=threemf_default_namespace)] = "model"
 		object_element.attrib["{{{ns}}}id".format(ns=threemf_default_namespace)] = str(new_resource_id)
 
+		if blender_object.mode == "EDIT":
+			blender_object.update_from_editmode()  # Apply recent changes made to the model.
+
 		child_objects = blender_object.children
 		if child_objects:  # Only write the <components> tag if there are actually components.
 			components_element = xml.etree.ElementTree.SubElement(object_element, "{{{ns}}}components".format(ns=threemf_default_namespace))
