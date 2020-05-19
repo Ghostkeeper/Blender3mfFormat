@@ -18,5 +18,7 @@ jobs:
         uses: actions/setup-python@v2
         with:
           python-version: 3.7
+      - name: Install dependencies
+        run: python3 -m pip install mathutils
       - name: Test
         run: python3 -m unittest test
