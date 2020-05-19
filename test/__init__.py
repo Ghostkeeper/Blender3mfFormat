@@ -4,4 +4,7 @@
 # This add-on is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for details.
 # You should have received a copy of the GNU Affero General Public License along with this plug-in. If not, see <https://gnu.org/licenses/>.
 
-# This page intentionally left blank.
+# Allows running all tests by calling `python3 -m unittest test` from the base directory.
+# This imports all test classes so that they get run then.
+
+from .import_3mf import TestImport3MF
