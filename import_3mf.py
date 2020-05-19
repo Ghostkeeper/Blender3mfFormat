@@ -295,13 +295,13 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
 		# Create a mesh.
 		mesh = bpy.data.meshes.new("3MF Mesh")
 		mesh.from_pydata(resource_object.vertices, [], resource_object.triangles)
-		mesh.transform(transformation)
 		mesh.update()
 
 		# Create an object.
 		blender_object = bpy.data.objects.new("3MF Object", mesh)
 		if parent is not None:
 			blender_object.parent = parent
+		blender_object.matrix_world = transformation
 		bpy.context.collection.objects.link(blender_object)
 		bpy.context.view_layer.objects.active = blender_object
 		blender_object.select_set(True)
