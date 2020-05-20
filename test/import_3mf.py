@@ -301,3 +301,20 @@ class TestImport3MF(unittest.TestCase):
 
 		result = self.importer.read_vertices(object_node)
 		assert result == vertices, "The outcome must be the same vertices as what went into the XML document."
+
+	def test_read_vertices_missing_coordinates(self):
+		"""
+		Tests reading vertices where some coordinate might be missing.
+		"""
+		object_node = xml.etree.ElementTree.Element("{{{ns}}}object".format(ns=threemf_default_namespace))
+		mesh_node = xml.etree.ElementTree.SubElement(object_node, "{{{ns}}}mesh".format(ns=threemf_default_namespace))
+		vertices_node = xml.etree.ElementTree.SubElement(mesh_node, "{{{ns}}}vertices".format(ns=threemf_default_namespace))
+		vertex_node = xml.etree.ElementTree.SubElement(vertices_node, "{{{ns}}}vertex".format(ns=threemf_default_namespace))
+
+		vertex_node.attrib["x"] = "13.37"
+		# Don't write a Y value.
+		vertex_node.attrib["z"] = "6.9"
+
+		result = self.importer.read_vertices(object_node)
+		assert len(result) == 1, "There was only one vertex in this object node."
+		assert result[0] == (13.37, 0, 6.9), "The Y value must be defaulting to 0, since it was missing."
