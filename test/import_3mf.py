@@ -318,3 +318,21 @@ class TestImport3MF(unittest.TestCase):
 		result = self.importer.read_vertices(object_node)
 		assert len(result) == 1, "There was only one vertex in this object node."
 		assert result[0] == (13.37, 0, 6.9), "The Y value must be defaulting to 0, since it was missing."
+
+	def test_read_vertices_broken_coordinates(self):
+		"""
+		Tests reading vertices where some coordinate is not a floating point
+		value.
+		"""
+		object_node = xml.etree.ElementTree.Element("{{{ns}}}object".format(ns=threemf_default_namespace))
+		mesh_node = xml.etree.ElementTree.SubElement(object_node, "{{{ns}}}mesh".format(ns=threemf_default_namespace))
+		vertices_node = xml.etree.ElementTree.SubElement(mesh_node, "{{{ns}}}vertices".format(ns=threemf_default_namespace))
+		vertex_node = xml.etree.ElementTree.SubElement(vertices_node, "{{{ns}}}vertex".format(ns=threemf_default_namespace))
+
+		vertex_node.attrib["x"] = "42"
+		vertex_node.attrib["y"] = "23,37"  # Must use period as the decimal separator.
+		vertex_node.attrib["z"] = "over there"  # Doesn't parse to a float either.
+
+		result = self.importer.read_vertices(object_node)
+		assert len(result) == 1, "There was only one vertex in this object node."
+		assert result[0] == (42, 0, 0), "The Y value defaults to 0 due to using comma as decimal separator. The Z value defaults to 0 due to not being a float at all."
