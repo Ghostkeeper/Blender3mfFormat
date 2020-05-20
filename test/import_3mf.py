@@ -56,9 +56,16 @@ class TestImport3MF(unittest.TestCase):
 		"""
 		assert (self.importer.read_archive("/some/nonexistent_path") is None), "On an environment error, return None."
 
-	def test_read_archive_empty(self):
+	def test_read_archive_corrupt(self):
 		"""
 		Tests reading a corrupt archive file.
 		"""
 		archive_path = os.path.join(os.path.dirname(__file__), "resources/corrupt_archive.3mf")
 		assert (self.importer.read_archive(archive_path) is None), "Corrupt files should return None."
+
+	def test_read_archive_empty(self):
+		"""
+		Tests reading an archive file that doesn't have the default model file.
+		"""
+		archive_path = os.path.join(os.path.dirname(__file__), "resources/empty_archive.3mf")
+		assert (self.importer.read_archive(archive_path) is None), "If the archive has no 3dmodel.model file, return None."
