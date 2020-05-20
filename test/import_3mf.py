@@ -28,7 +28,8 @@ import bpy_extras.io_utils
 bpy.types.Operator = MockOperator
 bpy_extras.io_utils.ImportHelper = MockImportHelper
 bpy_extras.io_utils.ExportHelper = MockExportHelper
-import io_mesh_3mf.import_3mf
+import io_mesh_3mf.import_3mf  # Now we may safely import the unit under test.
+from io_mesh_3mf.constants import threemf_default_namespace
 
 class TestImport3MF(unittest.TestCase):
 	"""
@@ -54,18 +55,27 @@ class TestImport3MF(unittest.TestCase):
 		"""
 		Tests reading an archive file that doesn't exist.
 		"""
-		assert (self.importer.read_archive("/some/nonexistent_path") is None), "On an environment error, return None."
+		assert self.importer.read_archive("some/nonexistent_path") is None, "On an environment error, return None."
 
 	def test_read_archive_corrupt(self):
 		"""
 		Tests reading a corrupt archive file.
 		"""
 		archive_path = os.path.join(os.path.dirname(__file__), "resources/corrupt_archive.3mf")
-		assert (self.importer.read_archive(archive_path) is None), "Corrupt files should return None."
+		assert self.importer.read_archive(archive_path) is None, "Corrupt files should return None."
 
 	def test_read_archive_empty(self):
 		"""
 		Tests reading an archive file that doesn't have the default model file.
 		"""
 		archive_path = os.path.join(os.path.dirname(__file__), "resources/empty_archive.3mf")
-		assert (self.importer.read_archive(archive_path) is None), "If the archive has no 3dmodel.model file, return None."
+		assert self.importer.read_archive(archive_path) is None, "If the archive has no 3dmodel.model file, return None."
+
+	def test_read_archive_default_position(self):
+		"""
+		Tests reading an archive where the 3D model is in the default position.
+		"""
+		archive_path = os.path.join(os.path.dirname(__file__), "resources/only_3dmodel_file.3mf")
+		result = self.importer.read_archive(archive_path)
+		assert result is not None, "There is a 3D model in this archive, so it should return a document."
+		assert result.getroot().tag == "{{{ns}}}model".format(ns=threemf_default_namespace), "The result is an XML document with a <model> tag in the root."
