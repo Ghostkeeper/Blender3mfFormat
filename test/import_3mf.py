@@ -8,6 +8,7 @@ import os.path  # To find the test resources.
 import unittest  # To run the tests.
 import unittest.mock  # To mock away the Blender API.
 import sys  # To mock entire packages.
+import xml.etree.ElementTree  # To construct 3MF documents as input for the importer functions.
 
 from .mock.bpy import MockOperator, MockExportHelper, MockImportHelper
 
@@ -79,3 +80,21 @@ class TestImport3MF(unittest.TestCase):
 		result = self.importer.read_archive(archive_path)
 		assert result is not None, "There is a 3D model in this archive, so it should return a document."
 		assert result.getroot().tag == "{{{ns}}}model".format(ns=threemf_default_namespace), "The result is an XML document with a <model> tag in the root."
+
+	def test_unit_scale_global(self):
+		"""
+		Tests getting the global scale importer setting.
+		"""
+		global_scale = 1.1  # The global scale setting is set to 110%.
+
+		context = unittest.mock.MagicMock()
+		self.importer.global_scale = global_scale
+
+		# Stuff not considered for this test.
+		context.scene.unit_settings.scale_length = 0
+		root = xml.etree.ElementTree.Element("{{{ns}}}model".format(ns=threemf_default_namespace))
+		root.attrib["unit".format(ns=threemf_default_namespace)] = "meter"
+		context.scene.unit_settings.length_unit = "METERS"
+
+		result = self.importer.unit_scale(context, root)
+		assert result == global_scale, "The global scale must be applied directly to the output."
