@@ -260,3 +260,11 @@ class TestImport3MF(unittest.TestCase):
 					root.attrib["unit"] = threemf_unit
 					result = self.importer.unit_scale(context, root)
 					self.assertAlmostEqual(result, correct_conversions[blender_unit][threemf_unit])
+
+	def test_read_vertices_missing(self):
+		"""
+		Tests reading an object node where the <vertices> tag is missing.
+		"""
+		object_node = xml.etree.ElementTree.Element("{{{ns}}}object".format(ns=threemf_default_namespace))
+
+		assert len(self.importer.read_vertices(object_node)) == 0, "There is no <vertices> element, so the resulting vertex list is empty."
