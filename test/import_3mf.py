@@ -93,7 +93,7 @@ class TestImport3MF(unittest.TestCase):
 		context = unittest.mock.MagicMock()
 		context.scene.unit_settings.scale_length = 0
 		root = xml.etree.ElementTree.Element("{{{ns}}}model".format(ns=threemf_default_namespace))
-		root.attrib["unit".format(ns=threemf_default_namespace)] = "meter"
+		root.attrib["unit"] = "meter"
 		context.scene.unit_settings.length_unit = "METERS"
 
 		result = self.importer.unit_scale(context, root)
@@ -111,8 +111,152 @@ class TestImport3MF(unittest.TestCase):
 		# Stuff not considered for this test.
 		self.importer.global_scale = 1.0
 		root = xml.etree.ElementTree.Element("{{{ns}}}model".format(ns=threemf_default_namespace))
-		root.attrib["unit".format(ns=threemf_default_namespace)] = "meter"
+		root.attrib["unit"] = "meter"
 		context.scene.unit_settings.length_unit = "METERS"
 
 		result = self.importer.unit_scale(context, root)
 		assert result == 1.0 / scene_scale, "The scene scale must be compensated for."
+
+	def test_unit_scale_conversion(self):
+		"""
+		Tests converting between different units of Blender and the 3MF.
+		"""
+		# Setting up the test.
+		context = unittest.mock.MagicMock()
+		context.scene.unit_settings.scale_length = 0  # Not considered for this test.
+		self.importer.global_scale = 1.0  # Not considered for this test.
+		root = xml.etree.ElementTree.Element("{{{ns}}}model".format(ns=threemf_default_namespace))
+
+		# Table of correct conversions! This is the ground truth.
+		# From 3MF unit (outer dict) to Blender unit (inner dicts), i.e. how many Blender units go in one 3MF unit.
+		# Sourced from www.wolframalpha.com and in the case of Metric just by head.
+		correct_conversions = {
+			"THOU": {
+				"micron": 0.039370078740157,
+				"millimeter": 39.370078740157,
+				"centimeter": 393.70078740157,
+				"inch": 1000,
+				"foot": 12000,
+				"meter": 39370.078740157
+			},
+			"INCHES": {
+				"micron": 0.000039370078740157,
+				"millimeter": 0.039370078740157,
+				"centimeter": 0.39370078740157,
+				"inch": 1,
+				"foot": 12,
+				"meter": 39.370078740157
+			},
+			"FEET": {
+				"micron": 0.000003280839895,
+				"millimeter": 0.003280839895,
+				"centimeter": 0.03280839895,
+				"inch": 0.08333333333,
+				"foot": 1,
+				"meter": 3.280839895
+			},
+			"YARDS": {
+				"micron": 0.0000010936133,
+				"millimeter": 0.0010936133,
+				"centimeter": 0.010936133,
+				"inch": 0.0277777777778,
+				"foot": 0.333333333333,
+				"meter": 1.0936133,
+			},
+			"CHAINS": {
+				"micron": 0.000000049709695379,
+				"millimeter": 0.000049709695379,
+				"centimeter": 0.00049709695379,
+				"inch": 0.001262626262626,
+				"foot": 0.015151515151515,
+				"meter": 0.049709695379
+			},
+			"FURLONGS": {
+				"micron": 0.0000000049709695379,
+				"millimeter": 0.0000049709695379,
+				"centimeter": 0.000049709695379,
+				"inch": 0.0001262626262626,
+				"foot": 0.0015151515151515,
+				"meter": 0.0049709695379
+			},
+			"MILES": {
+				"micron": 0.000000000621371192237,
+				"millimeter": 0.000000621371192237,
+				"centimeter": 0.00000621371192237,
+				"inch": 0.00001578282828282828,
+				"foot": 0.0001893939393939394,
+				"meter": 0.000621371192237
+			},
+			"MICROMETERS": {
+				"micron": 1,
+				"millimeter": 1000,
+				"centimeter": 10000,
+				"inch": 25400,
+				"foot": 304800,
+				"meter": 1000000
+			},
+			"MILLIMETERS": {
+				"micron": 0.001,
+				"millimeter": 1,
+				"centimeter": 10,
+				"inch": 25.4,
+				"foot": 304.8,
+				"meter": 1000
+			},
+			"CENTIMETERS": {
+				"micron": 0.0001,
+				"millimeter": 0.1,
+				"centimeter": 1,
+				"inch": 2.54,
+				"foot": 30.48,
+				"meter": 100
+			},
+			"DECIMETERS": {
+				"micron": 0.00001,
+				"millimeter": 0.01,
+				"centimeter": 0.1,
+				"inch": 0.254,
+				"foot": 3.048,
+				"meter": 10,
+			},
+			"METERS": {
+				"micron": 0.000001,
+				"millimeter": 0.001,
+				"centimeter": 0.01,
+				"inch": 0.0254,
+				"foot": 0.3048,
+				"meter": 1
+			},
+			"DEKAMETERS": {
+				"micron": 0.0000001,
+				"millimeter": 0.0001,
+				"centimeter": 0.001,
+				"inch": 0.00254,
+				"foot": 0.03048,
+				"meter": 0.1
+			},
+			"HECTOMETERS": {
+				"micron": 0.00000001,
+				"millimeter": 0.00001,
+				"centimeter": 0.0001,
+				"inch": 0.000254,
+				"foot": 0.003048,
+				"meter": 0.01
+			},
+			"KILOMETERS": {
+				"micron": 0.000000001,
+				"millimeter": 0.000001,
+				"centimeter": 0.00001,
+				"inch": 0.0000254,
+				"foot": 0.0003048,
+				"meter": 0.001
+			}
+		}
+
+		for blender_unit in correct_conversions:
+			for threemf_unit in correct_conversions[blender_unit]:
+				with self.subTest(blender_unit=blender_unit, threemf_unit=threemf_unit):
+					context.scene.unit_settings.length_unit = blender_unit
+					root.attrib["unit"] = threemf_unit
+					result = self.importer.unit_scale(context, root)
+					self.assertAlmostEqual(result, correct_conversions[blender_unit][threemf_unit])
