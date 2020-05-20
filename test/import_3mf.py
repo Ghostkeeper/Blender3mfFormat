@@ -50,4 +50,7 @@ class TestImport3MF(unittest.TestCase):
 		self.importer = io_mesh_3mf.import_3mf.Import3MF()  # An importer class.
 
 	def test_read_archive_non_existent(self):
-		pass  # TODO.
+		"""
+		Tests reading an archive file that doesn't exist.
+		"""
+		assert self.importer.read_archive("/some/nonexistent_path") is None
