@@ -279,3 +279,25 @@ class TestImport3MF(unittest.TestCase):
 		xml.etree.ElementTree.SubElement(mesh_node, "{{{ns}}}vertices".format(ns=threemf_default_namespace))
 
 		assert len(self.importer.read_vertices(object_node)) == 0, "There are no vertices in the <vertices> element, so the resulting vertex list is empty."
+
+	def test_read_vertices_multiple(self):
+		"""
+		Tests reading an object with a <vertices> element with several <vertex>
+		elements in it.
+
+		This is the most common case.
+		"""
+		vertices = [(1.0, 2.0, 3.0), (4.0, 5.0, 6.0), (7.0, 8.0, 9.0)]  # A few vertices to test with.
+
+		# Set up the XML data to parse.
+		object_node = xml.etree.ElementTree.Element("{{{ns}}}object".format(ns=threemf_default_namespace))
+		mesh_node = xml.etree.ElementTree.SubElement(object_node, "{{{ns}}}mesh".format(ns=threemf_default_namespace))
+		vertices_node = xml.etree.ElementTree.SubElement(mesh_node, "{{{ns}}}vertices".format(ns=threemf_default_namespace))
+		for vertex in vertices:
+			vertex_node = xml.etree.ElementTree.SubElement(vertices_node, "{{{ns}}}vertex".format(ns=threemf_default_namespace))
+			vertex_node.attrib["x"] = str(vertex[0])
+			vertex_node.attrib["y"] = str(vertex[1])
+			vertex_node.attrib["z"] = str(vertex[2])
+
+		result = self.importer.read_vertices(object_node)
+		assert result == vertices, "The outcome must be the same vertices as what went into the XML document."
