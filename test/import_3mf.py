@@ -263,8 +263,17 @@ class TestImport3MF(unittest.TestCase):
 
 	def test_read_vertices_missing(self):
 		"""
-		Tests reading an object node where the <vertices> tag is missing.
+		Tests reading an object where the <vertices> tag is missing.
 		"""
 		object_node = xml.etree.ElementTree.Element("{{{ns}}}object".format(ns=threemf_default_namespace))
 
 		assert len(self.importer.read_vertices(object_node)) == 0, "There is no <vertices> element, so the resulting vertex list is empty."
+
+	def test_read_vertices_empty(self):
+		"""
+		Tests reading an object where the <vertices> tag is present, but empty.
+		"""
+		object_node = xml.etree.ElementTree.Element("{{{ns}}}object".format(ns=threemf_default_namespace))
+		vertices_node = xml.etree.ElementTree.Element("{{{ns}}}vertices".format(ns=threemf_default_namespace))
+
+		assert len(self.importer.read_vertices(object_node)) == 0, "There are no vertices in the <vertices> element, so the resulting vertex list is empty."
