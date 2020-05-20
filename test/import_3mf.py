@@ -345,3 +345,13 @@ class TestImport3MF(unittest.TestCase):
 		xml.etree.ElementTree.SubElement(object_node, "{{{ns}}}mesh".format(ns=threemf_default_namespace))
 
 		assert len(self.importer.read_triangles(object_node)) == 0, "There is no <triangles> element, so the resulting triangle list is empty."
+
+	def test_read_triangles_empty(self):
+		"""
+		Tests reading triangles when the <triangles> element is empty.
+		"""
+		object_node = xml.etree.ElementTree.Element("{{{ns}}}object".format(ns=threemf_default_namespace))
+		mesh_node = xml.etree.ElementTree.SubElement(object_node, "{{{ns}}}mesh".format(ns=threemf_default_namespace))
+		xml.etree.ElementTree.SubElement(mesh_node, "{{{ns}}}triangles".format(ns=threemf_default_namespace))
+
+		assert len(self.importer.read_triangles(object_node)) == 0, "There are no triangles in the <triangles> element, so the resulting triangle list is empty."
