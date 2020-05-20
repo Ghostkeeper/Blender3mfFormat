@@ -336,3 +336,12 @@ class TestImport3MF(unittest.TestCase):
 		result = self.importer.read_vertices(object_node)
 		assert len(result) == 1, "There was only one vertex in this object node."
 		assert result[0] == (42, 0, 0), "The Y value defaults to 0 due to using comma as decimal separator. The Z value defaults to 0 due to not being a float at all."
+
+	def test_read_triangles_missing(self):
+		"""
+		Tests reading triangles when the <triangles> element is missing.
+		"""
+		object_node = xml.etree.ElementTree.Element("{{{ns}}}object".format(ns=threemf_default_namespace))
+		xml.etree.ElementTree.SubElement(object_node, "{{{ns}}}mesh".format(ns=threemf_default_namespace))
+
+		assert len(self.importer.read_triangles(object_node)) == 0, "There is no <triangles> element, so the resulting triangle list is empty."
