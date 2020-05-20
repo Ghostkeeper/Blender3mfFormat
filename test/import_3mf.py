@@ -87,10 +87,10 @@ class TestImport3MF(unittest.TestCase):
 		"""
 		global_scale = 1.1  # The global scale setting is set to 110%.
 
-		context = unittest.mock.MagicMock()
 		self.importer.global_scale = global_scale
 
 		# Stuff not considered for this test.
+		context = unittest.mock.MagicMock()
 		context.scene.unit_settings.scale_length = 0
 		root = xml.etree.ElementTree.Element("{{{ns}}}model".format(ns=threemf_default_namespace))
 		root.attrib["unit".format(ns=threemf_default_namespace)] = "meter"
@@ -98,3 +98,21 @@ class TestImport3MF(unittest.TestCase):
 
 		result = self.importer.unit_scale(context, root)
 		assert result == global_scale, "The global scale must be applied directly to the output."
+
+	def test_unit_scale_scene(self):
+		"""
+		Tests compensating for the scene scale.
+		"""
+		scene_scale = 0.9  # The scene scale is set to 90%.
+
+		context = unittest.mock.MagicMock()
+		context.scene.unit_settings.scale_length = scene_scale
+
+		# Stuff not considered for this test.
+		self.importer.global_scale = 1.0
+		root = xml.etree.ElementTree.Element("{{{ns}}}model".format(ns=threemf_default_namespace))
+		root.attrib["unit".format(ns=threemf_default_namespace)] = "meter"
+		context.scene.unit_settings.length_unit = "METERS"
+
+		result = self.importer.unit_scale(context, root)
+		assert result == 1.0 / scene_scale, "The scene scale must be compensated for."
