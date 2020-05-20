@@ -4,6 +4,7 @@
 # This add-on is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for details.
 # You should have received a copy of the GNU Affero General Public License along with this plug-in. If not, see <https://gnu.org/licenses/>.
 
+import os.path  # To find the test resources.
 import unittest  # To run the tests.
 import unittest.mock  # To mock away the Blender API.
 import sys  # To mock entire packages.
@@ -53,4 +54,11 @@ class TestImport3MF(unittest.TestCase):
 		"""
 		Tests reading an archive file that doesn't exist.
 		"""
-		assert self.importer.read_archive("/some/nonexistent_path") is None
+		assert (self.importer.read_archive("/some/nonexistent_path") is None), "On an environment error, return None."
+
+	def test_read_archive_empty(self):
+		"""
+		Tests reading a corrupt archive file.
+		"""
+		archive_path = os.path.join(os.path.dirname(__file__), "resources/corrupt_archive.3mf")
+		assert (self.importer.read_archive(archive_path) is None), "Corrupt files should return None."
