@@ -355,3 +355,23 @@ class TestImport3MF(unittest.TestCase):
 		xml.etree.ElementTree.SubElement(mesh_node, "{{{ns}}}triangles".format(ns=threemf_default_namespace))
 
 		assert len(self.importer.read_triangles(object_node)) == 0, "There are no triangles in the <triangles> element, so the resulting triangle list is empty."
+
+	def test_read_triangles_multiple(self):
+		"""
+		Tests reading several triangles from the <triangles> element.
+
+		This is the most common case. The happy path, if you will.
+		"""
+		triangles = [(1, 2, 3), (4, 5, 6), (7, 8, 9)]  # A few triangles to test with.
+
+		object_node = xml.etree.ElementTree.Element("{{{ns}}}object".format(ns=threemf_default_namespace))
+		mesh_node = xml.etree.ElementTree.SubElement(object_node, "{{{ns}}}mesh".format(ns=threemf_default_namespace))
+		triangles_node = xml.etree.ElementTree.SubElement(mesh_node, "{{{ns}}}triangles".format(ns=threemf_default_namespace))
+		for triangle in triangles:
+			triangle_node = xml.etree.ElementTree.SubElement(triangles_node, "{{{ns}}}triangle".format(ns=threemf_default_namespace))
+			triangle_node.attrib["v1"] = str(triangle[0])
+			triangle_node.attrib["v2"] = str(triangle[1])
+			triangle_node.attrib["v3"] = str(triangle[2])
+
+		result = self.importer.read_triangles(object_node)
+		assert result == triangles, "The outcome must be the same triangles as what we put in."
