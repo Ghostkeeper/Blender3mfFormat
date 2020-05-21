@@ -53,7 +53,15 @@ class TestImport3MF(unittest.TestCase):
 		"""
 		self.importer = io_mesh_3mf.import_3mf.Import3MF()  # An importer class.
 
-		bpy.context = unittest.mock.MagicMock()  # Reset the Blender context before each test.
+		self.single_triangle = io_mesh_3mf.import_3mf.ResourceObject(  # A model with just a single triangle.
+			vertices=[(0.0, 0.0, 0.0), (5.0, 0.0, 1.0), (0.0, 5.0, 1.0)],
+			triangles=[(0, 1, 2)],
+			components=[]
+		)
+
+		# Reset the Blender context before each test.
+		bpy.context = unittest.mock.MagicMock()
+		bpy.data = unittest.mock.MagicMock()
 
 	def test_read_archive_non_existent(self):
 		"""
@@ -504,3 +512,16 @@ class TestImport3MF(unittest.TestCase):
 		transform_str = "1.1 1.2 1.3 2.1 lead 2.3 3.1 3.2 3.3 4.1 4.2 4.3"
 		ground_truth = mathutils.Matrix([[1.1, 2.1, 3.1, 4.1], [1.2, 1.0, 3.2, 4.2], [1.3, 2.3, 3.3, 4.3], [0, 0, 0, 1]])  # Cell 2,2 is replaced with the value in the Identity matrix there (1.0).
 		self.assertEqual(self.importer.parse_transformation(transform_str), ground_truth, "Any invalid elements are filled from the identity matrix.")
+
+	def test_build_object_mesh_data(self):
+		"""
+		Tests whether building a single object results in correct mesh data.
+		"""
+		transformation = mathutils.Matrix.Identity(4)
+		objectid_stack_trace = ["1"]
+		self.importer.build_object(self.single_triangle, transformation, objectid_stack_trace)
+
+		# Now look whether the result is put correctly in the context.
+		bpy.data.meshes.new.assert_called_once()
+		mesh_mock = bpy.data.meshes.new()  # This is the mock object that the code got back from the Blender API call.
+		mesh_mock.from_pydata.assert_called_once_with(self.single_triangle.vertices, [], self.single_triangle.triangles)
