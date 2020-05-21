@@ -542,3 +542,15 @@ class TestImport3MF(unittest.TestCase):
 		bpy.context.collection.objects.link.assert_called_with(object_mock)  # The object must be linked to the collection.
 		self.assertEqual(bpy.context.view_layer.objects.active, object_mock, "The object must be made active.")
 		object_mock.select_set.assert_called_with(True)  # The object must be selected.
+
+	def test_build_object_transformation(self):
+		"""
+		Tests whether the object is built with the correct transformation.
+		"""
+		transformation = mathutils.Matrix.Scale(2.0, 4)
+		objectid_stack_trace = ["1"]
+		self.importer.build_object(self.single_triangle, transformation, objectid_stack_trace)
+
+		# Now look whether the Blender object has the correct transformation.
+		object_mock = bpy.data.objects.new()  # This is the mock object that the code got back from the Blender API call.
+		self.assertEqual(object_mock.matrix_world, transformation, "The transformation must be stored in the world matrix of the Blender object.")
