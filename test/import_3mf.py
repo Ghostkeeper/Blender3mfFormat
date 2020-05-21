@@ -554,3 +554,16 @@ class TestImport3MF(unittest.TestCase):
 		# Now look whether the Blender object has the correct transformation.
 		object_mock = bpy.data.objects.new()  # This is the mock object that the code got back from the Blender API call.
 		self.assertEqual(object_mock.matrix_world, transformation, "The transformation must be stored in the world matrix of the Blender object.")
+
+	def test_build_object_parent(self):
+		"""
+		Tests building an object with a parent.
+		"""
+		transformation = mathutils.Matrix.Identity(4)
+		objectid_stack_trace = ["1", "2"]
+		parent = unittest.mock.MagicMock()
+		self.importer.build_object(self.single_triangle, transformation, objectid_stack_trace, parent)
+
+		# Now look whether the Blender object has the correct parent.
+		object_mock = bpy.data.objects.new()  # This is the mock object that the code got back from the Blender API call.
+		self.assertEqual(object_mock.parent, parent, "The parent must be stored in the Blender object.")
