@@ -425,3 +425,12 @@ class TestImport3MF(unittest.TestCase):
 		object_node = xml.etree.ElementTree.Element("{{{ns}}}object".format(ns=threemf_default_namespace))
 
 		assert len(self.importer.read_components(object_node)) == 0, "There is no <components> element, so the resulting component list is empty."
+
+	def test_read_components_empty(self):
+		"""
+		Tests reading components when the <components> element is empty.
+		"""
+		object_node = xml.etree.ElementTree.Element("{{{ns}}}object".format(ns=threemf_default_namespace))
+		xml.etree.ElementTree.SubElement(object_node, "{{{ns}}}components".format(ns=threemf_default_namespace))
+
+		assert len(self.importer.read_components(object_node)) == 0, "There are no components in the <components> element, so the resulting component list is empty."
