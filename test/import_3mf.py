@@ -522,6 +522,23 @@ class TestImport3MF(unittest.TestCase):
 		self.importer.build_object(self.single_triangle, transformation, objectid_stack_trace)
 
 		# Now look whether the result is put correctly in the context.
-		bpy.data.meshes.new.assert_called_once()
+		bpy.data.meshes.new.assert_called_once()  # Exactly one mesh must have been created.
 		mesh_mock = bpy.data.meshes.new()  # This is the mock object that the code got back from the Blender API call.
-		mesh_mock.from_pydata.assert_called_once_with(self.single_triangle.vertices, [], self.single_triangle.triangles)
+		mesh_mock.from_pydata.assert_called_once_with(self.single_triangle.vertices, [], self.single_triangle.triangles)  # The mesh must be provided with correct vertex and triangle data.
+
+	def test_build_object_blender_object(self):
+		"""
+		Tests whether building a single object results in a correct Blender
+		object.
+		"""
+		transformation = mathutils.Matrix.Identity(4)
+		objectid_stack_trace = ["1"]
+		self.importer.build_object(self.single_triangle, transformation, objectid_stack_trace)
+
+		# Now look whether the Blender object is put correctly in the context.
+		bpy.data.objects.new.assert_called_once()  # Exactly one object must have been created.
+		object_mock = bpy.data.objects.new()  # This is the mock object that the code got back from the Blender API call.
+		self.assertEqual(object_mock.matrix_world, transformation, "The transformation must be stored in the Blender object.")
+		bpy.context.collection.objects.link.assert_called_with(object_mock)  # The object must be linked to the collection.
+		self.assertEqual(bpy.context.view_layer.objects.active, object_mock, "The object must be made active.")
+		object_mock.select_set.assert_called_with(True)  # The object must be selected.
