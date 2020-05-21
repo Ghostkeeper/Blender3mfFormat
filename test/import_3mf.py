@@ -513,6 +513,17 @@ class TestImport3MF(unittest.TestCase):
 		ground_truth = mathutils.Matrix([[1.1, 2.1, 3.1, 4.1], [1.2, 1.0, 3.2, 4.2], [1.3, 2.3, 3.3, 4.3], [0, 0, 0, 1]])  # Cell 2,2 is replaced with the value in the Identity matrix there (1.0).
 		self.assertEqual(self.importer.parse_transformation(transform_str), ground_truth, "Any invalid elements are filled from the identity matrix.")
 
+	def test_build_items_missing(self):
+		"""
+		Tests building the items when the <build> element is missing.
+		"""
+		self.importer.build_object = unittest.mock.MagicMock()  # Mock out the function that actually creates the object.
+		root = xml.etree.ElementTree.Element("{{{ns}}}model".format(ns=threemf_default_namespace))
+
+		self.importer.build_items(root, 1.0)
+
+		self.importer.build_object.assert_not_called()  # There are no items, so we shouldn't build any object resources.
+
 	def test_build_object_mesh_data(self):
 		"""
 		Tests whether building a single object results in correct mesh data.
