@@ -567,3 +567,33 @@ class TestImport3MF(unittest.TestCase):
 		# Now look whether the Blender object has the correct parent.
 		object_mock = bpy.data.objects.new()  # This is the mock object that the code got back from the Blender API call.
 		self.assertEqual(object_mock.parent, parent, "The parent must be stored in the Blender object.")
+
+	def test_build_object_with_component(self):
+		"""
+		Tests building an object with a component.
+		"""
+		# Set up two resource objects, one referring to the other.
+		with_component = io_mesh_3mf.import_3mf.ResourceObject(  # A model with an extra component.
+			vertices=[(0.0, 0.0, 0.0), (10.0, 0.0, 2.0), (0.0, 10.0, 2.0)],
+			triangles=[(0, 1, 2)],
+			components=[io_mesh_3mf.import_3mf.Component(
+				resource_object="1",
+				transformation=mathutils.Matrix.Identity(4)
+			)]
+		)
+		self.importer.resource_objects["1"] = self.single_triangle
+		self.importer.resource_objects["2"] = with_component
+
+		# We'll create two new objects, and we must distinguish them from each other to test their properties.
+		parent_mock = unittest.mock.MagicMock()  # Create two unique mocks for when two new Blender objects are going to be created.
+		child_mock = unittest.mock.MagicMock()
+		bpy.data.objects.new.side_effect = [parent_mock, child_mock]
+
+		# Call the function under test.
+		transformation = mathutils.Matrix.Identity(4)
+		objectid_stack_trace = ["2"]
+		self.importer.build_object(with_component, transformation, objectid_stack_trace)
+
+		# Test whether the component got created with correct properties.
+		self.assertEqual(bpy.data.objects.new.call_count, 2, "We must have created 2 objects from this: the parent and the child.")
+		self.assertEqual(child_mock.parent, parent_mock, "The component's parent must be set to the parent object.")
