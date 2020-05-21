@@ -537,6 +537,35 @@ class TestImport3MF(unittest.TestCase):
 
 		self.importer.build_object.assert_not_called()  # There are no items, so we shouldn't build any object resources.
 
+	def test_build_items_multiple(self):
+		"""
+		Tests building multiple items.
+
+		This can be considered the "happy path". It's the normal case where
+		there are proper objects in the scene.
+		"""
+		self.importer.build_object = unittest.mock.MagicMock()  # Mock out the function that actually creates the object.
+		self.importer.resource_objects["1"] = unittest.mock.MagicMock()  # Add a few "resources".
+		self.importer.resource_objects["2"] = unittest.mock.MagicMock()
+		self.importer.resource_objects["ananas"] = unittest.mock.MagicMock()
+		root = xml.etree.ElementTree.Element("{{{ns}}}model".format(ns=threemf_default_namespace))  # Build a document with three <item> elements in the <build> element.
+		build_element = xml.etree.ElementTree.SubElement(root, "{{{ns}}}build".format(ns=threemf_default_namespace))
+		item1_element = xml.etree.ElementTree.SubElement(build_element, "{{{ns}}}item".format(ns=threemf_default_namespace))
+		item1_element.attrib["objectid"] = "1"
+		item2_element = xml.etree.ElementTree.SubElement(build_element, "{{{ns}}}item".format(ns=threemf_default_namespace))
+		item2_element.attrib["objectid"] = "2"
+		itemananas_element = xml.etree.ElementTree.SubElement(build_element, "{{{ns}}}item".format(ns=threemf_default_namespace))
+		itemananas_element.attrib["objectid"] = "ananas"
+
+		self.importer.build_items(root, 1.0)
+
+		expected_args_list = [
+			unittest.mock.call(self.importer.resource_objects["1"], mathutils.Matrix.Identity(4), ["1"]),
+			unittest.mock.call(self.importer.resource_objects["2"], mathutils.Matrix.Identity(4), ["2"]),
+			unittest.mock.call(self.importer.resource_objects["ananas"], mathutils.Matrix.Identity(4), ["ananas"])
+		]
+		self.assertListEqual(self.importer.build_object.call_args_list, expected_args_list, "We must build these three objects with their correct transformations and object IDs.")
+
 	def test_build_object_mesh_data(self):
 		"""
 		Tests whether building a single object results in correct mesh data.
