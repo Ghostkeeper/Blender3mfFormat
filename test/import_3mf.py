@@ -380,7 +380,7 @@ class TestImport3MF(unittest.TestCase):
 		"""
 		Tests reading a triangle where one of the vertices is missing.
 
-		That's a broken triangle then and it shouldn't be output.
+		That's a broken triangle then and it shouldn't be returned.
 		"""
 		object_node = xml.etree.ElementTree.Element("{{{ns}}}object".format(ns=threemf_default_namespace))
 		mesh_node = xml.etree.ElementTree.SubElement(object_node, "{{{ns}}}mesh".format(ns=threemf_default_namespace))
@@ -392,3 +392,28 @@ class TestImport3MF(unittest.TestCase):
 
 		result = self.importer.read_triangles(object_node)
 		assert len(result) == 0, "The only triangle was invalid, so the output should have no triangles."
+
+	def test_read_triangles_broken_vertex(self):
+		"""
+		Tests reading a triangle where one of the vertices is broken.
+
+		That's a broken triangle then and it shouldn't be returned.
+		"""
+		object_node = xml.etree.ElementTree.Element("{{{ns}}}object".format(ns=threemf_default_namespace))
+		mesh_node = xml.etree.ElementTree.SubElement(object_node, "{{{ns}}}mesh".format(ns=threemf_default_namespace))
+		triangles_node = xml.etree.ElementTree.SubElement(mesh_node, "{{{ns}}}triangles".format(ns=threemf_default_namespace))
+		negative_index_triangle_node = xml.etree.ElementTree.SubElement(triangles_node, "{{{ns}}}triangle".format(ns=threemf_default_namespace))
+		negative_index_triangle_node.attrib["v1"] = "1"
+		negative_index_triangle_node.attrib["v2"] = "-1"  # Invalid! Makes the triangle go missing.
+		negative_index_triangle_node.attrib["v3"] = "2"
+		float_index_triangle_node = xml.etree.ElementTree.SubElement(triangles_node, "{{{ns}}}triangle".format(ns=threemf_default_namespace))
+		float_index_triangle_node.attrib["v1"] = "2.5"  # Not an integer! Should make the triangle go missing.
+		float_index_triangle_node.attrib["v2"] = "3"
+		float_index_triangle_node.attrib["v3"] = "4"
+		invalid_index_triangle_node = xml.etree.ElementTree.SubElement(triangles_node, "{{{ns}}}triangle".format(ns=threemf_default_namespace))
+		invalid_index_triangle_node.attrib["v1"] = "5"
+		invalid_index_triangle_node.attrib["v2"] = "6"
+		invalid_index_triangle_node.attrib["v3"] = "doodie"  # Doesn't parse as integer! Should make the triangle go missing.
+
+		result = self.importer.read_triangles(object_node)
+		assert len(result) == 0, "All triangles are invalid, so the output should have no triangles."
