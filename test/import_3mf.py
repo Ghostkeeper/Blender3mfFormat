@@ -493,3 +493,12 @@ class TestImport3MF(unittest.TestCase):
 		transform_str = "1.1 1.2 1.3 2.1 2.2"  # Fill in only 5 of the cells.
 		ground_truth = mathutils.Matrix([[1.1, 2.1, 0, 0], [1.2, 2.2, 0, 0], [1.3, 0, 1, 0], [0, 0, 0, 1]])
 		self.assertEqual(self.importer.parse_transformation(transform_str), ground_truth, "Any missing elements are filled from the identity matrix.")
+
+	def test_parse_transformation_broken(self):
+		"""
+		Tests parsing a transformation matrix containing elements that are not
+		proper floats.
+		"""
+		transform_str = "1.1 1.2 1.3 2.1 lead 2.3 3.1 3.2 3.3 4.1 4.2 4.3"
+		ground_truth = mathutils.Matrix([[1.1, 2.1, 3.1, 4.1], [1.2, 1.0, 3.2, 4.2], [1.3, 2.3, 3.3, 4.3], [0, 0, 0, 1]])  # Cell 2,2 is replaced with the value in the Identity matrix there (1.0).
+		self.assertEqual(self.importer.parse_transformation(transform_str), ground_truth, "Any invalid elements are filled from the identity matrix.")
