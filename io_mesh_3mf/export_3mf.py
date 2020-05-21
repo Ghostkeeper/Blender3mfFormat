@@ -44,6 +44,13 @@ class Export3MF(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
 	global_scale: bpy.props.FloatProperty(name="Scale", default=1.0, soft_min=0.001, soft_max=1000.0, min=1e-6, max=1e6)
 	use_mesh_modifiers: bpy.props.BoolProperty(name="Apply Modifiers", description="Apply the modifiers before saving", default=True)
 
+	def __init__(self):
+		"""
+		Initialise some fields with defaults before starting.
+		"""
+		super().__init__()
+		self.next_resource_id = 1  # Which resource ID to generate for the next object.
+
 	def execute(self, context):
 		"""
 		The main routine that writes the 3MF archive.
@@ -66,7 +73,7 @@ class Export3MF(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
 
 		global_scale = self.unit_scale(context)
 
-		# Due to an open bug in Python (as of Blender's version) we need to prefix all elements with the namespace.
+		# Due to an open bug in Python 3.7 (Blender's version) we need to prefix all elements with the namespace.
 		# Bug: https://bugs.python.org/issue17088
 		# Workaround: https://stackoverflow.com/questions/4997848/emitting-namespace-specifications-with-elementtree-in-python/4999510#4999510
 		root = xml.etree.ElementTree.Element("{{{ns}}}model".format(ns=threemf_default_namespace))
