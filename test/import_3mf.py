@@ -434,13 +434,13 @@ class TestImport3MF(unittest.TestCase):
 
 		This is the most common case. The happy path, if you will.
 		"""
-		component_objectids = {3, 4, 5, 6}  # A few object IDs that must be present. They don't necessarily need to appear in order though.
+		component_objectids = {"3", "4.2", "-5", "llama"}  # A few object IDs that must be present. They don't necessarily need to appear in order though.
 
 		object_node = xml.etree.ElementTree.Element("{{{ns}}}object".format(ns=threemf_default_namespace))
 		components_node = xml.etree.ElementTree.SubElement(object_node, "{{{ns}}}components".format(ns=threemf_default_namespace))
 		for component_objectid in component_objectids:
 			component_node = xml.etree.ElementTree.SubElement(components_node, "{{{ns}}}component".format(ns=threemf_default_namespace))
-			component_node.attrib["objectid"] = str(component_objectid)
+			component_node.attrib["objectid"] = component_objectid
 
 		result = self.importer.read_components(object_node)
 		self.assertSetEqual({component.resource_object for component in result}, component_objectids, "The component IDs in the result must be the same set as the ones we put in.")

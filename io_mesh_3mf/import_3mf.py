@@ -135,9 +135,9 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
 			if object_type in {"support", "solidsupport"}:
 				continue  # We ignore support objects.
 			try:
-				objectid = int(object_node.attrib["id"])
-			except (KeyError, ValueError):
-				continue  # ID is required (otherwise the build can't refer to it) and must be integer.
+				objectid = object_node.attrib["id"]
+			except KeyError:
+				continue  # ID is required, otherwise the build can't refer to it.
 
 			vertices = self.read_vertices(object_node)
 			triangles = self.read_triangles(object_node)
@@ -210,8 +210,8 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
 		result = []
 		for component_node in object_node.iterfind("./3mf:components/3mf:component", threemf_namespaces):
 			try:
-				objectid = int(component_node.attrib["objectid"])
-			except (KeyError, ValueError):  # ID is required, and must be an integer.
+				objectid = component_node.attrib["objectid"]
+			except KeyError:  # ID is required.
 				continue  # Ignore this invalid component.
 			transform = self.parse_transformation(component_node.attrib.get("transform", ""))
 
@@ -269,9 +269,9 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
 
 		for build_item in root.iterfind("./3mf:build/3mf:item", threemf_namespaces):
 			try:
-				objectid = int(build_item.attrib["objectid"])
+				objectid = build_item.attrib["objectid"]
 				resource_object = self.resource_objects[objectid]
-			except (KeyError, ValueError):  # ID is required, and it must be an integer in the available resource_objects.
+			except KeyError:  # ID is required, and it must be in the available resource_objects.
 				continue  # Ignore this invalid item.
 
 			transform = self.parse_transformation(build_item.attrib.get("transform", ""))
