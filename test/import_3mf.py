@@ -479,5 +479,17 @@ class TestImport3MF(unittest.TestCase):
 	def test_parse_transformation_empty(self):
 		"""
 		Tests parsing a transformation matrix from an empty string.
+
+		It should result in the identity matrix then.
 		"""
 		self.assertEqual(self.importer.parse_transformation(""), mathutils.Matrix.Identity(4), "Any missing elements are filled from the identity matrix, so if everything is missing everything is identity.")
+
+	def test_parse_transformation_partial(self):
+		"""
+		Tests parsing a transformation matrix that is incomplete.
+
+		The missing parts should get filled in with the identity matrix then.
+		"""
+		transform_str = "1.1 1.2 1.3 2.1 2.2"  # Fill in only 5 of the cells.
+		ground_truth = mathutils.Matrix([[1.1, 2.1, 0, 0], [1.2, 2.2, 0, 0], [1.3, 0, 1, 0], [0, 0, 0, 1]])
+		self.assertEqual(self.importer.parse_transformation(transform_str), ground_truth, "Any missing elements are filled from the identity matrix.")
