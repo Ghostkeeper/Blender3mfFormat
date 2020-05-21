@@ -417,3 +417,11 @@ class TestImport3MF(unittest.TestCase):
 
 		result = self.importer.read_triangles(object_node)
 		assert len(result) == 0, "All triangles are invalid, so the output should have no triangles."
+
+	def test_read_components_missing(self):
+		"""
+		Tests reading components when the <components> element is missing.
+		"""
+		object_node = xml.etree.ElementTree.Element("{{{ns}}}object".format(ns=threemf_default_namespace))
+
+		assert len(self.importer.read_components(object_node)) == 0, "There is no <components> element, so the resulting component list is empty."
