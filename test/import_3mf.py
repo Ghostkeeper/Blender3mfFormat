@@ -53,6 +53,8 @@ class TestImport3MF(unittest.TestCase):
 		"""
 		self.importer = io_mesh_3mf.import_3mf.Import3MF()  # An importer class.
 
+		bpy.context = unittest.mock.MagicMock()  # Reset the Blender context before each test.
+
 	def test_read_archive_non_existent(self):
 		"""
 		Tests reading an archive file that doesn't exist.
