@@ -188,7 +188,12 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
 		for triangle in object_node.iterfind("./3mf:mesh/3mf:triangles/3mf:triangle", threemf_namespaces):
 			attrib = triangle.attrib
 			try:
-				result.append((int(attrib["v1"]), int(attrib["v2"]), int(attrib["v3"])))
+				v1 = int(attrib["v1"])
+				v2 = int(attrib["v2"])
+				v3 = int(attrib["v3"])
+				if v1 < 0 or v2 < 0 or v3 < 0:  # Negative indices are not allowed.
+					continue
+				result.append((v1, v2, v3))
 			except (KeyError, ValueError):  # Vertex is missing, or not an integer.
 				continue  # No fallback this time. Leave out the entire triangle.
 		return result
