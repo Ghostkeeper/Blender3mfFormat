@@ -454,3 +454,17 @@ class TestImport3MF(unittest.TestCase):
 
 		result = self.importer.read_components(object_node)
 		assert {component.resource_object for component in result} == component_objectids, "The component IDs in the result must be the same set as the ones we put in."
+
+	def test_read_components_missing_objectid(self):
+		"""
+		Tests reading a component where the object ID is missing.
+
+		This component must not be in the output then.
+		"""
+		object_node = xml.etree.ElementTree.Element("{{{ns}}}object".format(ns=threemf_default_namespace))
+		components_node = xml.etree.ElementTree.SubElement(object_node, "{{{ns}}}components".format(ns=threemf_default_namespace))
+		xml.etree.ElementTree.SubElement(components_node, "{{{ns}}}component".format(ns=threemf_default_namespace))
+		# No objectid attribute!
+
+		result = self.importer.read_components(object_node)
+		assert len(result) == 0, "The only component in the input had no object ID, so it must not be included in the output."
