@@ -375,3 +375,20 @@ class TestImport3MF(unittest.TestCase):
 
 		result = self.importer.read_triangles(object_node)
 		assert result == triangles, "The outcome must be the same triangles as what we put in."
+
+	def test_read_triangles_missing_vertex(self):
+		"""
+		Tests reading a triangle where one of the vertices is missing.
+
+		That's a broken triangle then and it shouldn't be output.
+		"""
+		object_node = xml.etree.ElementTree.Element("{{{ns}}}object".format(ns=threemf_default_namespace))
+		mesh_node = xml.etree.ElementTree.SubElement(object_node, "{{{ns}}}mesh".format(ns=threemf_default_namespace))
+		triangles_node = xml.etree.ElementTree.SubElement(mesh_node, "{{{ns}}}triangles".format(ns=threemf_default_namespace))
+		triangle_node = xml.etree.ElementTree.SubElement(triangles_node, "{{{ns}}}triangle".format(ns=threemf_default_namespace))
+		triangle_node.attrib["v1"] = "1"
+		triangle_node.attrib["v2"] = "2"
+		# Leave out v3. It's missing then.
+
+		result = self.importer.read_triangles(object_node)
+		assert len(result) == 0, "The only triangle was invalid, so the output should have no triangles."
