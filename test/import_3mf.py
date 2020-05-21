@@ -597,3 +597,28 @@ class TestImport3MF(unittest.TestCase):
 		# Test whether the component got created with correct properties.
 		self.assertEqual(bpy.data.objects.new.call_count, 2, "We must have created 2 objects from this: the parent and the child.")
 		self.assertEqual(child_mock.parent, parent_mock, "The component's parent must be set to the parent object.")
+
+	def test_build_object_recursive(self):
+		"""
+		Tests building an object which uses itself as component.
+
+		This produces an infinite recursive loop, so the component should be
+		ignored then.
+		"""
+		resource_object = io_mesh_3mf.import_3mf.ResourceObject(  # A model with itself as component.
+			vertices=[(0.0, 0.0, 0.0), (10.0, 0.0, 2.0), (0.0, 10.0, 2.0)],
+			triangles=[(0, 1, 2)],
+			components=[io_mesh_3mf.import_3mf.Component(
+				resource_object="1",
+				transformation=mathutils.Matrix.Identity(4)
+			)]
+		)
+		self.importer.resource_objects["1"] = resource_object
+
+		# Call the function under test.
+		transformation = mathutils.Matrix.Identity(4)
+		objectid_stack_trace = ["1"]
+		self.importer.build_object(resource_object, transformation, objectid_stack_trace)
+
+		# Test whether the component got created.
+		bpy.data.objects.new.assert_called_once()  # May be called only once. Don't call for the recursive component!
