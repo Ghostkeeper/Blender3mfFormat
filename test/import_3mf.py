@@ -475,3 +475,9 @@ class TestImport3MF(unittest.TestCase):
 		self.assertEqual(len(result), 2, "We put two components in, both valid, so we must get two components out.")
 		self.assertEqual(result[0].transformation, mathutils.Matrix.Identity(4), "The transformation of the first element is missing, so it must be the identity matrix.")
 		self.assertEqual(result[1].transformation, mathutils.Matrix.Scale(2.0, 4), "The transformation of the second element was a factor-2 scale.")
+
+	def test_parse_transformation_empty(self):
+		"""
+		Tests parsing a transformation matrix from an empty string.
+		"""
+		self.assertEqual(self.importer.parse_transformation(""), mathutils.Matrix.Identity(4), "Any missing elements are filled from the identity matrix, so if everything is missing everything is identity.")
