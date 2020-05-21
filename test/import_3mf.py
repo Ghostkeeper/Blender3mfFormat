@@ -434,3 +434,23 @@ class TestImport3MF(unittest.TestCase):
 		xml.etree.ElementTree.SubElement(object_node, "{{{ns}}}components".format(ns=threemf_default_namespace))
 
 		assert len(self.importer.read_components(object_node)) == 0, "There are no components in the <components> element, so the resulting component list is empty."
+
+	def test_read_components_multiple(self):
+		"""
+		Tests reading several components from the <components> element.
+
+		This tests reading out the Object IDs in these components. The
+		transformations are tested in a different test.
+
+		This is the most common case. The happy path, if you will.
+		"""
+		component_objectids = {3, 4, 5, 6}  # A few object IDs that must be present. They don't necessarily need to appear in order though.
+
+		object_node = xml.etree.ElementTree.Element("{{{ns}}}object".format(ns=threemf_default_namespace))
+		components_node = xml.etree.ElementTree.SubElement(object_node, "{{{ns}}}components".format(ns=threemf_default_namespace))
+		for component_objectid in component_objectids:
+			component_node = xml.etree.ElementTree.SubElement(components_node, "{{{ns}}}component".format(ns=threemf_default_namespace))
+			component_node.attrib["objectid"] = str(component_objectid)
+
+		result = self.importer.read_components(object_node)
+		assert {component.resource_object for component in result} == component_objectids, "The component IDs in the result must be the same set as the ones we put in."
