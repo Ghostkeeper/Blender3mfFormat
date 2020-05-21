@@ -56,21 +56,21 @@ class TestImport3MF(unittest.TestCase):
 		"""
 		Tests reading an archive file that doesn't exist.
 		"""
-		assert self.importer.read_archive("some/nonexistent_path") is None, "On an environment error, return None."
+		self.assertIsNone(self.importer.read_archive("some/nonexistent_path"), "On an environment error, return None.")
 
 	def test_read_archive_corrupt(self):
 		"""
 		Tests reading a corrupt archive file.
 		"""
 		archive_path = os.path.join(os.path.dirname(__file__), "resources/corrupt_archive.3mf")
-		assert self.importer.read_archive(archive_path) is None, "Corrupt files should return None."
+		self.assertIsNone(self.importer.read_archive(archive_path), "Corrupt files should return None.")
 
 	def test_read_archive_empty(self):
 		"""
 		Tests reading an archive file that doesn't have the default model file.
 		"""
 		archive_path = os.path.join(os.path.dirname(__file__), "resources/empty_archive.3mf")
-		assert self.importer.read_archive(archive_path) is None, "If the archive has no 3dmodel.model file, return None."
+		self.assertIsNone(self.importer.read_archive(archive_path), "If the archive has no 3dmodel.model file, return None.")
 
 	def test_read_archive_default_position(self):
 		"""
@@ -78,8 +78,8 @@ class TestImport3MF(unittest.TestCase):
 		"""
 		archive_path = os.path.join(os.path.dirname(__file__), "resources/only_3dmodel_file.3mf")
 		result = self.importer.read_archive(archive_path)
-		assert result is not None, "There is a 3D model in this archive, so it should return a document."
-		assert result.getroot().tag == "{{{ns}}}model".format(ns=threemf_default_namespace), "The result is an XML document with a <model> tag in the root."
+		self.assertIsNotNone(result, "There is a 3D model in this archive, so it should return a document.")
+		self.assertEqual(result.getroot().tag, "{{{ns}}}model".format(ns=threemf_default_namespace), "The result is an XML document with a <model> tag in the root.")
 
 	def test_unit_scale_global(self):
 		"""
@@ -96,8 +96,7 @@ class TestImport3MF(unittest.TestCase):
 		root.attrib["unit"] = "meter"
 		context.scene.unit_settings.length_unit = "METERS"
 
-		result = self.importer.unit_scale(context, root)
-		assert result == global_scale, "The global scale must be applied directly to the output."
+		self.assertAlmostEqual(self.importer.unit_scale(context, root), global_scale, "The global scale must be applied directly to the output.")
 
 	def test_unit_scale_scene(self):
 		"""
@@ -114,8 +113,7 @@ class TestImport3MF(unittest.TestCase):
 		root.attrib["unit"] = "meter"
 		context.scene.unit_settings.length_unit = "METERS"
 
-		result = self.importer.unit_scale(context, root)
-		assert result == 1.0 / scene_scale, "The scene scale must be compensated for."
+		self.assertAlmostEqual(self.importer.unit_scale(context, root), 1.0 / scene_scale, "The scene scale must be compensated for.")
 
 	def test_unit_scale_conversion(self):
 		"""
@@ -268,7 +266,7 @@ class TestImport3MF(unittest.TestCase):
 		object_node = xml.etree.ElementTree.Element("{{{ns}}}object".format(ns=threemf_default_namespace))
 		xml.etree.ElementTree.SubElement(object_node, "{{{ns}}}mesh".format(ns=threemf_default_namespace))
 
-		assert len(self.importer.read_vertices(object_node)) == 0, "There is no <vertices> element, so the resulting vertex list is empty."
+		self.assertListEqual(self.importer.read_vertices(object_node), [], "There is no <vertices> element, so the resulting vertex list is empty.")
 
 	def test_read_vertices_empty(self):
 		"""
@@ -278,7 +276,7 @@ class TestImport3MF(unittest.TestCase):
 		mesh_node = xml.etree.ElementTree.SubElement(object_node, "{{{ns}}}mesh".format(ns=threemf_default_namespace))
 		xml.etree.ElementTree.SubElement(mesh_node, "{{{ns}}}vertices".format(ns=threemf_default_namespace))
 
-		assert len(self.importer.read_vertices(object_node)) == 0, "There are no vertices in the <vertices> element, so the resulting vertex list is empty."
+		self.assertListEqual(self.importer.read_vertices(object_node), [], "There are no vertices in the <vertices> element, so the resulting vertex list is empty.")
 
 	def test_read_vertices_multiple(self):
 		"""
@@ -299,8 +297,7 @@ class TestImport3MF(unittest.TestCase):
 			vertex_node.attrib["y"] = str(vertex[1])
 			vertex_node.attrib["z"] = str(vertex[2])
 
-		result = self.importer.read_vertices(object_node)
-		assert result == vertices, "The outcome must be the same vertices as what went into the XML document."
+		self.assertListEqual(self.importer.read_vertices(object_node), vertices, "The outcome must be the same vertices as what went into the XML document.")
 
 	def test_read_vertices_missing_coordinates(self):
 		"""
@@ -315,9 +312,7 @@ class TestImport3MF(unittest.TestCase):
 		# Don't write a Y value.
 		vertex_node.attrib["z"] = "6.9"
 
-		result = self.importer.read_vertices(object_node)
-		assert len(result) == 1, "There was only one vertex in this object node."
-		assert result[0] == (13.37, 0, 6.9), "The Y value must be defaulting to 0, since it was missing."
+		self.assertListEqual(self.importer.read_vertices(object_node), [(13.37, 0, 6.9)], "The Y value must be defaulting to 0, since it was missing.")
 
 	def test_read_vertices_broken_coordinates(self):
 		"""
@@ -333,9 +328,7 @@ class TestImport3MF(unittest.TestCase):
 		vertex_node.attrib["y"] = "23,37"  # Must use period as the decimal separator.
 		vertex_node.attrib["z"] = "over there"  # Doesn't parse to a float either.
 
-		result = self.importer.read_vertices(object_node)
-		assert len(result) == 1, "There was only one vertex in this object node."
-		assert result[0] == (42, 0, 0), "The Y value defaults to 0 due to using comma as decimal separator. The Z value defaults to 0 due to not being a float at all."
+		self.assertListEqual(self.importer.read_vertices(object_node), [(42, 0, 0)], "The Y value defaults to 0 due to using comma as decimal separator. The Z value defaults to 0 due to not being a float at all.")
 
 	def test_read_triangles_missing(self):
 		"""
@@ -344,7 +337,7 @@ class TestImport3MF(unittest.TestCase):
 		object_node = xml.etree.ElementTree.Element("{{{ns}}}object".format(ns=threemf_default_namespace))
 		xml.etree.ElementTree.SubElement(object_node, "{{{ns}}}mesh".format(ns=threemf_default_namespace))
 
-		assert len(self.importer.read_triangles(object_node)) == 0, "There is no <triangles> element, so the resulting triangle list is empty."
+		self.assertListEqual(self.importer.read_triangles(object_node), [], "There is no <triangles> element, so the resulting triangle list is empty.")
 
 	def test_read_triangles_empty(self):
 		"""
@@ -354,7 +347,7 @@ class TestImport3MF(unittest.TestCase):
 		mesh_node = xml.etree.ElementTree.SubElement(object_node, "{{{ns}}}mesh".format(ns=threemf_default_namespace))
 		xml.etree.ElementTree.SubElement(mesh_node, "{{{ns}}}triangles".format(ns=threemf_default_namespace))
 
-		assert len(self.importer.read_triangles(object_node)) == 0, "There are no triangles in the <triangles> element, so the resulting triangle list is empty."
+		self.assertListEqual(self.importer.read_triangles(object_node), [], "There are no triangles in the <triangles> element, so the resulting triangle list is empty.")
 
 	def test_read_triangles_multiple(self):
 		"""
@@ -373,8 +366,7 @@ class TestImport3MF(unittest.TestCase):
 			triangle_node.attrib["v2"] = str(triangle[1])
 			triangle_node.attrib["v3"] = str(triangle[2])
 
-		result = self.importer.read_triangles(object_node)
-		assert result == triangles, "The outcome must be the same triangles as what we put in."
+		self.assertListEqual(self.importer.read_triangles(object_node), triangles, "The outcome must be the same triangles as what we put in.")
 
 	def test_read_triangles_missing_vertex(self):
 		"""
@@ -390,8 +382,7 @@ class TestImport3MF(unittest.TestCase):
 		triangle_node.attrib["v2"] = "2"
 		# Leave out v3. It's missing then.
 
-		result = self.importer.read_triangles(object_node)
-		assert len(result) == 0, "The only triangle was invalid, so the output should have no triangles."
+		self.assertListEqual(self.importer.read_triangles(object_node), [], "The only triangle was invalid, so the output should have no triangles.")
 
 	def test_read_triangles_broken_vertex(self):
 		"""
@@ -415,8 +406,7 @@ class TestImport3MF(unittest.TestCase):
 		invalid_index_triangle_node.attrib["v2"] = "6"
 		invalid_index_triangle_node.attrib["v3"] = "doodie"  # Doesn't parse as integer! Should make the triangle go missing.
 
-		result = self.importer.read_triangles(object_node)
-		assert len(result) == 0, "All triangles are invalid, so the output should have no triangles."
+		self.assertListEqual(self.importer.read_triangles(object_node), [], "All triangles are invalid, so the output should have no triangles.")
 
 	def test_read_components_missing(self):
 		"""
@@ -424,7 +414,7 @@ class TestImport3MF(unittest.TestCase):
 		"""
 		object_node = xml.etree.ElementTree.Element("{{{ns}}}object".format(ns=threemf_default_namespace))
 
-		assert len(self.importer.read_components(object_node)) == 0, "There is no <components> element, so the resulting component list is empty."
+		self.assertListEqual(self.importer.read_components(object_node), [], "There is no <components> element, so the resulting component list is empty.")
 
 	def test_read_components_empty(self):
 		"""
@@ -433,7 +423,7 @@ class TestImport3MF(unittest.TestCase):
 		object_node = xml.etree.ElementTree.Element("{{{ns}}}object".format(ns=threemf_default_namespace))
 		xml.etree.ElementTree.SubElement(object_node, "{{{ns}}}components".format(ns=threemf_default_namespace))
 
-		assert len(self.importer.read_components(object_node)) == 0, "There are no components in the <components> element, so the resulting component list is empty."
+		self.assertListEqual(self.importer.read_components(object_node), [], "There are no components in the <components> element, so the resulting component list is empty.")
 
 	def test_read_components_multiple(self):
 		"""
@@ -453,7 +443,7 @@ class TestImport3MF(unittest.TestCase):
 			component_node.attrib["objectid"] = str(component_objectid)
 
 		result = self.importer.read_components(object_node)
-		assert {component.resource_object for component in result} == component_objectids, "The component IDs in the result must be the same set as the ones we put in."
+		self.assertSetEqual({component.resource_object for component in result}, component_objectids, "The component IDs in the result must be the same set as the ones we put in.")
 
 	def test_read_components_missing_objectid(self):
 		"""
@@ -466,5 +456,4 @@ class TestImport3MF(unittest.TestCase):
 		xml.etree.ElementTree.SubElement(components_node, "{{{ns}}}component".format(ns=threemf_default_namespace))
 		# No objectid attribute!
 
-		result = self.importer.read_components(object_node)
-		assert len(result) == 0, "The only component in the input had no object ID, so it must not be included in the output."
+		self.assertListEqual(self.importer.read_components(object_node), [], "The only component in the input had no object ID, so it must not be included in the output.")
