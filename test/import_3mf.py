@@ -566,6 +566,20 @@ class TestImport3MF(unittest.TestCase):
 		]
 		self.assertListEqual(self.importer.build_object.call_args_list, expected_args_list, "We must build these three objects with their correct transformations and object IDs.")
 
+	def test_build_items_nonexistent(self):
+		"""
+		Tests building items with object IDs that don't exist.
+		"""
+		self.importer.build_object = unittest.mock.MagicMock()  # Mock out the function that actually creates the object.
+		root = xml.etree.ElementTree.Element("{{{ns}}}model".format(ns=threemf_default_namespace))  # Build a document with an <item> in it.
+		build_element = xml.etree.ElementTree.SubElement(root, "{{{ns}}}build".format(ns=threemf_default_namespace))
+		item_element = xml.etree.ElementTree.SubElement(build_element, "{{{ns}}}item".format(ns=threemf_default_namespace))
+		item_element.attrib["objectid"] = "bombosity"  # Object ID doesn't exist.
+
+		self.importer.build_items(root, 1.0)
+
+		self.importer.build_object.assert_not_called()  # It was never called because the resource ID can't be found.
+
 	def test_build_object_mesh_data(self):
 		"""
 		Tests whether building a single object results in correct mesh data.
