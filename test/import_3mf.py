@@ -524,6 +524,19 @@ class TestImport3MF(unittest.TestCase):
 
 		self.importer.build_object.assert_not_called()  # There are no items, so we shouldn't build any object resources.
 
+	def test_build_items_empty(self):
+		"""
+		Tests building the items when the <build> element is empty.
+		"""
+		self.importer.build_object = unittest.mock.MagicMock()  # Mock out the function that actually creates the object.
+		root = xml.etree.ElementTree.Element("{{{ns}}}model".format(ns=threemf_default_namespace))
+		xml.etree.ElementTree.SubElement(root, "{{{ns}}}build".format(ns=threemf_default_namespace))
+		# <build> element left empty.
+
+		self.importer.build_items(root, 1.0)
+
+		self.importer.build_object.assert_not_called()  # There are no items, so we shouldn't build any object resources.
+
 	def test_build_object_mesh_data(self):
 		"""
 		Tests whether building a single object results in correct mesh data.
