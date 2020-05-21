@@ -582,7 +582,7 @@ class TestImport3MF(unittest.TestCase):
 
 	def test_build_items_unit_scale(self):
 		"""
-		Test whether the unit scale is properly applied to the built items.
+		Tests whether the unit scale is properly applied to the built items.
 		"""
 		self.importer.build_object = unittest.mock.MagicMock()  # Mock out the function that actually creates the object.
 		self.importer.resource_objects["1"] = self.single_triangle
@@ -594,6 +594,23 @@ class TestImport3MF(unittest.TestCase):
 		self.importer.build_items(root, 2.5)  # Build with a unit scale of 250%.
 
 		self.importer.build_object.assert_called_once_with(self.single_triangle, mathutils.Matrix.Scale(2.5, 4), ["1"])
+
+	def test_build_items_transformed(self):
+		"""
+		Tests building items that are being transformed.
+		"""
+		self.importer.build_object = unittest.mock.MagicMock()  # Mock out the function that actually creates the object.
+		self.importer.resource_objects["1"] = self.single_triangle
+		root = xml.etree.ElementTree.Element("{{{ns}}}model".format(ns=threemf_default_namespace))  # Build a document with an <item> in it.
+		build_element = xml.etree.ElementTree.SubElement(root, "{{{ns}}}build".format(ns=threemf_default_namespace))
+		item_element = xml.etree.ElementTree.SubElement(build_element, "{{{ns}}}item".format(ns=threemf_default_namespace))
+		item_element.attrib["objectid"] = "1"
+		item_element.attrib["transform"] = "1 0 0 0 1 0 0 0 1 30 40 0"
+
+		self.importer.build_items(root, 0.5)  # Build with a unit scale of 50%.
+
+		expected_transformation = mathutils.Matrix.Translation(mathutils.Vector([30, 40, 0])) @ mathutils.Matrix.Scale(0.5, 4)  # Both transformation must be applied (and in correct order).
+		self.importer.build_object.assert_called_once_with(self.single_triangle, expected_transformation, ["1"])
 
 	def test_build_object_mesh_data(self):
 		"""
