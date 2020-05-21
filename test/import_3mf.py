@@ -4,6 +4,7 @@
 # This add-on is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for details.
 # You should have received a copy of the GNU Affero General Public License along with this plug-in. If not, see <https://gnu.org/licenses/>.
 
+import mathutils  # To compare transformation matrices.
 import os.path  # To find the test resources.
 import unittest  # To run the tests.
 import unittest.mock  # To mock away the Blender API.
@@ -457,3 +458,20 @@ class TestImport3MF(unittest.TestCase):
 		# No objectid attribute!
 
 		self.assertListEqual(self.importer.read_components(object_node), [], "The only component in the input had no object ID, so it must not be included in the output.")
+
+	def test_read_components_transform(self):
+		"""
+		Tests reading the transformation from a component.
+		"""
+		object_node = xml.etree.ElementTree.Element("{{{ns}}}object".format(ns=threemf_default_namespace))
+		components_node = xml.etree.ElementTree.SubElement(object_node, "{{{ns}}}components".format(ns=threemf_default_namespace))
+		component_node_no_transform = xml.etree.ElementTree.SubElement(components_node, "{{{ns}}}component".format(ns=threemf_default_namespace))  # One node without transformation.
+		component_node_no_transform.attrib["objectid"] = "1"
+		component_node_scaled = xml.etree.ElementTree.SubElement(components_node, "{{{ns}}}component".format(ns=threemf_default_namespace))
+		component_node_scaled.attrib["objectid"] = "1"
+		component_node_scaled.attrib["transform"] = "2 0 0 0 2 0 0 0 2 0 0 0"  # Scaled 200%.
+
+		result = self.importer.read_components(object_node)
+		self.assertEqual(len(result), 2, "We put two components in, both valid, so we must get two components out.")
+		self.assertEqual(result[0].transformation, mathutils.Matrix.Identity(4), "The transformation of the first element is missing, so it must be the identity matrix.")
+		self.assertEqual(result[1].transformation, mathutils.Matrix.Scale(2.0, 4), "The transformation of the second element was a factor-2 scale.")
