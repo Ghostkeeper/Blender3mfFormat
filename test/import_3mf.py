@@ -622,3 +622,26 @@ class TestImport3MF(unittest.TestCase):
 
 		# Test whether the component got created.
 		bpy.data.objects.new.assert_called_once()  # May be called only once. Don't call for the recursive component!
+
+	def test_build_object_component_unknown(self):
+		"""
+		Tests building an object with a component referring to a non-existing
+		ID.
+		"""
+		resource_object = io_mesh_3mf.import_3mf.ResourceObject(  # A model with itself as component.
+			vertices=[(0.0, 0.0, 0.0), (10.0, 0.0, 2.0), (0.0, 10.0, 2.0)],
+			triangles=[(0, 1, 2)],
+			components=[io_mesh_3mf.import_3mf.Component(
+				resource_object="2",  # This object ID doesn't exist!
+				transformation=mathutils.Matrix.Identity(4)
+			)]
+		)
+		self.importer.resource_objects["1"] = resource_object
+
+		# Call the function under test.
+		transformation = mathutils.Matrix.Identity(4)
+		objectid_stack_trace = ["1"]
+		self.importer.build_object(resource_object, transformation, objectid_stack_trace)
+
+		# Test whether the component got created.
+		bpy.data.objects.new.assert_called_once()  # May be called only once. Don't call for the non-existing component!
