@@ -101,7 +101,7 @@ class TestExport3MF(unittest.TestCase):
 
 	def test_unit_scale_scene(self):
 		"""
-		Tests compensating for the scene scale
+		Tests compensating for the scene scale.
 		"""
 		scene_scale = 0.9  # The scene scale is set to 90%.
 
@@ -113,3 +113,37 @@ class TestExport3MF(unittest.TestCase):
 		context.scene.unit_settings.length_unit = "MILLIMETERS"  # Same as default 3MF unit.
 
 		self.assertEqual(self.exporter.unit_scale(context), scene_scale, "The only scaling factor was the scene scale.")
+
+	def test_unit_scale_conversion(self):
+		"""
+		Tests converting to 3MF default units.
+		"""
+		context = unittest.mock.MagicMock()
+		context.scene.unit_settings.scale_length = 0  # Not considered for this test.
+		self.exporter.global_scale = 1.0  # Not considered for this test.
+
+		# Table of correct conversions to millimeters! This is the ground truth.
+		# Maps from the Blender units to the default 3MF unit.
+		# Sourced from www.wolframalpha.com and in the case of Metric just by head.
+		correct_conversions = {
+			"THOU": 0.0254,
+			"INCHES": 25.4,
+			"FEET": 304.8,
+			"YARDS": 914.4,
+			"CHAINS": 20_116.8,
+			"FURLONGS": 201_168,
+			"MILES": 1_609_344,
+			"MICROMETERS": 0.001,
+			"MILLIMETERS": 1,
+			"CENTIMETERS": 10,
+			"DECIMETERS": 100,
+			"METERS": 1000,
+			"DEKAMETERS": 10_000,
+			"HECTOMETERS": 100_000,
+			"KILOMETERS": 1_000_000
+		}
+
+		for blender_unit in correct_conversions:
+			with self.subTest(blender_unit=blender_unit):
+				context.scene.unit_settings.length_unit = blender_unit
+				self.assertAlmostEqual(self.exporter.unit_scale(context), correct_conversions[blender_unit])

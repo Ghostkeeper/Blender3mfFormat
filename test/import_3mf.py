@@ -145,8 +145,8 @@ class TestImport3MF(unittest.TestCase):
 				"millimeter": 39.370078740157,
 				"centimeter": 393.70078740157,
 				"inch": 1000,
-				"foot": 12000,
-				"meter": 39370.078740157
+				"foot": 12_000,
+				"meter": 39_370.078740157
 			},
 			"INCHES": {
 				"micron": 0.000039370078740157,
@@ -199,10 +199,10 @@ class TestImport3MF(unittest.TestCase):
 			"MICROMETERS": {
 				"micron": 1,
 				"millimeter": 1000,
-				"centimeter": 10000,
-				"inch": 25400,
-				"foot": 304800,
-				"meter": 1000000
+				"centimeter": 10_000,
+				"inch": 25_400,
+				"foot": 304_800,
+				"meter": 1_000_000
 			},
 			"MILLIMETERS": {
 				"micron": 0.001,
