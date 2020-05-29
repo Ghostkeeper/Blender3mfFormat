@@ -65,6 +65,8 @@ class Export3MF(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
 		self.next_resource_id = 1  # Starts counting at 1 for some inscrutable reason.
 
 		archive = self.create_archive(self.filepath)
+		if archive is None:
+			return {"CANCELLED"}
 
 		if self.use_selection:
 			blender_objects = context.selected_objects
@@ -82,7 +84,10 @@ class Export3MF(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
 		document = xml.etree.ElementTree.ElementTree(root)
 		with archive.open(threemf_3dmodel_location, "w") as f:
 			document.write(f, xml_declaration=True, encoding="UTF-8", default_namespace=threemf_default_namespace)
-		archive.close()
+		try:
+			archive.close()
+		except EnvironmentError:
+			return {"CANCELLED"}
 		return {"FINISHED"}
 
 	# The rest of the functions are in order of when they are called.
@@ -96,12 +101,15 @@ class Export3MF(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
 		:param filepath: The path to write the file to.
 		:return: A zip archive that other functions can add things to.
 		"""
-		archive = zipfile.ZipFile(filepath, "w")
+		try:
+			archive = zipfile.ZipFile(filepath, "w")
 
-		with archive.open(threemf_content_types_location, "w") as content_types:
-			content_types.write(threemf_content_types_xml.encode("UTF-8"))
-		with archive.open(threemf_rels_location, "w") as rels:
-			rels.write(threemf_rels_xml.encode("UTF-8"))
+			with archive.open(threemf_content_types_location, "w") as content_types:
+				content_types.write(threemf_content_types_xml.encode("UTF-8"))
+			with archive.open(threemf_rels_location, "w") as rels:
+				rels.write(threemf_rels_xml.encode("UTF-8"))
+		except EnvironmentError:
+			return None
 
 		return archive
 
