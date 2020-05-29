@@ -8,6 +8,7 @@ import os  # To save archives to a temporary file.
 import tempfile  # To save archives to a temporary file.
 import unittest  # To run the tests.
 import unittest.mock  # To mock away the Blender API.
+import xml.etree.ElementTree  # To construct empty documents for the functions to build elements in.
 import sys  # To mock entire packages.
 
 from .mock.bpy import MockOperator, MockExportHelper, MockImportHelper
@@ -33,6 +34,8 @@ import io_mesh_3mf.export_3mf  # Now we may safely import the unit under test.
 from io_mesh_3mf.constants import (
 	threemf_content_types_location,
 	threemf_content_types_xml,
+	threemf_default_namespace,
+	threemf_namespaces,
 	threemf_rels_location,
 	threemf_rels_xml
 )
@@ -147,3 +150,15 @@ class TestExport3MF(unittest.TestCase):
 			with self.subTest(blender_unit=blender_unit):
 				context.scene.unit_settings.length_unit = blender_unit
 				self.assertAlmostEqual(self.exporter.unit_scale(context), correct_conversions[blender_unit])
+
+	def test_write_objects_none(self):
+		"""
+		Tests writing objects when there are no objects in the scene.
+		"""
+		root = xml.etree.ElementTree.Element("{{{ns}}}model".format(ns=threemf_default_namespace))
+		self.exporter.write_object_resource = unittest.mock.MagicMock()
+		self.exporter.write_objects(root, [], 1.0)  # Empty list of Blender objects.
+
+		self.assertListEqual(list(root.iterfind("3mf:resources/3mf:object", threemf_namespaces)), [], "There may be no objects in the document, since there were no Blender objects to write.")
+		self.assertListEqual(list(root.iterfind("3mf:build/3mf:item", threemf_namespaces)), [], "There may be no build items in the document, since there were no Blender objects to write.")
+		self.exporter.write_object_resource.assert_not_called()  # It was never called because there is no object to call it with.
