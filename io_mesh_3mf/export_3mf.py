@@ -149,15 +149,16 @@ class Export3MF(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
 		resources_element = xml.etree.ElementTree.SubElement(root, "{{{ns}}}resources".format(ns=threemf_default_namespace))
 		build_element = xml.etree.ElementTree.SubElement(root, "{{{ns}}}build".format(ns=threemf_default_namespace))
 		for blender_object in blender_objects:
-			if blender_object.parent is None:  # Only write objects that have no parent, since we'll get the child objects recursively.
-				if not isinstance(blender_object.data, bpy.types.Mesh):
-					continue
-				objectid, mesh_transformation = self.write_object_resource(resources_element, blender_object)
-				item_element = xml.etree.ElementTree.SubElement(build_element, "{{{ns}}}item".format(ns=threemf_default_namespace))
-				item_element.attrib["{{{ns}}}objectid".format(ns=threemf_default_namespace)] = str(objectid)
-				mesh_transformation @= transformation
-				if mesh_transformation != mathutils.Matrix.Identity(4):
-					item_element.attrib["{{{ns}}}transform".format(ns=threemf_default_namespace)] = self.format_transformation(mesh_transformation)
+			if blender_object.parent is not None:
+				continue  # Only write objects that have no parent, since we'll get the child objects recursively.
+			if not isinstance(blender_object.data, bpy.types.Mesh):
+				continue
+			objectid, mesh_transformation = self.write_object_resource(resources_element, blender_object)
+			item_element = xml.etree.ElementTree.SubElement(build_element, "{{{ns}}}item".format(ns=threemf_default_namespace))
+			item_element.attrib["{{{ns}}}objectid".format(ns=threemf_default_namespace)] = str(objectid)
+			mesh_transformation @= transformation
+			if mesh_transformation != mathutils.Matrix.Identity(4):
+				item_element.attrib["{{{ns}}}transform".format(ns=threemf_default_namespace)] = self.format_transformation(mesh_transformation)
 
 	def write_object_resource(self, resources_element, blender_object):
 		"""
