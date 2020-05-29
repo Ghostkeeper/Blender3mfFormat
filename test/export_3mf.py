@@ -83,3 +83,18 @@ class TestExport3MF(unittest.TestCase):
 			finally:
 				if file_path is not None:
 					os.remove(file_path)
+
+	def test_unit_scale_global(self):
+		"""
+		Tests whether the global scaling factor is taken into account with the
+		scale.
+		"""
+		global_scale = 1.1  # The global scale setting is set to 110%.
+		self.exporter.global_scale = global_scale
+
+		# Stuff not considered for this test.
+		context = unittest.mock.MagicMock()
+		context.scene.unit_settings.scale_length = 0
+		context.scene.unit_settings.length_unit = "MILLIMETERS"  # Same as the default unit.
+
+		self.assertEqual(self.exporter.unit_scale(context), global_scale, "The only scaling factor was the global scale.")
