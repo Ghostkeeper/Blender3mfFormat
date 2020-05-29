@@ -55,6 +55,7 @@ class TestExport3MF(unittest.TestCase):
 		While the archive may be void of 3D data, it still has some metadata
 		files in it. This tests if those files are created correctly.
 		"""
+		file_path = None
 		try:
 			file_handle, file_path = tempfile.mkstemp()
 			os.close(file_handle)
@@ -64,5 +65,21 @@ class TestExport3MF(unittest.TestCase):
 			self.assertEqual(archive.read(threemf_rels_location), threemf_rels_xml.encode("UTF-8"), "Correct content for rels file.")
 			self.assertEqual(archive.read(threemf_content_types_location), threemf_content_types_xml.encode("UTF-8"), "Correct content for content types file.")
 		finally:
-			if "file_path" in locals():
+			if file_path is not None:
 				os.remove(file_path)
+
+	def test_create_archive_no_rights(self):
+		"""
+		Tests opening an archive in a spot where there are no access rights.
+		"""
+		file_path = None
+		mock_open = unittest.mock.MagicMock(side_effect = PermissionError("Simulated permission error!"))
+		with unittest.mock.patch("io.open", mock_open):
+			try:
+				file_handle, file_path = tempfile.mkstemp()
+				os.close(file_handle)
+				archive = self.exporter.create_archive(file_path)
+				self.assertIsNone(archive)
+			finally:
+				if file_path is not None:
+					os.remove(file_path)
