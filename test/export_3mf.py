@@ -266,3 +266,31 @@ class TestExport3MF(unittest.TestCase):
 		# We must have written build items for both.
 		item_elements = list(root.iterfind("3mf:build/3mf:item", threemf_namespaces))
 		self.assertEqual(len(item_elements), 2, "There are two items to write.")
+
+	def test_write_objects_transformations(self):
+		"""
+		Tests applying the transformations to the written build items.
+
+		This tests both the global scale as well as a scale applied to the
+		object itself.
+		"""
+		root = xml.etree.ElementTree.Element("{{{ns}}}model".format(ns=threemf_default_namespace))
+		self.exporter.format_transformation = lambda x: str(x)  # The transformation formatter is not being tested here.
+
+		object_transformation = mathutils.Matrix.Translation(mathutils.Vector([10, 20, 30]))  # The object itself is moved.
+		self.exporter.write_object_resource = unittest.mock.MagicMock(return_value=(1, object_transformation.copy()))
+		global_scale = 2.0  # The global scale is 200%.
+
+		# Construct the object that we'll add.
+		the_object = unittest.mock.MagicMock()
+		the_object.parent = None
+		the_object.type = "MESH"
+
+		self.exporter.write_objects(root, [the_object], global_scale=global_scale)
+
+		# The build item must have the correct transformation then.
+		expected_transformation = object_transformation @ mathutils.Matrix.Scale(global_scale, 4)
+		item_elements = list(root.iterfind("3mf:build/3mf:item", threemf_namespaces))
+		self.assertEqual(len(item_elements), 1, "There was only one object to build.")
+		item_element = item_elements[0]
+		self.assertEqual(item_element.attrib["{{{ns}}}transform".format(ns=threemf_default_namespace)], str(expected_transformation), "The transformation must be equal to the expected transformation.")
