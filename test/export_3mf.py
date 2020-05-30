@@ -182,7 +182,7 @@ class TestExport3MF(unittest.TestCase):
 		resources_elements = list(root.iterfind("3mf:resources", threemf_namespaces))
 		self.assertEqual(len(resources_elements), 1, "There is always only one <resources> element.")
 		resources_element = resources_elements[0]
-		self.exporter.write_object_resource.assert_called_once_with(resources_element, the_object)
+		self.exporter.write_object_resource.assert_called_once_with(resources_element, the_object)  # The object resource must be saved.
 
 		# Test that we've created an item.
 		item_elements = list(root.iterfind("3mf:build/3mf:item", threemf_namespaces))
@@ -212,8 +212,24 @@ class TestExport3MF(unittest.TestCase):
 		resources_elements = list(root.iterfind("3mf:resources", threemf_namespaces))
 		self.assertEqual(len(resources_elements), 1, "There is always only one <resources> element.")
 		resources_element = resources_elements[0]
-		self.exporter.write_object_resource.assert_called_once_with(resources_element, parent_obj)
+		self.exporter.write_object_resource.assert_called_once_with(resources_element, parent_obj)  # We may only save the parent in the file. This takes care of children recursively.
 
 		# We may only make one build item, for the parent.
 		item_elements = list(root.iterfind("3mf:build/3mf:item", threemf_namespaces))
 		self.assertEqual(len(item_elements), 1, "There was one build item, building the only Blender object.")
+
+	def test_write_objects_object_types(self):
+		"""
+		Tests that Blender objects with different types get ignored.
+		"""
+		root = xml.etree.ElementTree.Element("{{{ns}}}model".format(ns=threemf_default_namespace))
+		self.exporter.write_object_resource = unittest.mock.MagicMock(return_value = (1, mathutils.Matrix.Identity(4)))  # Record whether this gets called.
+
+		# Construct an object with the wrong object type to add.
+		the_object = unittest.mock.MagicMock()
+		the_object.parent = None
+		the_object.type = "LIGHT"  # Lights don't get saved.
+
+		self.exporter.write_object_resource.assert_not_called()  # We may not call this for the "LIGHT" object.
+		item_elements = list(root.iterfind("3mf:build/3mf:item", threemf_namespaces))
+		self.assertListEqual(item_elements, [], "There may not be any items in the build, since the only object in the scene was a light and that should get ignored.")
