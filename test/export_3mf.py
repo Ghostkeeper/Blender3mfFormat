@@ -5,6 +5,7 @@
 # You should have received a copy of the GNU Affero General Public License along with this plug-in. If not, see <https://gnu.org/licenses/>.
 
 import os  # To save archives to a temporary file.
+import mathutils  # To mock parameters and return values that are transformations.
 import tempfile  # To save archives to a temporary file.
 import unittest  # To run the tests.
 import unittest.mock  # To mock away the Blender API.
@@ -156,9 +157,37 @@ class TestExport3MF(unittest.TestCase):
 		Tests writing objects when there are no objects in the scene.
 		"""
 		root = xml.etree.ElementTree.Element("{{{ns}}}model".format(ns=threemf_default_namespace))
-		self.exporter.write_object_resource = unittest.mock.MagicMock()
-		self.exporter.write_objects(root, [], 1.0)  # Empty list of Blender objects.
+		self.exporter.write_object_resource = unittest.mock.MagicMock()  # Record how this gets called.
+		self.exporter.write_objects(root, [], global_scale=1.0)  # Empty list of Blender objects.
 
 		self.assertListEqual(list(root.iterfind("3mf:resources/3mf:object", threemf_namespaces)), [], "There may be no objects in the document, since there were no Blender objects to write.")
 		self.assertListEqual(list(root.iterfind("3mf:build/3mf:item", threemf_namespaces)), [], "There may be no build items in the document, since there were no Blender objects to write.")
 		self.exporter.write_object_resource.assert_not_called()  # It was never called because there is no object to call it with.
+
+	def test_write_objects_single(self):
+		"""
+		Tests writing a single object into the XML document.
+		"""
+		root = xml.etree.ElementTree.Element("{{{ns}}}model".format(ns=threemf_default_namespace))
+		self.exporter.write_object_resource = unittest.mock.MagicMock(return_value = (1, mathutils.Matrix.Identity(4)))  # Record how this gets called.
+
+		# Construct an object to add.
+		the_object = unittest.mock.MagicMock()
+		the_object.parent = None
+		the_object.type = "MESH"
+
+		with unittest.mock.patch("bpy.types.Mesh", str):
+			self.exporter.write_objects(root, [the_object], global_scale=1.0)
+
+		# Test that we've written the resource object.
+		resources_elements = list(root.iterfind("3mf:resources", threemf_namespaces))
+		self.assertEqual(len(resources_elements), 1, "There is always only one <resources> element.")
+		resources_element = resources_elements[0]
+		self.exporter.write_object_resource.assert_called_once_with(resources_element, the_object)
+
+		# Test that we've created an item.
+		item_elements = list(root.iterfind("3mf:build/3mf:item", threemf_namespaces))
+		self.assertEqual(len(item_elements), 1, "There was one build item, building the only Blender object.")
+		item_element = item_elements[0]
+		self.assertEqual(item_element.attrib["{{{ns}}}objectid".format(ns=threemf_default_namespace)], "1", "The object ID must be equal to what the write_object_resource function returned.")
+		self.assertNotIn("{{{ns}}}transform".format(ns=threemf_default_namespace), item_element.attrib, "There should not be a transformation since the transformation returned by write_object_resource was Identity.")
