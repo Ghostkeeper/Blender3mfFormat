@@ -176,8 +176,7 @@ class TestExport3MF(unittest.TestCase):
 		the_object.parent = None
 		the_object.type = "MESH"
 
-		with unittest.mock.patch("bpy.types.Mesh", str):
-			self.exporter.write_objects(root, [the_object], global_scale=1.0)
+		self.exporter.write_objects(root, [the_object], global_scale=1.0)
 
 		# Test that we've written the resource object.
 		resources_elements = list(root.iterfind("3mf:resources", threemf_namespaces))
@@ -191,3 +190,30 @@ class TestExport3MF(unittest.TestCase):
 		item_element = item_elements[0]
 		self.assertEqual(item_element.attrib["{{{ns}}}objectid".format(ns=threemf_default_namespace)], "1", "The object ID must be equal to what the write_object_resource function returned.")
 		self.assertNotIn("{{{ns}}}transform".format(ns=threemf_default_namespace), item_element.attrib, "There should not be a transformation since the transformation returned by write_object_resource was Identity.")
+
+	def test_write_objects_nested(self):
+		"""
+		Tests writing one object contained inside another.
+		"""
+		root = xml.etree.ElementTree.Element("{{{ns}}}model".format(ns=threemf_default_namespace))
+		self.exporter.write_object_resource = unittest.mock.MagicMock(return_value = (1, mathutils.Matrix.Identity(4)))  # Record how this gets called.
+
+		# Construct two objects to add, one the parent of the other.
+		parent_obj = unittest.mock.MagicMock()
+		parent_obj.parent = None
+		parent_obj.type = "MESH"
+		child_obj = unittest.mock.MagicMock()
+		child_obj.parent = parent_obj
+		child_obj.type = "MESH"
+
+		self.exporter.write_objects(root, [parent_obj, child_obj], global_scale=1.0)
+
+		# We may only have written one resource object, for the parent.
+		resources_elements = list(root.iterfind("3mf:resources", threemf_namespaces))
+		self.assertEqual(len(resources_elements), 1, "There is always only one <resources> element.")
+		resources_element = resources_elements[0]
+		self.exporter.write_object_resource.assert_called_once_with(resources_element, parent_obj)
+
+		# We may only make one build item, for the parent.
+		item_elements = list(root.iterfind("3mf:build/3mf:item", threemf_namespaces))
+		self.assertEqual(len(item_elements), 1, "There was one build item, building the only Blender object.")
