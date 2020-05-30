@@ -235,3 +235,34 @@ class TestExport3MF(unittest.TestCase):
 		self.exporter.write_object_resource.assert_not_called()  # We may not call this for the "LIGHT" object.
 		item_elements = list(root.iterfind("3mf:build/3mf:item", threemf_namespaces))
 		self.assertListEqual(item_elements, [], "There may not be any items in the build, since the only object in the scene was a light and that should get ignored.")
+
+	def test_write_objects_multiple(self):
+		"""
+		Tests writing two objects.
+		"""
+		root = xml.etree.ElementTree.Element("{{{ns}}}model".format(ns=threemf_default_namespace))
+		self.exporter.write_object_resource = unittest.mock.MagicMock(side_effect=[
+			(1, mathutils.Matrix.Identity(4)),
+			(2, mathutils.Matrix.Identity(4))
+		])
+
+		# Construct the objects that we'll add.
+		object1 = unittest.mock.MagicMock()
+		object1.parent = None
+		object1.type = "MESH"
+		object2 = unittest.mock.MagicMock()
+		object2.parent = None
+		object2.type = "MESH"
+
+		self.exporter.write_objects(root, [object1, object2], global_scale=1.0)
+
+		# We must have written the resource objects of both.
+		resources_elements = list(root.iterfind("3mf:resources", threemf_namespaces))
+		self.assertEqual(len(resources_elements), 1, "There is always only one <resources> element.")
+		resources_element = resources_elements[0]
+		self.exporter.write_object_resource.assert_any_call(resources_element, object1)  # Both object must have had their object resources written.
+		self.exporter.write_object_resource.assert_any_call(resources_element, object2)  # The order doesn't matter.
+
+		# We must have written build items for both.
+		item_elements = list(root.iterfind("3mf:build/3mf:item", threemf_namespaces))
+		self.assertEqual(len(item_elements), 2, "There are two items to write.")
