@@ -169,7 +169,7 @@ class TestExport3MF(unittest.TestCase):
 		Tests writing a single object into the XML document.
 		"""
 		root = xml.etree.ElementTree.Element("{{{ns}}}model".format(ns=threemf_default_namespace))
-		self.exporter.write_object_resource = unittest.mock.MagicMock(return_value = (1, mathutils.Matrix.Identity(4)))  # Record how this gets called.
+		self.exporter.write_object_resource = unittest.mock.MagicMock(return_value=(1, mathutils.Matrix.Identity(4)))  # Record how this gets called.
 
 		# Construct an object to add.
 		the_object = unittest.mock.MagicMock()
@@ -196,7 +196,7 @@ class TestExport3MF(unittest.TestCase):
 		Tests writing one object contained inside another.
 		"""
 		root = xml.etree.ElementTree.Element("{{{ns}}}model".format(ns=threemf_default_namespace))
-		self.exporter.write_object_resource = unittest.mock.MagicMock(return_value = (1, mathutils.Matrix.Identity(4)))  # Record how this gets called.
+		self.exporter.write_object_resource = unittest.mock.MagicMock(return_value=(1, mathutils.Matrix.Identity(4)))  # Record how this gets called.
 
 		# Construct two objects to add, one the parent of the other.
 		parent_obj = unittest.mock.MagicMock()
@@ -223,12 +223,14 @@ class TestExport3MF(unittest.TestCase):
 		Tests that Blender objects with different types get ignored.
 		"""
 		root = xml.etree.ElementTree.Element("{{{ns}}}model".format(ns=threemf_default_namespace))
-		self.exporter.write_object_resource = unittest.mock.MagicMock(return_value = (1, mathutils.Matrix.Identity(4)))  # Record whether this gets called.
+		self.exporter.write_object_resource = unittest.mock.MagicMock(return_value=(1, mathutils.Matrix.Identity(4)))  # Record whether this gets called.
 
 		# Construct an object with the wrong object type to add.
 		the_object = unittest.mock.MagicMock()
 		the_object.parent = None
 		the_object.type = "LIGHT"  # Lights don't get saved.
+
+		self.exporter.write_objects(root, [the_object], global_scale=1.0)
 
 		self.exporter.write_object_resource.assert_not_called()  # We may not call this for the "LIGHT" object.
 		item_elements = list(root.iterfind("3mf:build/3mf:item", threemf_namespaces))
