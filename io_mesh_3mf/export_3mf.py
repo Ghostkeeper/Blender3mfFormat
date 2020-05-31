@@ -167,7 +167,9 @@ class Export3MF(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
 		:param resources_element: The <resources> element of the 3MF document to
 		write into.
 		:param blender_object: A Blender object to write to that XML element.
-		:return: The object ID of the newly written resource.
+		:return: A tuple, containing the object ID of the newly written
+		resource and a transformation matrix that this resource must be saved
+		with.
 		"""
 		new_resource_id = self.next_resource_id
 		self.next_resource_id += 1
@@ -195,14 +197,15 @@ class Export3MF(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
 		if self.use_mesh_modifiers:
 			dependency_graph = bpy.context.evaluated_depsgraph_get()
 			blender_object = blender_object.evaluated_get(dependency_graph)
+		mesh_transformation = blender_object.matrix_world
 
 		# Object.to_mesh() is not guaranteed to return Optional[Mesh], apparently.
 		try:
 			mesh = blender_object.to_mesh()
 		except RuntimeError:
-			return new_resource_id
+			return new_resource_id, mesh_transformation
 		if mesh is None:
-			return new_resource_id
+			return new_resource_id, mesh_transformation
 
 		mesh.calc_loop_triangles()  # Need to convert this to triangles-only, because 3MF doesn't support faces with more than 3 vertices.
 		if len(mesh.vertices) > 0:
@@ -210,7 +213,6 @@ class Export3MF(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
 			self.write_vertices(mesh_element, mesh.vertices)
 			self.write_triangles(mesh_element, mesh.loop_triangles)
 
-		mesh_transformation = blender_object.matrix_world
 		return new_resource_id, mesh_transformation
 
 	def format_transformation(self, transformation):
