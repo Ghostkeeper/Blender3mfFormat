@@ -294,3 +294,23 @@ class TestExport3MF(unittest.TestCase):
 		self.assertEqual(len(item_elements), 1, "There was only one object to build.")
 		item_element = item_elements[0]
 		self.assertEqual(item_element.attrib["{{{ns}}}transform".format(ns=threemf_default_namespace)], str(expected_transformation), "The transformation must be equal to the expected transformation.")
+
+	def test_write_object_resource_id(self):
+		"""
+		Ensures that the resource IDs given to the resources are unique positive
+		integers.
+
+		The IDs are probably just ascending numbers, but we only need to test
+		that they are positive integers that were not used before.
+		"""
+		root = xml.etree.ElementTree.Element("{{{ns}}}resources".format(ns=threemf_default_namespace))
+		blender_object = unittest.mock.MagicMock()
+		self.exporter.use_mesh_modifiers = False
+
+		given_ids = set()
+		for i in range(1000):  # 1000x is probably more than any user would export.
+			resource_id, _ = self.exporter.write_object_resource(root, blender_object)
+			resource_id = int(resource_id)  # We SHOULD only give out integer IDs. If not, this will crash and fail the test.
+			self.assertGreater(resource_id, 0, "Resource IDs must be strictly positive IDs (not 0 either).")
+			self.assertNotIn(resource_id, given_ids, "Resource IDs must be unique.")
+			given_ids.add(resource_id)
