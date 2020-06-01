@@ -34,13 +34,13 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
     bl_idname = "import_mesh.3mf"
     bl_label = "Import 3MF"
     bl_description = "Load 3MF mesh data"
-    bl_options = {"UNDO"}
+    bl_options = {'UNDO'}
     filename_ext = ".3mf"
 
     # Options for the user.
-    filter_glob: bpy.props.StringProperty(default="*.3mf", options={"HIDDEN"})
+    filter_glob: bpy.props.StringProperty(default="*.3mf", options={'HIDDEN'})
     files: bpy.props.CollectionProperty(name="File Path", type=bpy.types.OperatorFileListElement)
-    directory: bpy.props.StringProperty(subtype="DIR_PATH")
+    directory: bpy.props.StringProperty(subtype='DIR_PATH')
     global_scale: bpy.props.FloatProperty(name="Scale", default=1.0, soft_min=0.001, soft_max=1000.0, min=1e-6, max=1e6)
 
     def __init__(self):
@@ -69,9 +69,9 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
             paths.append(self.filepath)
 
         if bpy.ops.object.mode_set.poll():
-            bpy.ops.object.mode_set(mode="OBJECT")  # Switch to object mode to view the new file.
+            bpy.ops.object.mode_set(mode='OBJECT')  # Switch to object mode to view the new file.
         if bpy.ops.object.select_all.poll():
-            bpy.ops.object.select_all(action="DESELECT")  # Deselect other files.
+            bpy.ops.object.select_all(action='DESELECT')  # Deselect other files.
 
         for path in paths:
             document = self.read_archive(path)
@@ -84,7 +84,7 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
             self.read_objects(root)
             self.build_items(root, scale_unit)
 
-        return {"FINISHED"}
+        return {'FINISHED'}
 
     # The rest of the functions are in order of when they are called.
 

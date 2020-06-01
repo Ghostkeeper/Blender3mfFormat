@@ -17,7 +17,7 @@ threemf_namespaces = {  # Namespaces used for the 3MF file.
     "3mf": threemf_default_namespace
 }
 threemf_3dmodel_location = "3D/3dmodel.model"  # Conventional location for the 3D model data.
-threemf_default_unit = "millimeter"  # If the unit is missing, it will be this.
+threemf_default_unit = 'millimeter'  # If the unit is missing, it will be this.
 
 threemf_content_types_location = "[Content_Types].xml"  # Location of the content types definition.
 threemf_content_types_xml = """<?xml version="1.0" encoding="UTF-8"?>

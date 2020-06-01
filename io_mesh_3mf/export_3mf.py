@@ -41,7 +41,7 @@ class Export3MF(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
     filename_ext = ".3mf"
 
     # Options for the user.
-    filter_glob: bpy.props.StringProperty(default="*.3mf", options={"HIDDEN"})
+    filter_glob: bpy.props.StringProperty(default="*.3mf", options={'HIDDEN'})
     use_selection: bpy.props.BoolProperty(name="Selection Only", description="Export selected objects only", default=False)
     global_scale: bpy.props.FloatProperty(name="Scale", default=1.0, soft_min=0.001, soft_max=1000.0, min=1e-6, max=1e6)
     use_mesh_modifiers: bpy.props.BoolProperty(name="Apply Modifiers", description="Apply the modifiers before saving", default=True)
@@ -68,7 +68,7 @@ class Export3MF(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
 
         archive = self.create_archive(self.filepath)
         if archive is None:
-            return {"CANCELLED"}
+            return {'CANCELLED'}
 
         if self.use_selection:
             blender_objects = context.selected_objects
@@ -84,13 +84,13 @@ class Export3MF(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
         self.write_objects(root, blender_objects, global_scale)
 
         document = xml.etree.ElementTree.ElementTree(root)
-        with archive.open(threemf_3dmodel_location, "w") as f:
-            document.write(f, xml_declaration=True, encoding="UTF-8", default_namespace=threemf_default_namespace)
+        with archive.open(threemf_3dmodel_location, 'w') as f:
+            document.write(f, xml_declaration=True, encoding='UTF-8', default_namespace=threemf_default_namespace)
         try:
             archive.close()
         except EnvironmentError:
-            return {"CANCELLED"}
-        return {"FINISHED"}
+            return {'CANCELLED'}
+        return {'FINISHED'}
 
     # The rest of the functions are in order of when they are called.
 
@@ -104,12 +104,12 @@ class Export3MF(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
         :return: A zip archive that other functions can add things to.
         """
         try:
-            archive = zipfile.ZipFile(filepath, "w")
+            archive = zipfile.ZipFile(filepath, 'w')
 
-            with archive.open(threemf_content_types_location, "w") as content_types:
-                content_types.write(threemf_content_types_xml.encode("UTF-8"))
-            with archive.open(threemf_rels_location, "w") as rels:
-                rels.write(threemf_rels_xml.encode("UTF-8"))
+            with archive.open(threemf_content_types_location, 'w') as content_types:
+                content_types.write(threemf_content_types_xml.encode('UTF-8'))
+            with archive.open(threemf_rels_location, 'w') as rels:
+                rels.write(threemf_rels_xml.encode('UTF-8'))
         except EnvironmentError:
             return None
 
@@ -153,7 +153,7 @@ class Export3MF(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
         for blender_object in blender_objects:
             if blender_object.parent is not None:
                 continue  # Only write objects that have no parent, since we'll get the child objects recursively.
-            if blender_object.type != "MESH":
+            if blender_object.type != 'MESH':
                 continue
             objectid, mesh_transformation = self.write_object_resource(resources_element, blender_object)
             item_element = xml.etree.ElementTree.SubElement(build_element, "{{{ns}}}item".format(ns=threemf_default_namespace))
@@ -179,7 +179,7 @@ class Export3MF(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
         object_element.attrib["{{{ns}}}type".format(ns=threemf_default_namespace)] = "model"
         object_element.attrib["{{{ns}}}id".format(ns=threemf_default_namespace)] = str(new_resource_id)
 
-        if blender_object.mode == "EDIT":
+        if blender_object.mode == 'EDIT':
             blender_object.update_from_editmode()  # Apply recent changes made to the model.
 
         child_objects = blender_object.children

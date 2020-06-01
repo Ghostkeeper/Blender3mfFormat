@@ -68,8 +68,8 @@ class TestExport3MF(unittest.TestCase):
             archive = self.exporter.create_archive(file_path)
 
             self.assertSetEqual(set(archive.namelist()), {threemf_rels_location, threemf_content_types_location}, "There may only be these two files.")
-            self.assertEqual(archive.read(threemf_rels_location), threemf_rels_xml.encode("UTF-8"), "Correct content for rels file.")
-            self.assertEqual(archive.read(threemf_content_types_location), threemf_content_types_xml.encode("UTF-8"), "Correct content for content types file.")
+            self.assertEqual(archive.read(threemf_rels_location), threemf_rels_xml.encode('UTF-8'), "Correct content for rels file.")
+            self.assertEqual(archive.read(threemf_content_types_location), threemf_content_types_xml.encode('UTF-8'), "Correct content for content types file.")
         finally:
             if file_path is not None:
                 os.remove(file_path)
@@ -101,7 +101,7 @@ class TestExport3MF(unittest.TestCase):
         # Stuff not considered for this test.
         context = unittest.mock.MagicMock()
         context.scene.unit_settings.scale_length = 0
-        context.scene.unit_settings.length_unit = "MILLIMETERS"  # Same as the default 3MF unit.
+        context.scene.unit_settings.length_unit = 'MILLIMETERS'  # Same as the default 3MF unit.
 
         self.assertEqual(self.exporter.unit_scale(context), global_scale, "The only scaling factor was the global scale.")
 
@@ -116,7 +116,7 @@ class TestExport3MF(unittest.TestCase):
 
         # Stuff not considered for this test.
         self.exporter.global_scale = 1.0
-        context.scene.unit_settings.length_unit = "MILLIMETERS"  # Same as default 3MF unit.
+        context.scene.unit_settings.length_unit = 'MILLIMETERS'  # Same as default 3MF unit.
 
         self.assertEqual(self.exporter.unit_scale(context), scene_scale, "The only scaling factor was the scene scale.")
 
@@ -132,21 +132,21 @@ class TestExport3MF(unittest.TestCase):
         # Maps from the Blender units to the default 3MF unit.
         # Sourced from www.wolframalpha.com and in the case of Metric just by head.
         correct_conversions = {
-            "THOU": 0.0254,
-            "INCHES": 25.4,
-            "FEET": 304.8,
-            "YARDS": 914.4,
-            "CHAINS": 20_116.8,
-            "FURLONGS": 201_168,
-            "MILES": 1_609_344,
-            "MICROMETERS": 0.001,
-            "MILLIMETERS": 1,
-            "CENTIMETERS": 10,
-            "DECIMETERS": 100,
-            "METERS": 1000,
-            "DEKAMETERS": 10_000,
-            "HECTOMETERS": 100_000,
-            "KILOMETERS": 1_000_000
+            'THOU': 0.0254,
+            'INCHES': 25.4,
+            'FEET': 304.8,
+            'YARDS': 914.4,
+            'CHAINS': 20_116.8,
+            'FURLONGS': 201_168,
+            'MILES': 1_609_344,
+            'MICROMETERS': 0.001,
+            'MILLIMETERS': 1,
+            'CENTIMETERS': 10,
+            'DECIMETERS': 100,
+            'METERS': 1000,
+            'DEKAMETERS': 10_000,
+            'HECTOMETERS': 100_000,
+            'KILOMETERS': 1_000_000
         }
 
         for blender_unit in correct_conversions:
@@ -176,7 +176,7 @@ class TestExport3MF(unittest.TestCase):
         # Construct an object to add.
         the_object = unittest.mock.MagicMock()
         the_object.parent = None
-        the_object.type = "MESH"
+        the_object.type = 'MESH'
 
         self.exporter.write_objects(root, [the_object], global_scale=1.0)
 
@@ -203,10 +203,10 @@ class TestExport3MF(unittest.TestCase):
         # Construct two objects to add, one the parent of the other.
         parent_obj = unittest.mock.MagicMock()
         parent_obj.parent = None
-        parent_obj.type = "MESH"
+        parent_obj.type = 'MESH'
         child_obj = unittest.mock.MagicMock()
         child_obj.parent = parent_obj
-        child_obj.type = "MESH"
+        child_obj.type = 'MESH'
 
         self.exporter.write_objects(root, [parent_obj, child_obj], global_scale=1.0)
 
@@ -230,7 +230,7 @@ class TestExport3MF(unittest.TestCase):
         # Construct an object with the wrong object type to add.
         the_object = unittest.mock.MagicMock()
         the_object.parent = None
-        the_object.type = "LIGHT"  # Lights don't get saved.
+        the_object.type = 'LIGHT'  # Lights don't get saved.
 
         self.exporter.write_objects(root, [the_object], global_scale=1.0)
 
@@ -251,10 +251,10 @@ class TestExport3MF(unittest.TestCase):
         # Construct the objects that we'll add.
         object1 = unittest.mock.MagicMock()
         object1.parent = None
-        object1.type = "MESH"
+        object1.type = 'MESH'
         object2 = unittest.mock.MagicMock()
         object2.parent = None
-        object2.type = "MESH"
+        object2.type = 'MESH'
 
         self.exporter.write_objects(root, [object1, object2], global_scale=1.0)
 
@@ -286,7 +286,7 @@ class TestExport3MF(unittest.TestCase):
         # Construct the object that we'll add.
         the_object = unittest.mock.MagicMock()
         the_object.parent = None
-        the_object.type = "MESH"
+        the_object.type = 'MESH'
 
         self.exporter.write_objects(root, [the_object], global_scale=global_scale)
 
