@@ -22,5 +22,5 @@ jobs:
         run: python3 -m pip install mathutils pycodestyle
       - name: Test
         run: python3 -m unittest test
-      - name: Code Style
+      - name: Code style
         run: python3 -m pycodestyle --ignore=E402,E501 .
