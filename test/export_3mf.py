@@ -403,9 +403,33 @@ class TestExport3MF(unittest.TestCase):
         element then. We merely test this for defensive coding. The function
         should be reliable as a stand-alone routine regardless of input.
         """
-        mesh_element = xml.etree.ElementTree.Element("{{{ns}}}mesh")
+        mesh_element = xml.etree.ElementTree.Element("{{{ns}}}mesh".format(ns=threemf_default_namespace))
         vertices = []
 
         self.exporter.write_vertices(mesh_element, vertices)
 
         self.assertListEqual(mesh_element.findall("3mf:vertices/3mf:vertex", namespaces=threemf_namespaces), [], "There may not be any vertices in the file, because there were no vertices to write.")
+
+    def test_write_vertices_multiple(self):
+        """
+        Tests writing several vertices to the 3MF document.
+        """
+        mesh_element = xml.etree.ElementTree.Element("{{{ns}}}mesh".format(ns=threemf_default_namespace))
+        vertex1 = unittest.mock.MagicMock(co=(0.0, 1.1, 2.2))  # The vertices this function accepts are Blender's implementation, where the coordinates are in the "co" property.
+        vertex2 = unittest.mock.MagicMock(co=(3.3, 4.4, 5.5))
+        vertex3 = unittest.mock.MagicMock(co=(6.6, 7.7, 8.8))
+        vertices = [vertex1, vertex2, vertex3]
+
+        self.exporter.write_vertices(mesh_element, vertices)
+
+        vertex_elements = mesh_element.findall("3mf:vertices/3mf:vertex", namespaces=threemf_namespaces)
+        self.assertEqual(len(vertex_elements), 3, "There were 3 vertices to write.")
+        self.assertEqual(vertex_elements[0].attrib["{{{ns}}}x".format(ns=threemf_default_namespace)], "0", "Formatting must format as integers if possible.")
+        self.assertEqual(vertex_elements[0].attrib["{{{ns}}}y".format(ns=threemf_default_namespace)], "1.1", "Formatting must format as floats if necessary.")
+        self.assertEqual(vertex_elements[0].attrib["{{{ns}}}z".format(ns=threemf_default_namespace)], "2.2")
+        self.assertEqual(vertex_elements[1].attrib["{{{ns}}}x".format(ns=threemf_default_namespace)], "3.3")
+        self.assertEqual(vertex_elements[1].attrib["{{{ns}}}y".format(ns=threemf_default_namespace)], "4.4")
+        self.assertEqual(vertex_elements[1].attrib["{{{ns}}}z".format(ns=threemf_default_namespace)], "5.5")
+        self.assertEqual(vertex_elements[2].attrib["{{{ns}}}x".format(ns=threemf_default_namespace)], "6.6")
+        self.assertEqual(vertex_elements[2].attrib["{{{ns}}}y".format(ns=threemf_default_namespace)], "7.7")
+        self.assertEqual(vertex_elements[2].attrib["{{{ns}}}z".format(ns=threemf_default_namespace)], "8.8")
