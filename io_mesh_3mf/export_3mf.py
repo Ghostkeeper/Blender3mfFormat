@@ -89,7 +89,8 @@ class Export3MF(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
             document.write(f, xml_declaration=True, encoding='UTF-8', default_namespace=threemf_default_namespace)
         try:
             archive.close()
-        except EnvironmentError:
+        except EnvironmentError as e:
+            log.error(f"Unable to complete writing to 3MF archive: {e}")
             return {'CANCELLED'}
         return {'FINISHED'}
 
@@ -111,7 +112,8 @@ class Export3MF(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
                 content_types.write(threemf_content_types_xml.encode('UTF-8'))
             with archive.open(threemf_rels_location, 'w') as rels:
                 rels.write(threemf_rels_xml.encode('UTF-8'))
-        except EnvironmentError:
+        except EnvironmentError as e:
+            log.error(f"Unable to write 3MF archive to {filepath}: {e}")
             return None
 
         return archive

@@ -105,7 +105,8 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
             with zipfile.ZipFile(path) as archive:
                 with archive.open(threemf_3dmodel_location) as f:
                     return xml.etree.ElementTree.ElementTree(file=f)
-        except (zipfile.BadZipFile, EnvironmentError):  # File is corrupt, or the OS prevents us from reading it (doesn't exist, no permissions, etc.)
+        except (zipfile.BadZipFile, EnvironmentError) as e:  # File is corrupt, or the OS prevents us from reading it (doesn't exist, no permissions, etc.)
+            log.error(f"Unable to read archive: {e}")
             return None
 
     def unit_scale(self, context, root):
