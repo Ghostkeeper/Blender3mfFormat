@@ -433,3 +433,17 @@ class TestExport3MF(unittest.TestCase):
         self.assertEqual(vertex_elements[2].attrib["{{{ns}}}x".format(ns=threemf_default_namespace)], "6.6")
         self.assertEqual(vertex_elements[2].attrib["{{{ns}}}y".format(ns=threemf_default_namespace)], "7.7")
         self.assertEqual(vertex_elements[2].attrib["{{{ns}}}z".format(ns=threemf_default_namespace)], "8.8")
+
+    def test_write_triangles_empty(self):
+        """
+        Tests writing triangles when there are no triangles in the mesh.
+
+        Contrary to the similar test for writing vertices, this may actually
+        happen in the field, if a mesh consists of only vertices or edges.
+        """
+        mesh_element = xml.etree.ElementTree.Element("{{{ns}}}mesh".format(ns=threemf_default_namespace))
+        triangles = []
+
+        self.exporter.write_triangles(mesh_element, triangles)
+
+        self.assertListEqual(mesh_element.findall("3mf:triangles/3mf:triangle", namespaces=threemf_namespaces), [], "There may not be any triangles in the file, because there were no triangles to write.")
