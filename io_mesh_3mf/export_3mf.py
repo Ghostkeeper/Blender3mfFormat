@@ -225,8 +225,8 @@ class Export3MF(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
         :param transformation: The transformation matrix to format.
         :return: A serialisation of the transformation matrix.
         """
-        pieces = ((str(col) for col in row[:3]) for row in transformation)  # Convert the whole thing to strings, except the 4th column.
-        return " ".join(itertools.chain.from_iterable(pieces))
+        pieces = (row[:3] for row in transformation)  # Don't convert the 4th column.
+        return ("{:g} " * 11 + "{:g}").format(*itertools.chain.from_iterable(pieces))
 
     def write_vertices(self, mesh_element, vertices):
         """
