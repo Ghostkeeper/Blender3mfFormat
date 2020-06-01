@@ -378,3 +378,10 @@ class TestExport3MF(unittest.TestCase):
         component_element = component_elements[0]
         self.assertNotEqual(int(component_element.attrib["{{{ns}}}objectid".format(ns=threemf_default_namespace)]), int(parent_id), "The ID given to the child object must be unique.")
         self.assertEqual(component_element.attrib["{{{ns}}}transform".format(ns=threemf_default_namespace)], "2 0 0 0 2 0 0 0 2 0 0 0", "The transformation for 200% scale must be given to this component.")
+
+    def test_format_transformation_identity(self):
+        """
+        Tests formatting the identity matrix.
+        """
+        identity_matrix = mathutils.Matrix.Identity(4)
+        self.assertEqual(self.exporter.format_transformation(identity_matrix), "1 0 0 0 1 0 0 0 1 0 0 0")
