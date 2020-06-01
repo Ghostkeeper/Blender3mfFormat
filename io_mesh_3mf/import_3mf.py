@@ -148,6 +148,7 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
             try:
                 objectid = object_node.attrib["id"]
             except KeyError:
+                log.warning("Object resource without ID!")
                 continue  # ID is required, otherwise the build can't refer to it.
 
             vertices = self.read_vertices(object_node)
@@ -173,14 +174,17 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
             try:
                 x = float(attrib.get("x", 0))
             except ValueError:  # Not a float.
+                log.warning("Vertex missing X coordinate.")
                 x = 0
             try:
                 y = float(attrib.get("y", 0))
             except ValueError:
+                log.warning("Vertex missing Y coordinate.")
                 y = 0
             try:
                 z = float(attrib.get("z", 0))
             except ValueError:
+                log.warning("Vertex missing Z coordinate.")
                 z = 0
             result.append((x, y, z))
         return result
@@ -203,9 +207,14 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
                 v2 = int(attrib["v2"])
                 v3 = int(attrib["v3"])
                 if v1 < 0 or v2 < 0 or v3 < 0:  # Negative indices are not allowed.
+                    log.warning("Triangle containing negative index to vertex list.")
                     continue
                 result.append((v1, v2, v3))
-            except (KeyError, ValueError):  # Vertex is missing, or not an integer.
+            except KeyError as e:  # Vertex is missing.
+                log.warning(f"Vertex {e} missing.")
+                continue
+            except ValueError as e:  # Vertex is not an integer.
+                log.warning(f"Vertex reference is not an integer: {e}")
                 continue  # No fallback this time. Leave out the entire triangle.
         return result
 
@@ -258,10 +267,12 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
                 col += 1
                 row = 0
                 if col > 3:
+                    log.warning(f"Transformation matrix contains too many components: {transformation_str}")
                     break  # Too many components. Ignore the rest.
             try:
                 component_float = float(component)
             except ValueError:  # Not a proper float. Skip this one.
+                log.warning(f"Transformation matrix misformed: {transformation_str}")
                 continue
             result[row][col] = component_float
         return result
@@ -283,6 +294,7 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
                 objectid = build_item.attrib["objectid"]
                 resource_object = self.resource_objects[objectid]
             except KeyError:  # ID is required, and it must be in the available resource_objects.
+                log.warning("Encountered build item without object ID.")
                 continue  # Ignore this invalid item.
 
             transform @= self.parse_transformation(build_item.attrib.get("transform", ""))
@@ -324,10 +336,12 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
         # Recurse for all components.
         for component in resource_object.components:
             if component.resource_object in objectid_stack_trace:  # These object IDs refer to each other in a loop. Don't go in there!
+                log.warning(f"Recursive components in object ID: {component.resource_object}")
                 continue
             try:
                 child_object = self.resource_objects[component.resource_object]
             except KeyError:  # Invalid resource ID. Doesn't exist!
+                log.warning(f"Build item with unknown resource ID: {component.resource_object}")
                 continue
             transform = transformation @ component.transformation  # Apply the child's transformation and pass it on.
             objectid_stack_trace.append(component.resource_object)
