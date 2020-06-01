@@ -393,3 +393,19 @@ class TestExport3MF(unittest.TestCase):
         """
         matrix = mathutils.Matrix(((0.0, 0.1, 0.2, 0.3), (1.0, 1.1, 1.2, 1.3), (2.0, 2.1, 2.2, 2.3), (3.0, 3.1, 3.2, 3.3)))
         self.assertEqual(self.exporter.format_transformation(matrix), "0 0.1 0.2 1 1.1 1.2 2 2.1 2.2 3 3.1 3.2")
+
+    def test_write_vertices_empty(self):
+        """
+        Tests writing vertices when there are no vertices.
+
+        Note that this never occurs in the field, because the function is not
+        called when there are no vertices. There will not even be a <mesh>
+        element then. We merely test this for defensive coding. The function
+        should be reliable as a stand-alone routine regardless of input.
+        """
+        mesh_element = xml.etree.ElementTree.Element("{{{ns}}}mesh")
+        vertices = []
+
+        self.exporter.write_vertices(mesh_element, vertices)
+
+        self.assertListEqual(mesh_element.findall("3mf:vertices/3mf:vertex", namespaces=threemf_namespaces), [], "There may not be any vertices in the file, because there were no vertices to write.")
