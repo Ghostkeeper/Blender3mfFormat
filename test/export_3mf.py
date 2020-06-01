@@ -359,3 +359,25 @@ class TestExport3MF(unittest.TestCase):
         mesh_element = mesh_elements[0]
         self.exporter.write_vertices.assert_called_once_with(mesh_element, original_vertices)
         self.exporter.write_triangles.assert_called_once_with(mesh_element, original_triangles)
+
+    def test_write_object_resource_children(self):
+        """
+        Tests writing an object resource that has children.
+        """
+        resources_element = xml.etree.ElementTree.Element("{{{ns}}}resources".format(ns=threemf_default_namespace))
+        blender_object = unittest.mock.MagicMock()
+        self.exporter.use_mesh_modifiers = False
+
+        # Give the object a child.
+        child = unittest.mock.MagicMock()
+        child.type = 'MESH'
+        child.matrix_world = mathutils.Matrix.Scale(2.0, 4)
+        blender_object.children = [child]
+
+        parent_id, _ = self.exporter.write_object_resource(resources_element, blender_object)
+
+        component_elements = resources_element.findall("3mf:object/3mf:components/3mf:component", namespaces=threemf_namespaces)
+        self.assertEqual(len(component_elements), 1, "There was 1 child, so there should be 1 component.")
+        component_element = component_elements[0]
+        self.assertNotEqual(int(component_element.attrib["{{{ns}}}objectid".format(ns=threemf_default_namespace)]), int(parent_id), "The ID given to the child object must be unique.")
+        self.assertEqual(component_element.attrib["{{{ns}}}transform".format(ns=threemf_default_namespace)], "2 0 0 0 2 0 0 0 2 0 0 0", "The transformation for 200% scale must be given to this component.")
