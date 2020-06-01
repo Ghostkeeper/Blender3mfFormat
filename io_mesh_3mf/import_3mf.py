@@ -50,6 +50,7 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
         """
         super().__init__()
         self.resource_objects = {}
+        self.num_loaded = 0
 
     def execute(self, context):
         """
@@ -63,6 +64,7 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
         """
         # Reset state.
         self.resource_objects = {}
+        self.num_loaded = 0
 
         # Preparation of the input parameters.
         paths = [os.path.join(self.directory, name.name) for name in self.files]
@@ -84,6 +86,8 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
             scale_unit = self.unit_scale(context, root)
             self.read_objects(root)
             self.build_items(root, scale_unit)
+
+        log.info(f"Imported {self.num_loaded} objects from 3MF files.")
 
         return {'FINISHED'}
 
@@ -326,6 +330,7 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
 
         # Create an object.
         blender_object = bpy.data.objects.new("3MF Object", mesh)
+        self.num_loaded += 1
         if parent is not None:
             blender_object.parent = parent
         blender_object.matrix_world = transformation
