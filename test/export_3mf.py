@@ -43,6 +43,7 @@ from io_mesh_3mf.constants import (
     threemf_rels_xml
 )
 
+
 class TestExport3MF(unittest.TestCase):
     """
     Unit tests for exporting 3MF files.
@@ -79,7 +80,7 @@ class TestExport3MF(unittest.TestCase):
         Tests opening an archive in a spot where there are no access rights.
         """
         file_path = None
-        mock_open = unittest.mock.MagicMock(side_effect = PermissionError("Simulated permission error!"))
+        mock_open = unittest.mock.MagicMock(side_effect=PermissionError("Simulated permission error!"))
         with unittest.mock.patch("io.open", mock_open):
             try:
                 file_handle, file_path = tempfile.mkstemp()

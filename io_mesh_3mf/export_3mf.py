@@ -29,6 +29,7 @@ from .unit_conversions import blender_to_metre, threemf_to_metre
 
 log = logging.getLogger(__name__)
 
+
 class Export3MF(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
     """
     Operator that exports a 3MF file from Blender.

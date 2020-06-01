@@ -36,11 +36,13 @@ import bpy.types  # To (un)register the add-on as an import/export function.
 from .import_3mf import Import3MF  # Imports 3MF files.
 from .export_3mf import Export3MF  # Exports 3MF files.
 
+
 def menu_import(self, _):
     """
     Calls the 3MF import operator from the menu item.
     """
     self.layout.operator(Import3MF.bl_idname, text="3D Manufacturing Format (.3mf)")
+
 
 def menu_export(self, _):
     """
@@ -48,10 +50,12 @@ def menu_export(self, _):
     """
     self.layout.operator(Export3MF.bl_idname, text="3D Manufacturing Format (.3mf)")
 
+
 classes = (
     Import3MF,
     Export3MF
 )
+
 
 def register():
     for cls in classes:
@@ -60,12 +64,14 @@ def register():
     bpy.types.TOPBAR_MT_file_import.append(menu_import)
     bpy.types.TOPBAR_MT_file_export.append(menu_export)
 
+
 def unregister():
     for cls in classes:
         bpy.utils.unregister_class(cls)
 
     bpy.types.TOPBAR_MT_file_import.remove(menu_import)
     bpy.types.TOPBAR_MT_file_export.append(menu_export)
+
 
 # Allow the add-on to be ran directly without installation.
 if __name__ == "__main__":

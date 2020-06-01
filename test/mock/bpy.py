@@ -14,11 +14,14 @@ anything special or do anything. They are just meant to remove the basic import
 errors and add the missing names.
 """
 
+
 class MockOperator:
     pass
 
+
 class MockImportHelper:
     pass
+
 
 class MockExportHelper:
     pass

@@ -35,6 +35,7 @@ bpy_extras.io_utils.ExportHelper = MockExportHelper
 import io_mesh_3mf.import_3mf  # Now we may safely import the unit under test.
 from io_mesh_3mf.constants import threemf_default_namespace
 
+
 class TestImport3MF(unittest.TestCase):
     """
     Unit tests for importing 3MF files.

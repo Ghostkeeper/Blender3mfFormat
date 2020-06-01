@@ -25,6 +25,7 @@ log = logging.getLogger(__name__)
 ResourceObject = collections.namedtuple("ResourceObject", ["vertices", "triangles", "components"])
 Component = collections.namedtuple("Component", ["resource_object", "transformation"])
 
+
 class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
     """
     Operator that imports a 3MF file into Blender.
