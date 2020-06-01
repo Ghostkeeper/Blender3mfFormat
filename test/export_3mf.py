@@ -54,6 +54,7 @@ class TestExport3MF(unittest.TestCase):
         Creates fixtures to help running these tests.
         """
         self.exporter = io_mesh_3mf.export_3mf.Export3MF()  # An exporter class.
+        self.exporter.use_mesh_modifiers = False
 
     def test_create_archive(self):
         """
@@ -308,7 +309,6 @@ class TestExport3MF(unittest.TestCase):
         """
         resources_element = xml.etree.ElementTree.Element("{{{ns}}}resources".format(ns=threemf_default_namespace))
         blender_object = unittest.mock.MagicMock()
-        self.exporter.use_mesh_modifiers = False
 
         given_ids = set()
         for i in range(1000):  # 1000x is probably more than any user would export.
@@ -326,7 +326,6 @@ class TestExport3MF(unittest.TestCase):
         """
         resources_element = xml.etree.ElementTree.Element("{{{ns}}}resources".format(ns=threemf_default_namespace))
         blender_object = unittest.mock.MagicMock()
-        self.exporter.use_mesh_modifiers = False
 
         blender_object.to_mesh.return_value = None  # Indicates that there is no Mesh in this object.
         self.exporter.write_object_resource(resources_element, blender_object)
@@ -342,7 +341,6 @@ class TestExport3MF(unittest.TestCase):
         """
         resources_element = xml.etree.ElementTree.Element("{{{ns}}}resources".format(ns=threemf_default_namespace))
         blender_object = unittest.mock.MagicMock()
-        self.exporter.use_mesh_modifiers = False
         self.exporter.write_vertices = unittest.mock.MagicMock()  # Mock these two subroutines. We'll only verify that they get called with the correct parameters.
         self.exporter.write_triangles = unittest.mock.MagicMock()
 
@@ -366,7 +364,6 @@ class TestExport3MF(unittest.TestCase):
         """
         resources_element = xml.etree.ElementTree.Element("{{{ns}}}resources".format(ns=threemf_default_namespace))
         blender_object = unittest.mock.MagicMock()
-        self.exporter.use_mesh_modifiers = False
 
         # Give the object a child.
         child = unittest.mock.MagicMock()
