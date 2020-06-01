@@ -53,6 +53,7 @@ class Export3MF(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
         """
         super().__init__()
         self.next_resource_id = 1  # Which resource ID to generate for the next object.
+        self.num_written = 0  # How many objects we've written to the file.
 
     def execute(self, context):
         """
@@ -66,6 +67,7 @@ class Export3MF(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
         """
         # Reset state.
         self.next_resource_id = 1  # Starts counting at 1 for some inscrutable reason.
+        self.num_written = 0
 
         archive = self.create_archive(self.filepath)
         if archive is None:
@@ -92,6 +94,8 @@ class Export3MF(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
         except EnvironmentError as e:
             log.error(f"Unable to complete writing to 3MF archive: {e}")
             return {'CANCELLED'}
+
+        log.info(f"Exported {self.num_written} objects to 3MF archive {self.filepath}.")
         return {'FINISHED'}
 
     # The rest of the functions are in order of when they are called.
@@ -160,6 +164,7 @@ class Export3MF(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
                 continue
             objectid, mesh_transformation = self.write_object_resource(resources_element, blender_object)
             item_element = xml.etree.ElementTree.SubElement(build_element, "{{{ns}}}item".format(ns=threemf_default_namespace))
+            self.num_written += 1
             item_element.attrib["{{{ns}}}objectid".format(ns=threemf_default_namespace)] = str(objectid)
             mesh_transformation = transformation @ mesh_transformation
             if mesh_transformation != mathutils.Matrix.Identity(4):
@@ -195,6 +200,7 @@ class Export3MF(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
                 child_id, child_transformation = self.write_object_resource(resources_element, child)  # Recursively write children to the resources.
                 child_transformation = mesh_transformation.inverted_safe() @ child_transformation  # Use pseudoinverse for safety, but the epsilon then doesn't matter since it'll get multiplied by 0 later anyway then.
                 component_element = xml.etree.ElementTree.SubElement(components_element, "{{{ns}}}component".format(ns=threemf_default_namespace))
+                self.num_written += 1
                 component_element.attrib["{{{ns}}}objectid".format(ns=threemf_default_namespace)] = str(child_id)
                 if child_transformation != mathutils.Matrix.Identity(4):
                     component_element.attrib["{{{ns}}}transform".format(ns=threemf_default_namespace)] = self.format_transformation(child_transformation)
