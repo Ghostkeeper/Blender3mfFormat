@@ -182,6 +182,7 @@ class Export3MF(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
 
         if blender_object.mode == 'EDIT':
             blender_object.update_from_editmode()  # Apply recent changes made to the model.
+        mesh_transformation = blender_object.matrix_world
 
         child_objects = blender_object.children
         if child_objects:  # Only write the <components> tag if there are actually components.
@@ -189,18 +190,18 @@ class Export3MF(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
             for child in blender_object.children:
                 if child.type != 'MESH':
                     continue
-                child_id, mesh_transformation = self.write_object_resource(resources_element, child)  # Recursively write children to the resources.
+                child_id, child_transformation = self.write_object_resource(resources_element, child)  # Recursively write children to the resources.
+                child_transformation = mesh_transformation.inverted_safe() @ child_transformation  # Use pseudoinverse for safety, but the epsilon then doesn't matter since it'll get multiplied by 0 later anyway then.
                 component_element = xml.etree.ElementTree.SubElement(components_element, "{{{ns}}}component".format(ns=threemf_default_namespace))
                 component_element.attrib["{{{ns}}}objectid".format(ns=threemf_default_namespace)] = str(child_id)
-                if mesh_transformation != mathutils.Matrix.Identity(4):
-                    component_element.attrib["{{{ns}}}transform".format(ns=threemf_default_namespace)] = self.format_transformation(mesh_transformation)
+                if child_transformation != mathutils.Matrix.Identity(4):
+                    component_element.attrib["{{{ns}}}transform".format(ns=threemf_default_namespace)] = self.format_transformation(child_transformation)
 
         # In the tail recursion, get the vertex data.
         # This is necessary because we may need to apply the mesh modifiers, which causes these objects to lose their children.
         if self.use_mesh_modifiers:
             dependency_graph = bpy.context.evaluated_depsgraph_get()
             blender_object = blender_object.evaluated_get(dependency_graph)
-        mesh_transformation = blender_object.matrix_world
 
         try:
             mesh = blender_object.to_mesh()

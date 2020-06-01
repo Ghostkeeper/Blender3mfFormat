@@ -364,6 +364,7 @@ class TestExport3MF(unittest.TestCase):
         """
         resources_element = xml.etree.ElementTree.Element("{{{ns}}}resources".format(ns=threemf_default_namespace))
         blender_object = unittest.mock.MagicMock()
+        blender_object.matrix_world = mathutils.Matrix.Identity(4)
 
         # Give the object a child.
         child = unittest.mock.MagicMock()
