@@ -275,7 +275,7 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
         :return: A sequence of Blender Objects that need to be placed in the
         scene. Each mesh gets transformed appropriately.
         """
-        global_transform = mathutils.Matrix.Scale(scale_unit, 4)
+        transform = mathutils.Matrix.Scale(scale_unit, 4)
 
         for build_item in root.iterfind("./3mf:build/3mf:item", threemf_namespaces):
             try:
@@ -284,8 +284,7 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
             except KeyError:  # ID is required, and it must be in the available resource_objects.
                 continue  # Ignore this invalid item.
 
-            transform = self.parse_transformation(build_item.attrib.get("transform", ""))
-            transform @= global_transform
+            transform @= self.parse_transformation(build_item.attrib.get("transform", ""))
 
             self.build_object(resource_object, transform, [objectid])
 

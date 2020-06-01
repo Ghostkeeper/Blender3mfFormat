@@ -612,7 +612,7 @@ class TestImport3MF(unittest.TestCase):
 
         self.importer.build_items(root, 0.5)  # Build with a unit scale of 50%.
 
-        expected_transformation = mathutils.Matrix.Translation(mathutils.Vector([30, 40, 0])) @ mathutils.Matrix.Scale(0.5, 4)  # Both transformation must be applied (and in correct order).
+        expected_transformation = mathutils.Matrix.Scale(0.5, 4) @ mathutils.Matrix.Translation(mathutils.Vector([30, 40, 0]))  # Both transformation must be applied (and in correct order).
         self.importer.build_object.assert_called_once_with(self.single_triangle, expected_transformation, ["1"])
 
     def test_build_object_mesh_data(self):
