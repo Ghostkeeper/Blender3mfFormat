@@ -293,7 +293,7 @@ class TestExport3MF(unittest.TestCase):
         self.exporter.write_objects(root, [the_object], global_scale=global_scale)
 
         # The build item must have the correct transformation then.
-        expected_transformation = object_transformation @ mathutils.Matrix.Scale(global_scale, 4)
+        expected_transformation = mathutils.Matrix.Scale(global_scale, 4) @ object_transformation
         item_elements = list(root.iterfind("3mf:build/3mf:item", threemf_namespaces))
         self.assertEqual(len(item_elements), 1, "There was only one object to build.")
         item_element = item_elements[0]
