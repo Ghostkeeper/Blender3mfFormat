@@ -199,10 +199,9 @@ class Export3MF(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
 			blender_object = blender_object.evaluated_get(dependency_graph)
 		mesh_transformation = blender_object.matrix_world
 
-		# Object.to_mesh() is not guaranteed to return Optional[Mesh], apparently.
 		try:
 			mesh = blender_object.to_mesh()
-		except RuntimeError:
+		except RuntimeError:  # Object.to_mesh() is not guaranteed to return Optional[Mesh], apparently.
 			return new_resource_id, mesh_transformation
 		if mesh is None:
 			return new_resource_id, mesh_transformation

@@ -303,14 +303,32 @@ class TestExport3MF(unittest.TestCase):
 		The IDs are probably just ascending numbers, but we only need to test
 		that they are positive integers that were not used before.
 		"""
-		root = xml.etree.ElementTree.Element("{{{ns}}}resources".format(ns=threemf_default_namespace))
+		resources_element = xml.etree.ElementTree.Element("{{{ns}}}resources".format(ns=threemf_default_namespace))
 		blender_object = unittest.mock.MagicMock()
 		self.exporter.use_mesh_modifiers = False
 
 		given_ids = set()
 		for i in range(1000):  # 1000x is probably more than any user would export.
-			resource_id, _ = self.exporter.write_object_resource(root, blender_object)
+			resource_id, _ = self.exporter.write_object_resource(resources_element, blender_object)
 			resource_id = int(resource_id)  # We SHOULD only give out integer IDs. If not, this will crash and fail the test.
 			self.assertGreater(resource_id, 0, "Resource IDs must be strictly positive IDs (not 0 either).")
 			self.assertNotIn(resource_id, given_ids, "Resource IDs must be unique.")
 			given_ids.add(resource_id)
+
+	def test_write_object_resource_no_mesh(self):
+		"""
+		Tests writing the resource for an object that doesn't have any mesh.
+
+		It should become an empty <object> element then.
+		"""
+		resources_element = xml.etree.ElementTree.Element("{{{ns}}}resources".format(ns=threemf_default_namespace))
+		blender_object = unittest.mock.MagicMock()
+		self.exporter.use_mesh_modifiers = False
+
+		blender_object.to_mesh.return_value = None  # Indicates that there is no Mesh in this object.
+		self.exporter.write_object_resource(resources_element, blender_object)
+
+		object_elements = resources_element.findall("3mf:object", namespaces=threemf_namespaces)
+		self.assertEqual(len(object_elements), 1, "We have written only one object.")
+		object_element = object_elements[0]
+		self.assertListEqual(object_element.findall("3mf:mesh", namespaces=threemf_namespaces), [], "The object had no mesh, so there may not be a <mesh> element.")
