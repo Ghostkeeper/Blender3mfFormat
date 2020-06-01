@@ -246,9 +246,9 @@ class Export3MF(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
 
         for vertex in vertices:  # Create the <vertex> elements.
             vertex_element = xml.etree.ElementTree.SubElement(vertices_element, vertex_name)
-            vertex_element.attrib[x_name] = str(vertex.co[0])
-            vertex_element.attrib[y_name] = str(vertex.co[1])
-            vertex_element.attrib[z_name] = str(vertex.co[2])
+            vertex_element.attrib[x_name] = "{:g}".format(vertex.co[0])
+            vertex_element.attrib[y_name] = "{:g}".format(vertex.co[1])
+            vertex_element.attrib[z_name] = "{:g}".format(vertex.co[2])
 
     def write_triangles(self, mesh_element, triangles):
         """
