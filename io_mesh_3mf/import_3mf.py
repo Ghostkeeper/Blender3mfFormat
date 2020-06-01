@@ -263,6 +263,8 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
         """
         components = transformation_str.split(" ")
         result = mathutils.Matrix.Identity(4)
+        if transformation_str == "":  # Early-out if transformation is missing. This is not malformed.
+            return result
         row = -1
         col = 0
         for component in components:
@@ -276,7 +278,7 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
             try:
                 component_float = float(component)
             except ValueError:  # Not a proper float. Skip this one.
-                log.warning(f"Transformation matrix misformed: {transformation_str}")
+                log.warning(f"Transformation matrix malformed: {transformation_str}")
                 continue
             result[row][col] = component_float
         return result
