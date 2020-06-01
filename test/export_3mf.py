@@ -385,3 +385,11 @@ class TestExport3MF(unittest.TestCase):
         """
         identity_matrix = mathutils.Matrix.Identity(4)
         self.assertEqual(self.exporter.format_transformation(identity_matrix), "1 0 0 0 1 0 0 0 1 0 0 0")
+
+    def test_format_transformation_coordinates(self):
+        """
+        Tests formatting a matrix where each cell has a unique value, so that we
+        can see whether the cells end up in the correct order.
+        """
+        matrix = mathutils.Matrix(((0.0, 0.1, 0.2, 0.3), (1.0, 1.1, 1.2, 1.3), (2.0, 2.1, 2.2, 2.3), (3.0, 3.1, 3.2, 3.3)))
+        self.assertEqual(self.exporter.format_transformation(matrix), "0 0.1 0.2 1 1.1 1.2 2 2.1 2.2 3 3.1 3.2")
