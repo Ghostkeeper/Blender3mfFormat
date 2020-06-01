@@ -187,7 +187,7 @@ class Export3MF(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
         if child_objects:  # Only write the <components> tag if there are actually components.
             components_element = xml.etree.ElementTree.SubElement(object_element, "{{{ns}}}components".format(ns=threemf_default_namespace))
             for child in blender_object.children:
-                if not isinstance(child.data, bpy.types.Mesh):
+                if child.type != 'MESH':
                     continue
                 child_id, mesh_transformation = self.write_object_resource(resources_element, child)  # Recursively write children to the resources.
                 component_element = xml.etree.ElementTree.SubElement(components_element, "{{{ns}}}component".format(ns=threemf_default_namespace))
