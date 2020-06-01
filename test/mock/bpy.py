@@ -4,6 +4,8 @@
 # This add-on is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for details.
 # You should have received a copy of the GNU Affero General Public License along with this plug-in. If not, see <https://gnu.org/licenses/>.
 
+# <pep8 compliant>
+
 """
 This module contains mocks for Blender's API.
 
@@ -13,10 +15,10 @@ errors and add the missing names.
 """
 
 class MockOperator:
-	pass
+    pass
 
 class MockImportHelper:
-	pass
+    pass
 
 class MockExportHelper:
-	pass
+    pass
