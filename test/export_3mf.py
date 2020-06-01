@@ -447,3 +447,27 @@ class TestExport3MF(unittest.TestCase):
         self.exporter.write_triangles(mesh_element, triangles)
 
         self.assertListEqual(mesh_element.findall("3mf:triangles/3mf:triangle", namespaces=threemf_namespaces), [], "There may not be any triangles in the file, because there were no triangles to write.")
+
+    def test_write_triangles_multiple(self):
+        """
+        Tests writing several triangles to the 3MF document.
+        """
+        mesh_element = xml.etree.ElementTree.Element("{{{ns}}}mesh".format(ns=threemf_default_namespace))
+        triangle1 = unittest.mock.MagicMock(vertices=[0, 1, 2])
+        triangle2 = unittest.mock.MagicMock(vertices=[3, 4, 5])
+        triangle3 = unittest.mock.MagicMock(vertices=[4, 2, 0])
+        triangles = [triangle1, triangle2, triangle3]
+
+        self.exporter.write_triangles(mesh_element, triangles)
+
+        triangle_elements = mesh_element.findall("3mf:triangles/3mf:triangle", namespaces=threemf_namespaces)
+        self.assertEqual(len(triangle_elements), 3, "There were 3 triangles to write.")
+        self.assertEqual(triangle_elements[0].attrib["{{{ns}}}v1".format(ns=threemf_default_namespace)], "0")
+        self.assertEqual(triangle_elements[0].attrib["{{{ns}}}v2".format(ns=threemf_default_namespace)], "1")
+        self.assertEqual(triangle_elements[0].attrib["{{{ns}}}v3".format(ns=threemf_default_namespace)], "2")
+        self.assertEqual(triangle_elements[1].attrib["{{{ns}}}v1".format(ns=threemf_default_namespace)], "3")
+        self.assertEqual(triangle_elements[1].attrib["{{{ns}}}v2".format(ns=threemf_default_namespace)], "4")
+        self.assertEqual(triangle_elements[1].attrib["{{{ns}}}v3".format(ns=threemf_default_namespace)], "5")
+        self.assertEqual(triangle_elements[2].attrib["{{{ns}}}v1".format(ns=threemf_default_namespace)], "4")
+        self.assertEqual(triangle_elements[2].attrib["{{{ns}}}v2".format(ns=threemf_default_namespace)], "2")
+        self.assertEqual(triangle_elements[2].attrib["{{{ns}}}v3".format(ns=threemf_default_namespace)], "0")
