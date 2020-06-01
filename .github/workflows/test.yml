@@ -19,6 +19,8 @@ jobs:
         with:
           python-version: 3.7
       - name: Install dependencies
-        run: python3 -m pip install mathutils
+        run: python3 -m pip install mathutils pycodestyle
       - name: Test
         run: python3 -m unittest test
+      - name: Code Style
+        run: python3 -m pycodestyle --ignore=E402,E501 .
