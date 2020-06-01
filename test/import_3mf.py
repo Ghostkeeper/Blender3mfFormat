@@ -62,6 +62,8 @@ class TestImport3MF(unittest.TestCase):
             components=[]
         )
 
+        self.resources_path = os.path.join(os.path.dirname(__file__), "resources")
+
         # Reset the Blender context before each test.
         bpy.context = unittest.mock.MagicMock()
         bpy.data = unittest.mock.MagicMock()
@@ -76,21 +78,21 @@ class TestImport3MF(unittest.TestCase):
         """
         Tests reading a corrupt archive file.
         """
-        archive_path = os.path.join(os.path.dirname(__file__), "resources/corrupt_archive.3mf")
+        archive_path = os.path.join(self.resources_path, "corrupt_archive.3mf")
         self.assertIsNone(self.importer.read_archive(archive_path), "Corrupt files should return None.")
 
     def test_read_archive_empty(self):
         """
         Tests reading an archive file that doesn't have the default model file.
         """
-        archive_path = os.path.join(os.path.dirname(__file__), "resources/empty_archive.3mf")
+        archive_path = os.path.join(self.resources_path, "empty_archive.3mf")
         self.assertIsNone(self.importer.read_archive(archive_path), "If the archive has no 3dmodel.model file, return None.")
 
     def test_read_archive_default_position(self):
         """
         Tests reading an archive where the 3D model is in the default position.
         """
-        archive_path = os.path.join(os.path.dirname(__file__), "resources/only_3dmodel_file.3mf")
+        archive_path = os.path.join(self.resources_path, "only_3dmodel_file.3mf")
         result = self.importer.read_archive(archive_path)
         self.assertIsNotNone(result, "There is a 3D model in this archive, so it should return a document.")
         self.assertEqual(result.getroot().tag, "{{{ns}}}model".format(ns=threemf_default_namespace), "The result is an XML document with a <model> tag in the root.")
