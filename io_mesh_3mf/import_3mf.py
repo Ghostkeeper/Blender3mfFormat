@@ -23,7 +23,10 @@ from .constants import (  # Constants associated with the 3MF file format.
     threemf_3dmodel_location,
     threemf_content_types_location,
     threemf_default_unit,
-    threemf_namespaces)
+    threemf_model_mimetype,
+    threemf_namespaces,
+    threemf_rels_mimetype
+)
 
 log = logging.getLogger(__name__)
 
@@ -154,6 +157,11 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
                 continue  # Ignore the broken one.
             match_regex = re.compile(r".*\." + re.escape(default_node.attrib["Extension"]))
             result.append((match_regex, default_node.attrib["ContentType"]))
+
+        # This parser should be robust to slightly broken files and retrieve what we can.
+        # In case the document is broken, here we'll append the default ones for 3MF.
+        result.append((re.compile(r".*\.rels"), threemf_rels_mimetype))
+        result.append((re.compile(r".*\.model"), threemf_model_mimetype))
 
         return result
 
