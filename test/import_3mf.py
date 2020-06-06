@@ -132,6 +132,22 @@ class TestImport3MF(unittest.TestCase):
         self.assertIn((rels_pattern, threemf_rels_mimetype), result, "The relationships MIME type must always be present for robustness, even if the file is broken.")
         self.assertIn((model_pattern, threemf_model_mimetype), result, "The model MIME type must always be present for robustness, even if the file is broken.")
 
+    def test_read_content_types_empty(self):
+        """
+        Tests reading an archive where the content types file doesn't define any
+        content types.
+        """
+        archive_path = os.path.join(self.resources_path, "content_types_empty.3mf")
+        archive = zipfile.ZipFile(archive_path)
+        result = self.importer.read_content_types(archive)
+
+        # In order to verify if the regexes are correct, transform the output to list the regex pattern rather than the compiled unit.
+        result = [(regex.pattern, mimetype) for regex, mimetype in result]
+        rels_pattern = r".*\.rels"
+        model_pattern = r".*\.model"
+        self.assertIn((rels_pattern, threemf_rels_mimetype), result, "The relationships MIME type must always be present for robustness, even if they weren't present in the file.")
+        self.assertIn((model_pattern, threemf_model_mimetype), result, "The model MIME type must always be present for robustness, even if they weren't present in the file.")
+
     def test_unit_scale_global(self):
         """
         Tests getting the global scale importer setting.
