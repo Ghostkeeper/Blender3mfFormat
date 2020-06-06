@@ -112,10 +112,8 @@ class TestImport3MF(unittest.TestCase):
 
         # In order to verify if the regexes are correct, transform the output to list the regex pattern rather than the compiled unit.
         result = [(regex.pattern, mimetype) for regex, mimetype in result]
-        rels_pattern = r".*\.rels"
-        model_pattern = r".*\.model"
-        self.assertIn((rels_pattern, threemf_rels_mimetype), result, "The relationships MIME type must always be present for robustness, even if the file is broken.")
-        self.assertIn((model_pattern, threemf_model_mimetype), result, "The model MIME type must always be present for robustness, even if the file is broken.")
+        self.assertIn((r".*\.rels", threemf_rels_mimetype), result, "The relationships MIME type must always be present for robustness, even if the file is broken.")
+        self.assertIn((r".*\.model", threemf_model_mimetype), result, "The model MIME type must always be present for robustness, even if the file is broken.")
 
     def test_read_content_types_invalid_xml(self):
         """
@@ -127,10 +125,8 @@ class TestImport3MF(unittest.TestCase):
 
         # In order to verify if the regexes are correct, transform the output to list the regex pattern rather than the compiled unit.
         result = [(regex.pattern, mimetype) for regex, mimetype in result]
-        rels_pattern = r".*\.rels"
-        model_pattern = r".*\.model"
-        self.assertIn((rels_pattern, threemf_rels_mimetype), result, "The relationships MIME type must always be present for robustness, even if the file is broken.")
-        self.assertIn((model_pattern, threemf_model_mimetype), result, "The model MIME type must always be present for robustness, even if the file is broken.")
+        self.assertIn((r".*\.rels", threemf_rels_mimetype), result, "The relationships MIME type must always be present for robustness, even if the file is broken.")
+        self.assertIn((r".*\.model", threemf_model_mimetype), result, "The model MIME type must always be present for robustness, even if the file is broken.")
 
     def test_read_content_types_empty(self):
         """
@@ -143,10 +139,8 @@ class TestImport3MF(unittest.TestCase):
 
         # In order to verify if the regexes are correct, transform the output to list the regex pattern rather than the compiled unit.
         result = [(regex.pattern, mimetype) for regex, mimetype in result]
-        rels_pattern = r".*\.rels"
-        model_pattern = r".*\.model"
-        self.assertIn((rels_pattern, threemf_rels_mimetype), result, "The relationships MIME type must always be present for robustness, even if they weren't present in the file.")
-        self.assertIn((model_pattern, threemf_model_mimetype), result, "The model MIME type must always be present for robustness, even if they weren't present in the file.")
+        self.assertIn((r".*\.rels", threemf_rels_mimetype), result, "The relationships MIME type must always be present for robustness, even if they weren't present in the file.")
+        self.assertIn((r".*\.model", threemf_model_mimetype), result, "The model MIME type must always be present for robustness, even if they weren't present in the file.")
 
     def test_read_content_types_default(self):
         """
@@ -158,10 +152,24 @@ class TestImport3MF(unittest.TestCase):
 
         # In order to verify if the regexes are correct, transform the output to list the regex pattern rather than the compiled unit.
         result = [(regex.pattern, mimetype) for regex, mimetype in result]
-        rels_pattern = r".*\.rels"
-        model_pattern = r".*\.model"
-        self.assertIn((rels_pattern, threemf_rels_mimetype), result, "This is the relationships file type, which was specified in the file. It doesn't matter that it's in the output twice.")
-        self.assertIn((model_pattern, threemf_model_mimetype), result, "This is the model file type, which was specified in the file. It doesn't matter that it's in the output twice.")
+        self.assertIn((r".*\.rels", threemf_rels_mimetype), result, "This is the relationships file type, which was specified in the file. It doesn't matter that it's in the output twice.")
+        self.assertIn((r".*\.model", threemf_model_mimetype), result, "This is the model file type, which was specified in the file. It doesn't matter that it's in the output twice.")
+
+    def test_read_content_types_custom_defaults(self):
+        """
+        Tests reading an archive with customised content type defaults.
+        """
+        archive_path = os.path.join(self.resources_path, "content_types_custom.3mf")
+        archive = zipfile.ZipFile(archive_path)
+        result = self.importer.read_content_types(archive)
+
+        # In order to verify if the regexes are correct, transform the output to list the regex pattern rather than the compiled unit.
+        result = [(regex.pattern, mimetype) for regex, mimetype in result]
+        custom_index = result.index((r".*\.txt", "text/plain"))  # If this throws a ValueError, the custom default was not parsed properly.
+        rels_index = result.index((r".*\.rels", threemf_rels_mimetype))
+        model_index = result.index((r".*\.model", threemf_model_mimetype))
+        self.assertLess(custom_index, rels_index, "Customised defaults must have higher priority than the fallbacks that were added in case of a corrupt [Content_Types].xml file.")
+        self.assertLess(custom_index, model_index, "Customised defaults must have higher priority than the fallbacks that were added in case of a corrupt [Content_Types].xml file.")
 
     def test_unit_scale_global(self):
         """
