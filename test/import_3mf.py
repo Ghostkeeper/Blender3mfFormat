@@ -8,10 +8,11 @@
 
 import mathutils  # To compare transformation matrices.
 import os.path  # To find the test resources.
+import sys  # To mock entire packages.
 import unittest  # To run the tests.
 import unittest.mock  # To mock away the Blender API.
-import sys  # To mock entire packages.
 import xml.etree.ElementTree  # To construct 3MF documents as input for the importer functions.
+import zipfile  # To provide zip archives to some functions.
 
 from .mock.bpy import MockOperator, MockExportHelper, MockImportHelper
 
@@ -33,7 +34,11 @@ bpy.types.Operator = MockOperator
 bpy_extras.io_utils.ImportHelper = MockImportHelper
 bpy_extras.io_utils.ExportHelper = MockExportHelper
 import io_mesh_3mf.import_3mf  # Now we may safely import the unit under test.
-from io_mesh_3mf.constants import threemf_default_namespace
+from io_mesh_3mf.constants import (
+    threemf_default_namespace,
+    threemf_model_mimetype,
+    threemf_rels_mimetype
+)
 
 
 class TestImport3MF(unittest.TestCase):
@@ -96,6 +101,21 @@ class TestImport3MF(unittest.TestCase):
         result = self.importer.read_archive(archive_path)
         self.assertIsNotNone(result, "There is a 3D model in this archive, so it should return a document.")
         self.assertEqual(result.getroot().tag, "{{{ns}}}model".format(ns=threemf_default_namespace), "The result is an XML document with a <model> tag in the root.")
+
+    def test_read_content_types_missing(self):
+        """
+        Tests reading an archive when the content types file is missing.
+        """
+        archive_path = os.path.join(self.resources_path, "empty_archive.zip")
+        archive = zipfile.ZipFile(archive_path)
+        result = self.importer.read_content_types(archive)
+
+        # In order to verify if the regexes are correct, transform the output to list the regex pattern rather than the compiled unit.
+        result = [(regex.pattern, mimetype) for regex, mimetype in result]
+        rels_pattern = r".*\.rels"
+        model_pattern = r".*\.model"
+        self.assertIn((rels_pattern, threemf_rels_mimetype), result, "The relationships MIME type must always be present for robustness, even if the file is broken.")
+        self.assertIn((model_pattern, threemf_model_mimetype), result, "The model MIME type must always be present for robustness, even if the file is broken.")
 
     def test_unit_scale_global(self):
         """
