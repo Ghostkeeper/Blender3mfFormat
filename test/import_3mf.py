@@ -171,6 +171,24 @@ class TestImport3MF(unittest.TestCase):
         self.assertLess(custom_index, rels_index, "Customised defaults must have higher priority than the fallbacks that were added in case of a corrupt [Content_Types].xml file.")
         self.assertLess(custom_index, model_index, "Customised defaults must have higher priority than the fallbacks that were added in case of a corrupt [Content_Types].xml file.")
 
+    def test_read_content_types_custom_overrides(self):
+        """
+        Tests reading an archive with customised content type overrides.
+        """
+        archive_path = os.path.join(self.resources_path, "content_types_custom.3mf")
+        archive = zipfile.ZipFile(archive_path)
+        result = self.importer.read_content_types(archive)
+
+        # In order to verify if the regexes are correct, transform the output to list the regex pattern rather than the compiled unit.
+        result = [(regex.pattern, mimetype) for regex, mimetype in result]
+        override_index = result.index((r"/path/to/file\.jpg", "image/thumbnail"))  # If this throws a ValueError, the custom override was not parsed properly.
+        default_index = result.index((r".*\.txt", "text/plain"))
+        rels_index = result.index((r".*\.rels", threemf_rels_mimetype))
+        model_index = result.index((r".*\.model", threemf_model_mimetype))
+        self.assertLess(override_index, default_index, "The overrides must have higher priority than the defaults.")
+        self.assertLess(override_index, rels_index, "The overrides must have higher priority than the fallbacks.")
+        self.assertLess(override_index, model_index, "The overrides must have higher priority than the fallbacks.")
+
     def test_unit_scale_global(self):
         """
         Tests getting the global scale importer setting.
