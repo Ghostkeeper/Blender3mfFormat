@@ -14,6 +14,7 @@ import logging  # To debug and log progress.
 import collections  # For namedtuple.
 import mathutils  # For the transformation matrices.
 import os.path  # To take file paths relative to the selected directory.
+import re  # To find files in the archive based on the content types.
 import xml.etree.ElementTree  # To parse the 3dmodel.model file.
 import zipfile  # To read the 3MF files which are secretly zip archives.
 
@@ -119,13 +120,42 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
             log.error(f"Unable to read archive: {e}")
             return None
 
-    def read_content_types(self, content_types_root):
+    def read_content_types(self, root):
         """
         Read the content types from a [Content_Types].xml document.
+
+        The output of this reading is a list of MIME types that are each mapped
+        to a regular expression that matches on the file paths within the
+        archive that could contain this content type. This encodes both types of
+        descriptors for the content types that can occur in the content types
+        document: Extensions and full paths.
+
+        The output is ordered in priority. Matches that should be evaluated
+        first will be put in the front of the output list.
         :param root: The root of the XML document describing the content types.
-        :return: A dictionary mapping MIME types to extensions.
+        :return: A list of tuples, in order of importance, where the first
+        element describes a regex of paths that match, and the second element is
+        the MIME type string of the content type.
         """
-        pass  # TODO.
+        namespaces = {"ct": "http://schemas.openxmlformats.org/package/2006/content-types"}
+        result = []
+
+        # Overrides are more important than defaults, so put those in front.
+        for override_node in root.iterfind("ct:Override", namespaces):
+            if "PartName" not in override_node.attrib or "ContentType" not in override_node.attrib:
+                log.warning("[Content_Types].xml malformed: Override node without path or MIME type.")
+                continue  # Ignore the broken one.
+            match_regex = re.compile(re.escape(override_node.attrib["PartName"]))
+            result.append((match_regex, override_node.attrib["ContentType"]))
+
+        for default_node in root.iterfind("ct:Default", namespaces):
+            if "Extension" not in default_node.attrib or "ContentType" not in default_node.attrib:
+                log.warning("[Content_Types].xml malformed: Default node without extension or MIME type.")
+                continue  # Ignore the broken one.
+            match_regex = re.compile(r".*\." + re.escape(default_node.attrib["Extension"]))
+            result.append((match_regex, default_node.attrib["ContentType"]))
+
+        return result
 
     def unit_scale(self, context, root):
         """
