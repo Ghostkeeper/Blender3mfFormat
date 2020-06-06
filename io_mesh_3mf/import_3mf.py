@@ -115,17 +115,17 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
         """
         try:
             with zipfile.ZipFile(path) as archive:
-                with archive.open(threemf_content_types_location) as f:
-                    content_types = self.read_content_types(xml.etree.ElementTree.ElementTree(file=f))
+                content_types = self.read_content_types(archive)
+                print(content_types)
                 with archive.open(threemf_3dmodel_location) as f:
                     return xml.etree.ElementTree.ElementTree(file=f)
         except (zipfile.BadZipFile, EnvironmentError) as e:  # File is corrupt, or the OS prevents us from reading it (doesn't exist, no permissions, etc.)
             log.error(f"Unable to read archive: {e}")
             return None
 
-    def read_content_types(self, root):
+    def read_content_types(self, archive):
         """
-        Read the content types from a [Content_Types].xml document.
+        Read the content types from a 3MF archive.
 
         The output of this reading is a list of MIME types that are each mapped
         to a regular expression that matches on the file paths within the
@@ -135,7 +135,7 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
 
         The output is ordered in priority. Matches that should be evaluated
         first will be put in the front of the output list.
-        :param root: The root of the XML document describing the content types.
+        :param archive: The 3MF archive to read the contents from.
         :return: A list of tuples, in order of importance, where the first
         element describes a regex of paths that match, and the second element is
         the MIME type string of the content type.
@@ -143,23 +143,35 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
         namespaces = {"ct": "http://schemas.openxmlformats.org/package/2006/content-types"}
         result = []
 
-        # Overrides are more important than defaults, so put those in front.
-        for override_node in root.iterfind("ct:Override", namespaces):
-            if "PartName" not in override_node.attrib or "ContentType" not in override_node.attrib:
-                log.warning("[Content_Types].xml malformed: Override node without path or MIME type.")
-                continue  # Ignore the broken one.
-            match_regex = re.compile(re.escape(override_node.attrib["PartName"]))
-            result.append((match_regex, override_node.attrib["ContentType"]))
+        with archive.open(threemf_content_types_location) as f:
+            try:
+                root = xml.etree.ElementTree.ElementTree(file=f)
+            except KeyError:  # ZipFile reports that the content types file doesn't exist.
+                log.warning(f"{threemf_content_types_location} file missing!")
+                root = None
+            except xml.etree.ElementTree.ParseError as e:
+                log.warning("{threemf_content_types_location} has malformed XML (position {linenr}:{columnnr}).".format(threemf_content_types_location=threemf_content_types_location, linenr=e.position[0], columnnr=e.position[1]))
+                root = None
 
-        for default_node in root.iterfind("ct:Default", namespaces):
-            if "Extension" not in default_node.attrib or "ContentType" not in default_node.attrib:
-                log.warning("[Content_Types].xml malformed: Default node without extension or MIME type.")
-                continue  # Ignore the broken one.
-            match_regex = re.compile(r".*\." + re.escape(default_node.attrib["Extension"]))
-            result.append((match_regex, default_node.attrib["ContentType"]))
+            if root is not None:
+                # Overrides are more important than defaults, so put those in front.
+                for override_node in root.iterfind("ct:Override", namespaces):
+                    if "PartName" not in override_node.attrib or "ContentType" not in override_node.attrib:
+                        log.warning("[Content_Types].xml malformed: Override node without path or MIME type.")
+                        continue  # Ignore the broken one.
+                    match_regex = re.compile(re.escape(override_node.attrib["PartName"]))
+                    result.append((match_regex, override_node.attrib["ContentType"]))
+
+                for default_node in root.iterfind("ct:Default", namespaces):
+                    if "Extension" not in default_node.attrib or "ContentType" not in default_node.attrib:
+                        log.warning("[Content_Types].xml malformed: Default node without extension or MIME type.")
+                        continue  # Ignore the broken one.
+                    match_regex = re.compile(r".*\." + re.escape(default_node.attrib["Extension"]))
+                    result.append((match_regex, default_node.attrib["ContentType"]))
 
         # This parser should be robust to slightly broken files and retrieve what we can.
-        # In case the document is broken, here we'll append the default ones for 3MF.
+        # In case the document is broken or missing, here we'll append the default ones for 3MF.
+        # If the content types file was fine, this gets least priority so the actual data still wins.
         result.append((re.compile(r".*\.rels"), threemf_rels_mimetype))
         result.append((re.compile(r".*\.model"), threemf_model_mimetype))
 
