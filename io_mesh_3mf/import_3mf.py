@@ -18,7 +18,11 @@ import xml.etree.ElementTree  # To parse the 3dmodel.model file.
 import zipfile  # To read the 3MF files which are secretly zip archives.
 
 from .unit_conversions import blender_to_metre, threemf_to_metre  # To convert to Blender's units.
-from .constants import threemf_3dmodel_location, threemf_default_unit, threemf_namespaces  # Constants associated with the 3MF file format.
+from .constants import (  # Constants associated with the 3MF file format.
+    threemf_3dmodel_location,
+    threemf_content_types_location,
+    threemf_default_unit,
+    threemf_namespaces)
 
 log = logging.getLogger(__name__)
 
@@ -107,11 +111,21 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
         """
         try:
             with zipfile.ZipFile(path) as archive:
+                with archive.open(threemf_content_types_location) as f:
+                    content_types = self.read_content_types(xml.etree.ElementTree.ElementTree(file=f))
                 with archive.open(threemf_3dmodel_location) as f:
                     return xml.etree.ElementTree.ElementTree(file=f)
         except (zipfile.BadZipFile, EnvironmentError) as e:  # File is corrupt, or the OS prevents us from reading it (doesn't exist, no permissions, etc.)
             log.error(f"Unable to read archive: {e}")
             return None
+
+    def read_content_types(self, content_types_root):
+        """
+        Read the content types from a [Content_Types].xml document.
+        :param root: The root of the XML document describing the content types.
+        :return: A dictionary mapping MIME types to extensions.
+        """
+        pass  # TODO.
 
     def unit_scale(self, context, root):
         """
