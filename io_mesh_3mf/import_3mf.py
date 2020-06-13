@@ -116,6 +116,8 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
         try:
             with zipfile.ZipFile(path) as archive:
                 content_types = self.read_content_types(archive)
+                mime_types = self.assign_content_types(archive, content_types)
+                print(mime_types)
                 with archive.open(threemf_3dmodel_location) as f:
                     return xml.etree.ElementTree.ElementTree(file=f)
         except (zipfile.BadZipFile, EnvironmentError) as e:  # File is corrupt, or the OS prevents us from reading it (doesn't exist, no permissions, etc.)
@@ -173,6 +175,33 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
         # If the content types file was fine, this gets least priority so the actual data still wins.
         result.append((re.compile(r".*\.rels"), threemf_rels_mimetype))
         result.append((re.compile(r".*\.model"), threemf_model_mimetype))
+
+        return result
+
+    def assign_content_types(self, archive, content_types):
+        """
+        Assign a MIME type to each file in the archive.
+
+        The MIME types are obtained through the content types file from the
+        archive. This content types file itself is not in the result though.
+        :param archive: A 3MF archive with files to assign content types to.
+        :param content_types: The content types for files in that archive, in
+        order of priority.
+        :return: A dictionary mapping all file paths in the archive to a content
+        types. If the content type for a file is unknown, the content type will
+        be an empty string.
+        """
+        result = {}
+        for file_info in archive.filelist:
+            file_path = file_info.filename
+            if file_path == threemf_content_types_location:  # Don't index this one.
+                continue
+            for pattern, content_type in content_types:  # Process in the correct order!
+                if pattern.fullmatch(file_path):
+                    result[file_path] = content_type
+                    break
+            else:  # None of the patterns matched.
+                result[file_path] = ""
 
         return result
 
