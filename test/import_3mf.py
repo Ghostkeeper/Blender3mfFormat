@@ -213,6 +213,26 @@ class TestImport3MF(unittest.TestCase):
 
         self.assertEqual(result, {}, "The content types file in the archive should not be assigned a content type itself.")
 
+    def test_assign_content_types_by_path(self):
+        """
+        Tests assigning content types if the content types specify a full path.
+        """
+        archive = zipfile.ZipFile(os.devnull, "w")
+        archive.writestr("some_directory/file.txt", "Those are 3 MF'ing nice models!")
+        archive.writestr("other_directory/file.txt", "Are you suggesting that coconuts migrate?")
+        content_types = [
+            (re.compile(r"some_directory/file\.txt"), "text/plain"),
+            (re.compile(r"other_directory/file\.txt"), "plain/wrong")
+        ]
+
+        result = self.importer.assign_content_types(archive, content_types)
+        expected_result = {
+            "some_directory/file.txt": "text/plain",
+            "other_directory/file.txt": "plain/wrong"
+        }
+
+        self.assertEqual(result, expected_result, "Each file must be assigned their respective content type.")
+
     def test_unit_scale_global(self):
         """
         Tests getting the global scale importer setting.
