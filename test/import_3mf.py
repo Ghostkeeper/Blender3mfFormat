@@ -255,6 +255,24 @@ class TestImport3MF(unittest.TestCase):
 
         self.assertEqual(result, expected_result, "There are two .txt files and one .md file.")
 
+    def test_assign_content_types_priority(self):
+        """
+        Tests whether the priority in the content types list is honoured.
+        """
+        archive = zipfile.ZipFile(os.devnull, "w")
+        archive.writestr("some_directory/file.txt", "As the plane lands in Glasgow, passengers are reminded to set their watches back 25 years.")
+        content_types = [
+            (re.compile(r".*\.txt"), "First type"),
+            (re.compile(r"some_directory/file.txt"), "Second type")
+        ]
+
+        result = self.importer.assign_content_types(archive, content_types)
+        self.assertEqual(result, {"some_directory/file.txt": "First type"}, "The first type was first in the list of content types, so that takes priority.")
+
+        content_types.reverse()  # Reverse the priority. See if it's any different.
+        result = self.importer.assign_content_types(archive, content_types)
+        self.assertEqual(result, {"some_directory/file.txt": "Second type"}, "Now that the priority is reversed, the second type has highest priority.")
+
     def test_unit_scale_global(self):
         """
         Tests getting the global scale importer setting.
