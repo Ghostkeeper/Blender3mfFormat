@@ -200,6 +200,18 @@ class TestImport3MF(unittest.TestCase):
 
         self.assertEqual(result, {}, "There are no files in the archive to assign a content type.")
 
+    def test_assign_content_types_ignore_content_types_file(self):
+        """
+        Tests that the content types file is ignored in the archive. It should
+        not show up in the result.
+        """
+        archive_path = os.path.join(self.resources_path, "content_types_default.3mf")
+        archive = zipfile.ZipFile(archive_path)
+        content_types = {"*.txt": "text/plain"}
+        result = self.importer.assign_content_types(archive, content_types)
+
+        self.assertEqual(result, {}, "The content types file in the archive should not be assigned a content type itself.")
+
     def test_unit_scale_global(self):
         """
         Tests getting the global scale importer setting.
