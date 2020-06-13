@@ -189,6 +189,17 @@ class TestImport3MF(unittest.TestCase):
         self.assertLess(override_index, rels_index, "The overrides must have higher priority than the fallbacks.")
         self.assertLess(override_index, model_index, "The overrides must have higher priority than the fallbacks.")
 
+    def test_assign_content_types_empty(self):
+        """
+        Tests assigning content types to an empty archive.
+        """
+        archive_path = os.path.join(self.resources_path, "empty_archive.zip")
+        archive = zipfile.ZipFile(archive_path)
+        content_types = {"*.txt": "text/plain"}
+        result = self.importer.assign_content_types(archive, content_types)
+
+        self.assertEqual(result, {}, "There are no files in the archive to assign a content type.")
+
     def test_unit_scale_global(self):
         """
         Tests getting the global scale importer setting.
