@@ -8,6 +8,7 @@
 
 import mathutils  # To compare transformation matrices.
 import os.path  # To find the test resources.
+import re  # To test matching with content types.
 import sys  # To mock entire packages.
 import unittest  # To run the tests.
 import unittest.mock  # To mock away the Blender API.
@@ -195,7 +196,7 @@ class TestImport3MF(unittest.TestCase):
         """
         archive_path = os.path.join(self.resources_path, "empty_archive.zip")
         archive = zipfile.ZipFile(archive_path)
-        content_types = {"*.txt": "text/plain"}
+        content_types = [(re.compile(r".*\.txt"), "text/plain")]
         result = self.importer.assign_content_types(archive, content_types)
 
         self.assertEqual(result, {}, "There are no files in the archive to assign a content type.")
@@ -207,7 +208,7 @@ class TestImport3MF(unittest.TestCase):
         """
         archive_path = os.path.join(self.resources_path, "content_types_default.3mf")
         archive = zipfile.ZipFile(archive_path)
-        content_types = {"*.txt": "text/plain"}
+        content_types = [(re.compile(r".*\.txt"), "text/plain")]
         result = self.importer.assign_content_types(archive, content_types)
 
         self.assertEqual(result, {}, "The content types file in the archive should not be assigned a content type itself.")
