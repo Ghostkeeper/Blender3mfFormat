@@ -233,6 +233,28 @@ class TestImport3MF(unittest.TestCase):
 
         self.assertEqual(result, expected_result, "Each file must be assigned their respective content type.")
 
+    def test_assign_content_types_by_extension(self):
+        """
+        Tests assigning content types if the content types specify an extension.
+        """
+        archive = zipfile.ZipFile(os.devnull, "w")
+        archive.writestr("some_directory/file.txt", "I fart in your general direction.")
+        archive.writestr("insult.txt", "Your mother was a hamster and your father smelt of elderberries.")
+        archive.writestr("what.md", "There's nothing wrong with you that an expensive operation can't prolong.")
+        content_types = [
+            (re.compile(r".*\.txt"), "text/plain"),
+            (re.compile(r".*\.md"), "text/markdown")
+        ]
+
+        result = self.importer.assign_content_types(archive, content_types)
+        expected_result = {
+            "some_directory/file.txt": "text/plain",
+            "insult.txt": "text/plain",
+            "what.md": "text/markdown"
+        }
+
+        self.assertEqual(result, expected_result, "There are two .txt files and one .md file.")
+
     def test_unit_scale_global(self):
         """
         Tests getting the global scale importer setting.
