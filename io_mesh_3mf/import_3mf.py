@@ -85,7 +85,8 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
             bpy.ops.object.select_all(action='DESELECT')  # Deselect other files.
 
         for path in paths:
-            document = self.read_archive(path)
+            files_by_content_type = self.read_archive(path)
+            document = xml.etree.ElementTree.ElementTree(file=files_by_content_type[threemf_model_mimetype][0])
             if document is None:
                 # This file is corrupt or we can't read it. There is no error code to communicate this to blender though.
                 continue  # Leave the scene empty / skip this file.
@@ -103,25 +104,30 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
 
     def read_archive(self, path):
         """
-        Reads out all of the relevant information from the zip archive of the
-        3MF document.
+        Creates file streams from all the files in the archive.
 
-        After this stage, the zip archive can be discarded. All of it will be in
-        memory. Error handling about reading the file only need to be put around
-        this function.
+        The results are sorted by their content types. Consumers of this data
+        can pick the content types that they know from the file and process
+        those.
         :param path: The path to the archive to read.
-        :return: An ElementTree representing the contents of the 3dmodel.model
-        file in the archive. If reading fails, `None` is returned.
+        :return: A dictionary with all of the resources in the archive by
+        content type. The keys in this dictionary are the different content
+        types available in the file. The values in this dictionary are lists of
+        input streams referring to files in the archive.
         """
+        result = {}
         try:
-            with zipfile.ZipFile(path) as archive:
-                content_types = self.read_content_types(archive)
-                mime_types = self.assign_content_types(archive, content_types)
-                with archive.open(threemf_3dmodel_location) as f:
-                    return xml.etree.ElementTree.ElementTree(file=f)
+            archive = zipfile.ZipFile(path)
+            content_types = self.read_content_types(archive)
+            mime_types = self.assign_content_types(archive, content_types)
+            for path, mime_type in mime_types.items():
+                if mime_type not in result:
+                    result[mime_type] = []
+                result[mime_type].append(archive.open(path))  # Zipfile can open an infinite number of streams at the same time. Don't worry about it.
         except (zipfile.BadZipFile, EnvironmentError) as e:  # File is corrupt, or the OS prevents us from reading it (doesn't exist, no permissions, etc.)
             log.error(f"Unable to read archive: {e}")
-            return None
+            return result
+        return result
 
     def read_content_types(self, archive):
         """
