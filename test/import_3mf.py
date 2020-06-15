@@ -78,21 +78,21 @@ class TestImport3MF(unittest.TestCase):
         """
         Tests reading an archive file that doesn't exist.
         """
-        self.assertIsNone(self.importer.read_archive("some/nonexistent_path"), "On an environment error, return None.")
+        self.assertEqual(self.importer.read_archive("some/nonexistent_path"), {}, "On an environment error, return an empty dictionary.")
 
     def test_read_archive_corrupt(self):
         """
         Tests reading a corrupt archive file.
         """
         archive_path = os.path.join(self.resources_path, "corrupt_archive.3mf")
-        self.assertIsNone(self.importer.read_archive(archive_path), "Corrupt files should return None.")
+        self.assertEqual(self.importer.read_archive(archive_path), {}, "Corrupt files should return no files.")
 
     def test_read_archive_empty(self):
         """
         Tests reading an archive file that doesn't have the default model file.
         """
         archive_path = os.path.join(self.resources_path, "empty_archive.3mf")
-        self.assertIsNone(self.importer.read_archive(archive_path), "If the archive has no 3dmodel.model file, return None.")
+        self.assertEqual(self.importer.read_archive(archive_path), {}, "There are no files in this archive, so don't return any types.")
 
     def test_read_archive_default_position(self):
         """
@@ -100,8 +100,12 @@ class TestImport3MF(unittest.TestCase):
         """
         archive_path = os.path.join(self.resources_path, "only_3dmodel_file.3mf")
         result = self.importer.read_archive(archive_path)
-        self.assertIsNotNone(result, "There is a 3D model in this archive, so it should return a document.")
-        self.assertEqual(result.getroot().tag, "{{{ns}}}model".format(ns=threemf_default_namespace), "The result is an XML document with a <model> tag in the root.")
+        self.assertIn(threemf_model_mimetype, result, "There should be a listing for the MIME type of the model, since there was a model in this archive.")
+        model_files = result[threemf_model_mimetype]
+        self.assertEqual(len(model_files), 1, "There was just 1 model file.")
+
+        document = xml.etree.ElementTree.ElementTree(file=model_files[0])
+        self.assertEqual(document.getroot().tag, "{{{ns}}}model".format(ns=threemf_default_namespace), "The file is an XML document with a <model> tag in the root.")
 
     def test_read_content_types_missing(self):
         """
