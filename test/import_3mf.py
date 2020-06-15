@@ -241,7 +241,8 @@ class TestImport3MF(unittest.TestCase):
         """
         Tests assigning content types if the content types specify a full path.
         """
-        archive = zipfile.ZipFile(os.devnull, "w")
+        black_hole = io.BytesIO()  # Create an arbitrary stream to "write" to. We'll never write though, but just construct an archive with this.
+        archive = zipfile.ZipFile(black_hole, "w")
         archive.writestr("some_directory/file.txt", "Those are 3 MF'ing nice models!")
         archive.writestr("other_directory/file.txt", "Are you suggesting that coconuts migrate?")
         content_types = [
@@ -261,7 +262,8 @@ class TestImport3MF(unittest.TestCase):
         """
         Tests assigning content types if the content types specify an extension.
         """
-        archive = zipfile.ZipFile(os.devnull, "w")
+        black_hole = io.BytesIO()  # Create an arbitrary stream to "write" to. We'll never write though, but just construct an archive with this.
+        archive = zipfile.ZipFile(black_hole, "w")
         archive.writestr("some_directory/file.txt", "I fart in your general direction.")
         archive.writestr("insult.txt", "Your mother was a hamster and your father smelt of elderberries.")
         archive.writestr("what.md", "There's nothing wrong with you that an expensive operation can't prolong.")
@@ -283,7 +285,8 @@ class TestImport3MF(unittest.TestCase):
         """
         Tests whether the priority in the content types list is honoured.
         """
-        archive = zipfile.ZipFile(os.devnull, "w")
+        black_hole = io.BytesIO()  # Create an arbitrary stream to "write" to. We'll never write though, but just construct an archive with this.
+        archive = zipfile.ZipFile(black_hole, "w")
         archive.writestr("some_directory/file.txt", "As the plane lands in Glasgow, passengers are reminded to set their watches back 25 years.")
         content_types = [
             (re.compile(r".*\.txt"), "First type"),
