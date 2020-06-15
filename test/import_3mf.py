@@ -69,6 +69,7 @@ class TestImport3MF(unittest.TestCase):
             triangles=[(0, 1, 2)],
             components=[]
         )
+        self.black_hole = io.BytesIO()  # A dummy stream to write to, in order to construct archives to import from in-memory.
 
         self.resources_path = os.path.join(os.path.dirname(__file__), "resources")
 
@@ -113,8 +114,7 @@ class TestImport3MF(unittest.TestCase):
         """
         Tests reading an archive when the content types file is missing.
         """
-        black_hole = io.BytesIO()  # Create an arbitrary stream to "write" to. We'll never write though, but just construct an archive with this.
-        archive = zipfile.ZipFile(black_hole, 'w')
+        archive = zipfile.ZipFile(self.black_hole, 'w')
         result = self.importer.read_content_types(archive)  # At this point the archive is completely empty.
 
         # In order to verify if the regexes are correct, transform the output to list the regex pattern rather than the compiled unit.
@@ -126,8 +126,7 @@ class TestImport3MF(unittest.TestCase):
         """
         Tests reading an archive when the content types file is invalid XML.
         """
-        black_hole = io.BytesIO()  # Create an arbitrary stream to "write" to. We'll never write though, but just construct an archive with this.
-        archive = zipfile.ZipFile(black_hole, 'w')
+        archive = zipfile.ZipFile(self.black_hole, 'w')
         archive.writestr(threemf_content_types_location, "I do one situp a day. Half of it when I get up out of bed, the other half when I lay down.")  # Not a valid XML document.
         result = self.importer.read_content_types(archive)
 
@@ -141,8 +140,7 @@ class TestImport3MF(unittest.TestCase):
         Tests reading an archive where the content types file doesn't define any
         content types.
         """
-        black_hole = io.BytesIO()  # Create an arbitrary stream to "write" to. We'll never write though, but just construct an archive with this.
-        archive = zipfile.ZipFile(black_hole, 'w')
+        archive = zipfile.ZipFile(self.black_hole, 'w')
         archive.writestr(threemf_content_types_location, "")  # Completely empty file.
         result = self.importer.read_content_types(archive)
 
@@ -155,8 +153,7 @@ class TestImport3MF(unittest.TestCase):
         """
         Tests reading an archive that specifies all of the normal content types.
         """
-        black_hole = io.BytesIO()  # Create an arbitrary stream to "write" to. We'll never write though, but just construct an archive with this.
-        archive = zipfile.ZipFile(black_hole, 'w')
+        archive = zipfile.ZipFile(self.black_hole, 'w')
         archive.writestr(threemf_content_types_location, """<?xml version="1.0" encoding="UTF-8"?>
 <Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
     <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml" />
@@ -173,8 +170,7 @@ class TestImport3MF(unittest.TestCase):
         """
         Tests reading an archive with customised content type defaults.
         """
-        black_hole = io.BytesIO()  # Create an arbitrary stream to "write" to. We'll never write though, but just construct an archive with this.
-        archive = zipfile.ZipFile(black_hole, 'w')
+        archive = zipfile.ZipFile(self.black_hole, 'w')
         archive.writestr(threemf_content_types_location, """<?xml version="1.0" encoding="UTF-8"?>
 <Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
     <Default Extension="txt" ContentType="text/plain" />
@@ -194,8 +190,7 @@ class TestImport3MF(unittest.TestCase):
         """
         Tests reading an archive with customised content type overrides.
         """
-        black_hole = io.BytesIO()  # Create an arbitrary stream to "write" to. We'll never write though, but just construct an archive with this.
-        archive = zipfile.ZipFile(black_hole, 'w')
+        archive = zipfile.ZipFile(self.black_hole, 'w')
         archive.writestr(threemf_content_types_location, """<?xml version="1.0" encoding="UTF-8"?>
 <Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
     <Default Extension="txt" ContentType="text/plain" />
@@ -217,8 +212,7 @@ class TestImport3MF(unittest.TestCase):
         """
         Tests assigning content types to an empty archive.
         """
-        black_hole = io.BytesIO()  # Create an arbitrary stream to "write" to. We'll never write though, but just construct an archive with this.
-        archive = zipfile.ZipFile(black_hole, 'w')
+        archive = zipfile.ZipFile(self.black_hole, 'w')
         content_types = [(re.compile(r".*\.txt"), "text/plain")]
         result = self.importer.assign_content_types(archive, content_types)
 
@@ -229,8 +223,7 @@ class TestImport3MF(unittest.TestCase):
         Tests that the content types file is ignored in the archive. It should
         not show up in the result.
         """
-        black_hole = io.BytesIO()  # Create an arbitrary stream to "write" to. We'll never write though, but just construct an archive with this.
-        archive = zipfile.ZipFile(black_hole, 'w')
+        archive = zipfile.ZipFile(self.black_hole, 'w')
         archive.writestr(threemf_content_types_location, "")  # Contents of the file don't matter for this test.
         content_types = [(re.compile(r".*\.txt"), "text/plain")]
         result = self.importer.assign_content_types(archive, content_types)
@@ -241,8 +234,7 @@ class TestImport3MF(unittest.TestCase):
         """
         Tests assigning content types if the content types specify a full path.
         """
-        black_hole = io.BytesIO()  # Create an arbitrary stream to "write" to. We'll never write though, but just construct an archive with this.
-        archive = zipfile.ZipFile(black_hole, "w")
+        archive = zipfile.ZipFile(self.black_hole, "w")
         archive.writestr("some_directory/file.txt", "Those are 3 MF'ing nice models!")
         archive.writestr("other_directory/file.txt", "Are you suggesting that coconuts migrate?")
         content_types = [
@@ -262,8 +254,7 @@ class TestImport3MF(unittest.TestCase):
         """
         Tests assigning content types if the content types specify an extension.
         """
-        black_hole = io.BytesIO()  # Create an arbitrary stream to "write" to. We'll never write though, but just construct an archive with this.
-        archive = zipfile.ZipFile(black_hole, "w")
+        archive = zipfile.ZipFile(self.black_hole, "w")
         archive.writestr("some_directory/file.txt", "I fart in your general direction.")
         archive.writestr("insult.txt", "Your mother was a hamster and your father smelt of elderberries.")
         archive.writestr("what.md", "There's nothing wrong with you that an expensive operation can't prolong.")
@@ -285,8 +276,7 @@ class TestImport3MF(unittest.TestCase):
         """
         Tests whether the priority in the content types list is honoured.
         """
-        black_hole = io.BytesIO()  # Create an arbitrary stream to "write" to. We'll never write though, but just construct an archive with this.
-        archive = zipfile.ZipFile(black_hole, "w")
+        archive = zipfile.ZipFile(self.black_hole, "w")
         archive.writestr("some_directory/file.txt", "As the plane lands in Glasgow, passengers are reminded to set their watches back 25 years.")
         content_types = [
             (re.compile(r".*\.txt"), "First type"),
