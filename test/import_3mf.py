@@ -512,6 +512,21 @@ class TestImport3MF(unittest.TestCase):
         self.importer.read_metadata(object_node)
         self.assertEqual(len(self.importer.metadata), 0, "There is no metadata in this document, so the metadata is empty.")
 
+    def test_read_metadata_entries_multiple(self):
+        """
+        Tests reading multiple metadata entries from the document.
+        """
+        object_node = xml.etree.ElementTree.Element("{{{ns}}}object".format(ns=threemf_default_namespace))
+        metadata1_node = xml.etree.ElementTree.SubElement(object_node, "{{{ns}}}metadata".format(ns=threemf_default_namespace))
+        metadata1_node.attrib["name"] = "name1"
+        metadata1_node.text = "value1"
+        metadata2_node = xml.etree.ElementTree.SubElement(object_node, "{{{ns}}}metadata".format(ns=threemf_default_namespace))
+        metadata2_node.attrib["name"] = "name2"
+        metadata2_node.text = "value2"
+
+        self.importer.read_metadata(object_node)
+        self.assertEqual(len(self.importer.metadata), 2, "We added 2 metadata entries.")
+
     def test_read_vertices_missing(self):
         """
         Tests reading an object where the <vertices> element is missing.
