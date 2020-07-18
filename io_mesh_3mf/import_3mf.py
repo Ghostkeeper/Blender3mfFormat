@@ -32,6 +32,7 @@ log = logging.getLogger(__name__)
 
 ResourceObject = collections.namedtuple("ResourceObject", ["vertices", "triangles", "components"])
 Component = collections.namedtuple("Component", ["resource_object", "transformation"])
+MetadataEntry = collections.namedtuple("MetadataEntry", ["name", "preserve", "datatype", "value"])
 
 
 class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
@@ -59,6 +60,7 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
         super().__init__()
         self.resource_objects = {}
         self.num_loaded = 0
+        self.metadata = {}
 
     def execute(self, context):
         """
@@ -73,6 +75,7 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
         # Reset state.
         self.resource_objects = {}
         self.num_loaded = 0
+        self.metadata = {}
 
         # Preparation of the input parameters.
         paths = [os.path.join(self.directory, name.name) for name in self.files]
@@ -98,6 +101,7 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
 
                 scale_unit = self.unit_scale(context, root)
                 self.resource_objects = {}
+                self.read_metadata(root)
                 self.read_objects(root)
                 self.build_items(root, scale_unit)
 
@@ -215,6 +219,17 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
 
         return result
 
+    def is_supported(self, required_extensions):
+        """
+        Determines if a document is supported by this add-on.
+        :param required_extensions: The value of the `requiredextensions`
+        attribute of the root node of the XML document.
+        :return: `True` if the document is supported, or `False` if it's not.
+        """
+        extensions = required_extensions.split(" ")
+        extensions = set(filter(lambda x: x != "", extensions))
+        return extensions <= threemf_supported_extensions
+
     def unit_scale(self, context, root):
         """
         Get the scaling factor we need to use for this document, according to
@@ -239,16 +254,23 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
 
         return scale
 
-    def is_supported(self, required_extensions):
+    def read_metadata(self, root):
         """
-        Determines if a document is supported by this add-on.
-        :param required_extensions: The value of the `requiredextensions`
-        attribute of the root node of the XML document.
-        :return: `True` if the document is supported, or `False` if it's not.
+        Reads the metadata tag from a 3MF document.
+        :param root: The root node of a 3dmodel.model XML file.
         """
-        extensions = required_extensions.split(" ")
-        extensions = set(filter(lambda x: x != "", extensions))
-        return extensions <= threemf_supported_extensions
+        for metadata_node in root.iterfind("./3mf:metadata", threemf_namespaces):
+            if "name" not in metadata_node.attrib:
+                log.warning("Metadata entry without name is discarded.")
+                continue  # This attribute has no name, so there's no key by which I can save the metadata.
+            name = metadata_node.attrib["name"]
+            preserve_str = metadata_node.attrib.get("preserve", "0")
+            preserve = preserve_str != "0" and preserve_str.lower() != "false"  # We don't use this ourselves since we always preserve, but the preserve attribute itself will also be preserved.
+            datatype = metadata_node.attrib.get("type", "")
+            value = metadata_node.text
+
+            # Always store all metadata so that they are preserved.
+            self.metadata[name] = MetadataEntry(name=name, preserve=preserve, datatype=datatype, value=value)
 
     def read_objects(self, root):
         """
