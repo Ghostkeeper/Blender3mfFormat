@@ -579,6 +579,19 @@ class TestImport3MF(unittest.TestCase):
                 self.assertIn(negative_preserve, self.importer.metadata, "We added this entry.")
                 self.assertFalse(self.importer.metadata[negative_preserve].preserve, "These are preserve values that indicate that they don't need to be preserved.")
 
+    def test_read_metadata_type(self):
+        """
+        Tests reading the type from metadata entries.
+        """
+        object_node = xml.etree.ElementTree.Element("{{{ns}}}object".format(ns=threemf_default_namespace))
+        metadata_node = xml.etree.ElementTree.SubElement(object_node, "{{{ns}}}metadata".format(ns=threemf_default_namespace))
+        metadata_node.attrib["type"] = "hyperset"
+        metadata_node.attrib["name"] = "some metadata"
+
+        self.importer.read_metadata(object_node)
+        self.assertIn("some metadata", self.importer.metadata, "We added this entry.")
+        self.assertEqual(self.importer.metadata["some metadata"].datatype, "hyperset", "We said that the type was a hyperset.")
+
     def test_read_vertices_missing(self):
         """
         Tests reading an object where the <vertices> element is missing.
