@@ -527,6 +527,20 @@ class TestImport3MF(unittest.TestCase):
         self.importer.read_metadata(object_node)
         self.assertEqual(len(self.importer.metadata), 2, "We added 2 metadata entries.")
 
+    def test_read_metadata_entries_name(self):
+        """
+        Tests reading the name from a metadata entry.
+        """
+        object_node = xml.etree.ElementTree.Element("{{{ns}}}object".format(ns=threemf_default_namespace))
+        metadata_node = xml.etree.ElementTree.SubElement(object_node, "{{{ns}}}metadata".format(ns=threemf_default_namespace))
+        metadata_node.attrib["name"] = "some name"
+        metadata_node.text = "value"
+
+        self.importer.read_metadata(object_node)
+        self.assertIn("some name", self.importer.metadata, "The metadata entry is stored by name.")
+        self.assertEqual(self.importer.metadata["some name"].name, "some name", "This was the name that we added.")
+        self.assertEqual(self.importer.metadata["some name"].value, "value", "The correct value is stored with it.")
+
     def test_read_vertices_missing(self):
         """
         Tests reading an object where the <vertices> element is missing.
