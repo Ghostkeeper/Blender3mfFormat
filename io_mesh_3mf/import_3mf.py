@@ -25,7 +25,8 @@ from .constants import (  # Constants associated with the 3MF file format.
     threemf_default_unit,
     threemf_model_mimetype,
     threemf_namespaces,
-    threemf_rels_mimetype
+    threemf_rels_mimetype,
+    threemf_supported_extensions
 )
 
 log = logging.getLogger(__name__)
@@ -92,6 +93,9 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
                     # This file is corrupt or we can't read it. There is no error code to communicate this to blender though.
                     continue  # Leave the scene empty / skip this file.
                 root = document.getroot()
+                if not self.is_supported(root.attrib.get("requiredextensions", "")):
+                    log.warning(f"3MF document in {path} requires unknown extensions.")
+                    # Still continue processing even though the spec says not to. Our aim is to retrieve whatever information we can.
 
                 scale_unit = self.unit_scale(context, root)
                 self.resource_objects = {}
@@ -235,6 +239,17 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
         scale /= blender_to_metre[blender_unit]  # Convert metre to Blender's units.
 
         return scale
+
+    def is_supported(self, required_extensions):
+        """
+        Determines if a document is supported by this add-on.
+        :param required_extensions: The value of the `requiredextensions`
+        attribute of the root node of the XML document.
+        :return: `True` if the document is supported, or `False` if it's not.
+        """
+        extensions = required_extensions.split(" ")
+        extensions = set(filter(lambda x: x != "", extensions))
+        return extensions <= threemf_supported_extensions
 
     def read_objects(self, root):
         """
