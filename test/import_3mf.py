@@ -290,6 +290,25 @@ class TestImport3MF(unittest.TestCase):
         result = self.importer.assign_content_types(archive, content_types)
         self.assertEqual(result, {"some_directory/file.txt": "Second type"}, "Now that the priority is reversed, the second type has highest priority.")
 
+    def test_is_supported_true(self):
+        """
+        Tests the detection of whether a document is supported.
+        """
+        supported_documents = [
+            "",  # No requirements, so this is supported.
+            "http://a",  # Subset of the supported namespaces.
+            "http://b",  # Different subset.
+            "http://b http://a",  # All of the supported extensions are necessary.
+            "   http://a   ",  # Extra whitespace.
+            " ",  # Just whitespace.
+            "http://a http://a"  # Duplicates are ignored.
+        ]
+
+        with unittest.mock.patch("io_mesh_3mf.import_3mf.threemf_supported_extensions", {"http://a", "http://b"}):
+            for document_requirements in supported_documents:
+                with self.subTest(document_requirements=document_requirements):
+                    self.assertTrue(self.importer.is_supported(document_requirements))
+
     def test_unit_scale_global(self):
         """
         Tests getting the global scale importer setting.
