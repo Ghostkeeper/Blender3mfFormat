@@ -20,7 +20,6 @@ import zipfile  # To read the 3MF files which are secretly zip archives.
 
 from .unit_conversions import blender_to_metre, threemf_to_metre  # To convert to Blender's units.
 from .constants import (  # Constants associated with the 3MF file format.
-    threemf_3dmodel_location,
     threemf_content_types_location,
     threemf_default_unit,
     threemf_model_mimetype,
