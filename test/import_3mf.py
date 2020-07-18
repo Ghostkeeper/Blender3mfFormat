@@ -554,6 +554,31 @@ class TestImport3MF(unittest.TestCase):
         self.importer.read_metadata(object_node)
         self.assertEqual(len(self.importer.metadata), 0, "The only metadata entry had no name, so it will get ignored.")
 
+    def test_read_metadata_preserve(self):
+        """
+        Tests reading the preserve attribute of metadata entries.
+        """
+        positive_preserve_values = ["1", "true", "tRuE", "bla", "anything really"]
+        negative_preserve_values = ["0", "false", "fAlSe"]
+
+        object_node = xml.etree.ElementTree.Element("{{{ns}}}object".format(ns=threemf_default_namespace))
+        for preserve in positive_preserve_values + negative_preserve_values:
+            metadata_node = xml.etree.ElementTree.SubElement(object_node, "{{{ns}}}metadata".format(ns=threemf_default_namespace))
+            metadata_node.attrib["name"] = preserve
+            metadata_node.text = "value"
+            metadata_node.attrib["preserve"] = preserve
+
+        self.importer.read_metadata(object_node)  # Read them all at once.
+
+        for positive_preserve in positive_preserve_values:
+            with self.subTest(preserve=positive_preserve):
+                self.assertIn(positive_preserve, self.importer.metadata, "We added this entry.")
+                self.assertTrue(self.importer.metadata[positive_preserve].preserve, "These are preserve values that indicate that they need to be preserved.")
+        for negative_preserve in negative_preserve_values:
+            with self.subTest(preserve=negative_preserve):
+                self.assertIn(negative_preserve, self.importer.metadata, "We added this entry.")
+                self.assertFalse(self.importer.metadata[negative_preserve].preserve, "These are preserve values that indicate that they don't need to be preserved.")
+
     def test_read_vertices_missing(self):
         """
         Tests reading an object where the <vertices> element is missing.
