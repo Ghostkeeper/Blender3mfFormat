@@ -527,7 +527,7 @@ class TestImport3MF(unittest.TestCase):
         self.importer.read_metadata(object_node)
         self.assertEqual(len(self.importer.metadata), 2, "We added 2 metadata entries.")
 
-    def test_read_metadata_entries_name(self):
+    def test_read_metadata_name(self):
         """
         Tests reading the name from a metadata entry.
         """
@@ -540,6 +540,19 @@ class TestImport3MF(unittest.TestCase):
         self.assertIn("some name", self.importer.metadata, "The metadata entry is stored by name.")
         self.assertEqual(self.importer.metadata["some name"].name, "some name", "This was the name that we added.")
         self.assertEqual(self.importer.metadata["some name"].value, "value", "The correct value is stored with it.")
+
+    def test_read_metadata_no_name(self):
+        """
+        Tests reading a metadata entry that has no name with it.
+
+        Those entries should get ignored.
+        """
+        object_node = xml.etree.ElementTree.Element("{{{ns}}}object".format(ns=threemf_default_namespace))
+        metadata_node = xml.etree.ElementTree.SubElement(object_node, "{{{ns}}}metadata".format(ns=threemf_default_namespace))
+        metadata_node.text = "value"
+
+        self.importer.read_metadata(object_node)
+        self.assertEqual(len(self.importer.metadata), 0, "The only metadata entry had no name, so it will get ignored.")
 
     def test_read_vertices_missing(self):
         """
