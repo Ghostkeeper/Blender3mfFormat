@@ -307,7 +307,23 @@ class TestImport3MF(unittest.TestCase):
         with unittest.mock.patch("io_mesh_3mf.import_3mf.threemf_supported_extensions", {"http://a", "http://b"}):
             for document_requirements in supported_documents:
                 with self.subTest(document_requirements=document_requirements):
-                    self.assertTrue(self.importer.is_supported(document_requirements))
+                    self.assertTrue(self.importer.is_supported(document_requirements), "These namespaces are supported (A and B are).")
+
+    def test_is_supported_false(self):
+        """
+        Tests the case when a document contains not-supported extensions.
+        """
+        not_supported_documents = [
+            "http://c",  # Just one requirement, which is not supported.
+            "http://a http://c",  # Mix of supported and not-supported extensions.
+            "http://c http://b",  # Not-supported extension is first.
+            "  http://c    http://a  http://d"  # Whitespace around them.
+        ]
+
+        with unittest.mock.patch("io_mesh_3mf.import_3mf.threemf_supported_extensions", {"http://a", "http://b"}):
+            for document_requirements in not_supported_documents:
+                with self.subTest(document_requirements=document_requirements):
+                    self.assertFalse(self.importer.is_supported(document_requirements), "These namespaces are not supported (only A and B are).")
 
     def test_unit_scale_global(self):
         """
