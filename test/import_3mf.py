@@ -503,6 +503,15 @@ class TestImport3MF(unittest.TestCase):
                     result = self.importer.unit_scale(context, root)
                     self.assertAlmostEqual(result, correct_conversions[blender_unit][threemf_unit])
 
+    def test_read_metadata_entries_missing(self):
+        """
+        Tests reading metadata entries when there are no <metadata> elements.
+        """
+        object_node = xml.etree.ElementTree.Element("{{{ns}}}object".format(ns=threemf_default_namespace))
+
+        self.importer.read_metadata(object_node)
+        self.assertEqual(len(self.importer.metadata), 0, "There is no metadata in this document, so the metadata is empty.")
+
     def test_read_vertices_missing(self):
         """
         Tests reading an object where the <vertices> element is missing.
