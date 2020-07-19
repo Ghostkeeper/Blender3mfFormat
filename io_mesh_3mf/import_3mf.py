@@ -18,7 +18,6 @@ import re  # To find files in the archive based on the content types.
 import xml.etree.ElementTree  # To parse the 3dmodel.model file.
 import zipfile  # To read the 3MF files which are secretly zip archives.
 
-from .unit_conversions import blender_to_metre, threemf_to_metre  # To convert to Blender's units.
 from .constants import (  # Constants associated with the 3MF file format.
     threemf_content_types_location,
     threemf_default_unit,
@@ -27,6 +26,8 @@ from .constants import (  # Constants associated with the 3MF file format.
     threemf_rels_mimetype,
     threemf_supported_extensions
 )
+from .metadata import MetadataEntry, Metadata  # To store and serialise metadata.
+from .unit_conversions import blender_to_metre, threemf_to_metre  # To convert to Blender's units.
 
 log = logging.getLogger(__name__)
 
@@ -59,7 +60,7 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
         super().__init__()
         self.resource_objects = {}
         self.num_loaded = 0
-        self.metadata = {}
+        self.metadata = Metadata()
 
     def execute(self, context):
         """
@@ -74,7 +75,8 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
         # Reset state.
         self.resource_objects = {}
         self.num_loaded = 0
-        self.metadata = {}
+        self.metadata = Metadata()
+        # TODO: Deserialise metadata from the Blender context, if it exists.
 
         # Preparation of the input parameters.
         paths = [os.path.join(self.directory, name.name) for name in self.files]
@@ -253,17 +255,11 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
 
         return scale
 
-    def read_metadata(self, root, model_path):
+    def read_metadata(self, root):
         """
         Reads the metadata tag from a 3MF document.
         :param root: The root node of a 3dmodel.model XML file.
-        :param model_path: A complete path to the model within the file. That
-        includes the path to the file that this model came from as well as the
-        path within that file to the 3dmodel.model file. The two are separated
-        URI-stile with a pound symbol. For example:
-        `/home/ghostkeeper/models/project.3mf#3D/3dmodel.model`
         """
-        self.metadata[model_path] = {}
         for metadata_node in root.iterfind("./3mf:metadata", threemf_namespaces):
             if "name" not in metadata_node.attrib:
                 log.warning("Metadata entry without name is discarded.")
@@ -275,7 +271,7 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
             value = metadata_node.text
 
             # Always store all metadata so that they are preserved.
-            self.metadata[model_path][name] = MetadataEntry(name=name, preserve=preserve, datatype=datatype, value=value)
+            self.metadata[name] = MetadataEntry(name=name, preserve=preserve, datatype=datatype, value=value)
 
     def read_objects(self, root):
         """
