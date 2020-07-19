@@ -62,7 +62,7 @@ class TestMetadata(unittest.TestCase):
         self.assertEqual(self.metadata["duplicate"].datatype, "int", "The data type was the same, still \"int\".")
         self.assertEqual(self.metadata["duplicate"].value, "5", "The value was the same, still \"5\".")
 
-    def test_store_override_preserve(self):
+    def test_override_preserve(self):
         """
         Tests the overriding of the preserve attribute if metadata entries are
         compatible.
@@ -74,3 +74,21 @@ class TestMetadata(unittest.TestCase):
 
         self.metadata["duplicate"] = io_mesh_3mf.metadata.MetadataEntry(name="duplicate", preserve=False, datatype="int", value="5")
         self.assertTrue(self.metadata["duplicate"].preserve, "An older entry needed to be preserved, so even if the later entry didn't, it still needs to be preserved.")
+
+    def test_store_incompatible_value(self):
+        """
+        Tests storing values for a metadata entry that are incompatible with
+        each other because they have different values.
+        """
+        self.metadata["duplicate"] = io_mesh_3mf.metadata.MetadataEntry(name="duplicate", preserve=False, datatype="int", value="5")
+        self.metadata["duplicate"] = io_mesh_3mf.metadata.MetadataEntry(name="duplicate", preserve=False, datatype="int", value="6")  # Different value!
+
+        self.assertNotIn("duplicate", self.metadata, "It should appear to be removed from the storage.")
+        with self.assertRaises(KeyError):
+            print("Getting this value should be impossible:", self.metadata["duplicate"])
+
+        self.metadata["duplicate"] = io_mesh_3mf.metadata.MetadataEntry(name="duplicate", preserve=False, datatype="int", value="5")  # Add it again.
+
+        self.assertNotIn("duplicate", self.metadata, "Since there's conflicts, it should not add it to the storage.")
+        with self.assertRaises(KeyError):
+            print("Getting this value should be impossible:", self.metadata["duplicate"])
