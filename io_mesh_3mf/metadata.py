@@ -38,4 +38,29 @@ class Metadata:
     """
 
     def __init__(self):
+        """
+        Create an empty storage of metadata.
+        """
         self.metadata = {}
+
+    def __setitem__(self, key, value):
+        """
+        Add a metadata entry to this storage.
+        :param key: The name of the entry.
+        :param value: A `MetadataEntry` object to store.
+        """
+        if key not in self.metadata:  # Completely new value. We can just store this one, since it's always consistent with existing metadata.
+            self.metadata[key] = value
+            return
+
+        if self.metadata[key] is None:  # This entry was already in conflict with another entry and erased. The new value will also be in conflict with at least one, so should also not be stored.
+            return
+
+        competing = self.metadata[key]
+        if value.value != competing.value or value.datatype != competing.datatype:  # These two are inconsistent. Erase both!
+            self.metadata[key] = None
+            return
+
+        # The two are consistent.
+        self.metadata[key].preserve |= value.preserve  # The "preserve" property may be different. Preserve if any of them says to preserve.
+        # No need to store any new value, since the entry already existed.
