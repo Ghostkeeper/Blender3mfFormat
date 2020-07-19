@@ -10,6 +10,7 @@ import collections  # For named tuples.
 
 MetadataEntry = collections.namedtuple("MetadataEntry", ["name", "preserve", "datatype", "value"])
 
+
 class Metadata:
     """
     This class tracks the metadata in the scene.
