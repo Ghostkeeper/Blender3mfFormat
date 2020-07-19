@@ -254,11 +254,17 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
 
         return scale
 
-    def read_metadata(self, root):
+    def read_metadata(self, root, model_path):
         """
         Reads the metadata tag from a 3MF document.
         :param root: The root node of a 3dmodel.model XML file.
+        :param model_path: A complete path to the model within the file. That
+        includes the path to the file that this model came from as well as the
+        path within that file to the 3dmodel.model file. The two are separated
+        URI-stile with a pound symbol. For example:
+        `/home/ghostkeeper/models/project.3mf#3D/3dmodel.model`
         """
+        self.metadata[model_path] = {}
         for metadata_node in root.iterfind("./3mf:metadata", threemf_namespaces):
             if "name" not in metadata_node.attrib:
                 log.warning("Metadata entry without name is discarded.")
@@ -270,7 +276,7 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
             value = metadata_node.text
 
             # Always store all metadata so that they are preserved.
-            self.metadata[name] = MetadataEntry(name=name, preserve=preserve, datatype=datatype, value=value)
+            self.metadata[model_path][name] = MetadataEntry(name=name, preserve=preserve, datatype=datatype, value=value)
 
     def read_objects(self, root):
         """
