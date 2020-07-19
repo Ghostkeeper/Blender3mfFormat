@@ -62,7 +62,7 @@ class Metadata:
             return
 
         # The two are consistent.
-        self.metadata[key].preserve |= value.preserve  # The "preserve" property may be different. Preserve if any of them says to preserve.
+        self.metadata[key].preserve = competing.preserve or value.preserve  # The "preserve" property may be different. Preserve if any of them says to preserve.
         # No need to store any new value, since the entry already existed.
 
     def __getitem__(self, key):
@@ -86,3 +86,11 @@ class Metadata:
         multiple files.
         """
         return item in self.metadata and self.metadata[item] is not None
+
+    def values(self):
+        """
+        Return all metadata entries that are registered in this storage and not
+        in conflict.
+        :return: A generator of metadata entries.
+        """
+        yield from filter(lambda entry: entry is not None, self.metadata.values())
