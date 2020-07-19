@@ -77,8 +77,8 @@ class TestMetadata(unittest.TestCase):
 
     def test_store_incompatible_value(self):
         """
-        Tests storing values for a metadata entry that are incompatible with
-        each other because they have different values.
+        Tests storing metadata entries that are incompatible with each other
+        because they have different values.
         """
         self.metadata["duplicate"] = io_mesh_3mf.metadata.MetadataEntry(name="duplicate", preserve=False, datatype="int", value="5")
         self.metadata["duplicate"] = io_mesh_3mf.metadata.MetadataEntry(name="duplicate", preserve=False, datatype="int", value="6")  # Different value!
@@ -88,6 +88,24 @@ class TestMetadata(unittest.TestCase):
             print("Getting this value should be impossible:", self.metadata["duplicate"])
 
         self.metadata["duplicate"] = io_mesh_3mf.metadata.MetadataEntry(name="duplicate", preserve=False, datatype="int", value="5")  # Add it again.
+
+        self.assertNotIn("duplicate", self.metadata, "Since there's conflicts, it should not add it to the storage.")
+        with self.assertRaises(KeyError):
+            print("Getting this value should be impossible:", self.metadata["duplicate"])
+
+    def test_store_incompatible_type(self):
+        """
+        Tests storing metadata entries that are incompatible with each other
+        because they have different types.
+        """
+        self.metadata["duplicate"] = io_mesh_3mf.metadata.MetadataEntry(name="duplicate", preserve=False, datatype="int", value="5")
+        self.metadata["duplicate"] = io_mesh_3mf.metadata.MetadataEntry(name="duplicate", preserve=False, datatype="float", value="5")  # Different data type!
+
+        self.assertNotIn("duplicate", self.metadata, "It should appear to be removed from the storage.")
+        with self.assertRaises(KeyError):
+            print("Getting this value should be impossible:", self.metadata["duplicate"])
+
+        self.metadata["duplicate"] = io_mesh_3mf.metadata.MetadataEntry(name="duplicate", preserve=False, datatype="float", value="5")  # Add it again.
 
         self.assertNotIn("duplicate", self.metadata, "Since there's conflicts, it should not add it to the storage.")
         with self.assertRaises(KeyError):
