@@ -75,3 +75,14 @@ class Metadata:
         if key not in self.metadata or self.metadata[key] is None:
             raise KeyError(key)  # Metadata entry doesn't exist, or its values are conflicting with each other across multiple files.
         return self.metadata[key]
+
+    def __contains__(self, item):
+        """
+        Tests if a metadata entry with a certain name is present and not in
+        conflict.
+        :param item: The name of the metadata entry to test for.
+        :return: `True` if the metadata entry is present and not in conflict, or
+        `False` if it's not present or in conflict with metadata values from
+        multiple files.
+        """
+        return item in self.metadata and self.metadata[item] is not None
