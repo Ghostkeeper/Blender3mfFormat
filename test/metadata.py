@@ -49,3 +49,15 @@ class TestMetadata(unittest.TestCase):
         """
         self.metadata["fast"] = "yes, please"
         self.assertEqual(self.metadata["fast"], "yes, please")
+
+    def test_store_compatible(self):
+        """
+        Test storing an entry multiple times with compatible values.
+        """
+        self.metadata["duplicate"] = io_mesh_3mf.metadata.MetadataEntry(name="duplicate", preserve=False, datatype="int", value="5")
+        self.metadata["duplicate"] = io_mesh_3mf.metadata.MetadataEntry(name="duplicate", preserve=False, datatype="int", value="5")  # Store twice!
+
+        self.assertEqual(self.metadata["duplicate"].name, "duplicate", "The name was the same, still \"duplicate\".")
+        self.assertFalse(self.metadata["duplicate"].preserve, "Neither of the entries needed to be preserved, so it still doesn't need to be preserved.")
+        self.assertEqual(self.metadata["duplicate"].datatype, "int", "The data type was the same, still \"int\".")
+        self.assertEqual(self.metadata["duplicate"].value, "5", "The value was the same, still \"5\".")
