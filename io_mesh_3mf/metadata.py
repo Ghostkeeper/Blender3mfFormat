@@ -62,9 +62,10 @@ class Metadata:
             self.metadata[key] = None
             return
 
-        # The two are consistent.
-        self.metadata[key].preserve = competing.preserve or value.preserve  # The "preserve" property may be different. Preserve if any of them says to preserve.
-        # No need to store any new value, since the entry already existed.
+        # The two are consistent. Usually no need to store anything, since it's already stored.
+        # The "preserve" property may be different. Preserve if any of them says to preserve.
+        if not competing.preserve and value.preserve:  # Prevent unnecessary construction of namedtuples.
+            self.metadata[key] = MetadataEntry(name=key, preserve=True, datatype=competing.datatype, value=competing.value)
 
     def __getitem__(self, key):
         """
