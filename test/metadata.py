@@ -110,3 +110,19 @@ class TestMetadata(unittest.TestCase):
         self.assertNotIn("duplicate", self.metadata, "Since there's conflicts, it should not add it to the storage.")
         with self.assertRaises(KeyError):
             print("Getting this value should be impossible:", self.metadata["duplicate"])
+
+    def test_values(self):
+        """
+        Test getting the metadata values.
+        """
+        self.metadata["hollow"] = io_mesh_3mf.metadata.MetadataEntry(name="hollow", preserve=True, datatype="bool", value="True")
+        self.metadata["conflicting"] = io_mesh_3mf.metadata.MetadataEntry(name="conflicting", preserve=False, datatype="int", value="5")
+        self.metadata["conflicting"] = io_mesh_3mf.metadata.MetadataEntry(name="conflicting", preserve=False, datatype="float", value="5.0")  # Should not show up in the values.
+        self.metadata["author"] = io_mesh_3mf.metadata.MetadataEntry(name="author", preserve=False, datatype="string", value="Ghostkeeper")
+        self.metadata["author"] = io_mesh_3mf.metadata.MetadataEntry(name="author", preserve=False, datatype="string", value="Ghostkeeper")  # Duplicate, but not conflicting.
+
+        num_entries = 0  # Count how many, to prevent listing duplicates twice or something.
+        for entry in self.metadata.values():
+            self.assertIn(entry.name, {"hollow", "author"}, "The \"hollow\" and \"author\" entries need to be stored. Not \"conflicting\" because there was a conflict.")
+            num_entries += 1
+        self.assertEqual(num_entries, 2, "There were two valid entries: \"hollow\" and \"author\". \"conflicting\" shouldn't show up at all and there should only be one \"author\".")
