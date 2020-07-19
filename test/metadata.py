@@ -61,3 +61,16 @@ class TestMetadata(unittest.TestCase):
         self.assertFalse(self.metadata["duplicate"].preserve, "Neither of the entries needed to be preserved, so it still doesn't need to be preserved.")
         self.assertEqual(self.metadata["duplicate"].datatype, "int", "The data type was the same, still \"int\".")
         self.assertEqual(self.metadata["duplicate"].value, "5", "The value was the same, still \"5\".")
+
+    def test_store_override_preserve(self):
+        """
+        Tests the overriding of the preserve attribute if metadata entries are
+        compatible.
+        """
+        self.metadata["duplicate"] = io_mesh_3mf.metadata.MetadataEntry(name="duplicate", preserve=False, datatype="int", value="5")
+        self.metadata["duplicate"] = io_mesh_3mf.metadata.MetadataEntry(name="duplicate", preserve=True, datatype="int", value="5")  # Preserve the duplicate!
+
+        self.assertTrue(self.metadata["duplicate"].preserve, "If any of the duplicates needs to be preserved, the entry indicates that it needs to be preserved.")
+
+        self.metadata["duplicate"] = io_mesh_3mf.metadata.MetadataEntry(name="duplicate", preserve=False, datatype="int", value="5")
+        self.assertTrue(self.metadata["duplicate"].preserve, "An older entry needed to be preserved, so even if the later entry didn't, it still needs to be preserved.")
