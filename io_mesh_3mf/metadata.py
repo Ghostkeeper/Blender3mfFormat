@@ -7,6 +7,8 @@
 # <pep8 compliant>
 
 import collections  # For named tuples.
+import json  # To serialise and deserialise.
+import logging  # To warn when something is wrong.
 
 MetadataEntry = collections.namedtuple("MetadataEntry", ["name", "preserve", "datatype", "value"])
 
@@ -98,6 +100,23 @@ class Metadata:
         :return: The number of valid metadata entries.
         """
         return sum(1 for _ in self.values())
+
+    def deserialise(self, serialised):
+        """
+        Fills this instance with metadata entries from a serialised instance,
+        restoring its state as it was then.
+        """
+        self.metadata = {}  # Clear first. Don't want to be merging metadata this way.
+        try:
+            restored = json.loads(serialised)
+        except json.JSONDecodeError:
+            logging.warning("3MF Metadata file is corrupt. Something seems to have messed with it.")
+            return
+        for name, value in restored.items():
+            if value is None:
+                self.metadata[name] = None  # Flag that they are conflicting.
+                continue
+            self.metadata[name] = MetadataEntry(name=name, preserve=value["preserve"], datatype=value["datatype"], value=value["value"])
 
     def values(self):
         """
