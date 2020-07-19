@@ -32,7 +32,6 @@ log = logging.getLogger(__name__)
 
 ResourceObject = collections.namedtuple("ResourceObject", ["vertices", "triangles", "components"])
 Component = collections.namedtuple("Component", ["resource_object", "transformation"])
-MetadataEntry = collections.namedtuple("MetadataEntry", ["name", "preserve", "datatype", "value"])
 
 
 class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
