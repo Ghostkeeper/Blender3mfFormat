@@ -87,6 +87,16 @@ class Metadata:
         """
         return item in self.metadata and self.metadata[item] is not None
 
+    def __len__(self):
+        """
+        Returns the number of valid items in this metadata storage.
+
+        An item is only valid if it's not in conflict, i.e. if it would be
+        present in an iteration over the storage.
+        :return: The number of valid metadata entries.
+        """
+        return sum(1 for _ in self.values())
+
     def values(self):
         """
         Return all metadata entries that are registered in this storage and not
