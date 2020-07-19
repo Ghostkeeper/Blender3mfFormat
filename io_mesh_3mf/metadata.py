@@ -118,6 +118,23 @@ class Metadata:
                 continue
             self.metadata[name] = MetadataEntry(name=name, preserve=value["preserve"], datatype=value["datatype"], value=value["value"])
 
+    def serialise(self):
+        """
+        Serializes all current metadata entries to a string for storage in
+        Blender's context.
+        :return: A string that fully represents the state of this instance.
+        """
+        result = {}  # Create a dictionary for the JSON library to dump.
+        for key, entry in self.metadata.items():
+            if entry is None:
+                result[key] = None
+                continue
+            result[key] = {}
+            result[key]["preserve"] = entry.preserve
+            result[key]["datatype"] = entry.datatype
+            result[key]["value"] = entry.value
+        return json.dumps(result)
+
     def values(self):
         """
         Return all metadata entries that are registered in this storage and not
