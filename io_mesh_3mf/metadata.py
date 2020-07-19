@@ -64,3 +64,14 @@ class Metadata:
         # The two are consistent.
         self.metadata[key].preserve |= value.preserve  # The "preserve" property may be different. Preserve if any of them says to preserve.
         # No need to store any new value, since the entry already existed.
+
+    def __getitem__(self, key):
+        """
+        Retrieves a metadata entry, if it exists and was not in conflict.
+        :param key: The name of the metadata entry to get.
+        :return: The `MetadataEntry` object stored there.
+        :raises: `KeyError` if there is no metadata entry or it was in conflict.
+        """
+        if key not in self.metadata or self.metadata[key] is None:
+            raise KeyError(key)  # Metadata entry doesn't exist, or its values are conflicting with each other across multiple files.
+        return self.metadata[key]
