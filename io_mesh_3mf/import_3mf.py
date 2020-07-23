@@ -106,6 +106,8 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
                 self.read_objects(root)
                 self.build_items(root, scale_unit)
 
+        self.build_metadata()
+
         log.info(f"Imported {self.num_loaded} objects from 3MF files.")
 
         return {'FINISHED'}
@@ -490,3 +492,14 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
             objectid_stack_trace.append(component.resource_object)
             self.build_object(child_object, transform, objectid_stack_trace, parent=blender_object)
             objectid_stack_trace.pop()
+
+    def build_metadata(self):
+        """
+        Add a file to the scene containing the 3MF metadata.
+        """
+        if ".3mf_metadata" in bpy.data.texts:
+            metadata_text = bpy.data.texts[".3mf_metadata"]
+            metadata_text.clear()
+        else:
+            metadata_text = bpy.data.texts.new(".3mf_metadata")
+        metadata_text.write(self.metadata.serialise())

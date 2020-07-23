@@ -120,7 +120,7 @@ class Metadata:
 
     def serialise(self):
         """
-        Serializes all current metadata entries to a string for storage in
+        Serialises all current metadata entries to a string for storage in
         Blender's context.
         :return: A string that fully represents the state of this instance.
         """
