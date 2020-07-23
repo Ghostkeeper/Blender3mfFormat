@@ -76,7 +76,8 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
         self.resource_objects = {}
         self.num_loaded = 0
         self.metadata = Metadata()
-        # TODO: Deserialise metadata from the Blender context, if it exists.
+        if ".3mf_metadata" in bpy.data.texts:  # If we already loaded 3MF files before, combine the metadata.
+            self.metadata.deserialise(bpy.data.texts[".3mf_metadata"].as_string())
 
         # Preparation of the input parameters.
         paths = [os.path.join(self.directory, name.name) for name in self.files]
