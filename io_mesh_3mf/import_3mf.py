@@ -286,6 +286,8 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
             # Always store all metadata so that they are preserved.
             metadata[name] = MetadataEntry(name=name, preserve=preserve, datatype=datatype, value=value)
 
+        return metadata
+
     def read_objects(self, root):
         """
         Reads all repeatable build objects from the resources of an XML root
