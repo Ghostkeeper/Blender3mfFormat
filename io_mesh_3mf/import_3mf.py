@@ -103,7 +103,7 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
 
                 scale_unit = self.unit_scale(context, root)
                 self.resource_objects = {}
-                self.read_metadata(root)
+                self.metadata = self.read_metadata(root, self.metadata)
                 self.read_objects(root)
                 self.build_items(root, scale_unit)
 
@@ -258,12 +258,22 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
 
         return scale
 
-    def read_metadata(self, root):
+    def read_metadata(self, node, original_metadata=None):
         """
-        Reads the metadata tag from a 3MF document.
-        :param root: The root node of a 3dmodel.model XML file.
+        Reads the metadata tags from a metadata group.
+        :param node: A node in the 3MF document that contains <metadata> tags.
+        This can be either a root node, or a <metadatagroup> node.
+        :param original_metadata: If there was already metadata for this context
+        from other documents, you can provide that metadata here. The metadata
+        of those documents will be combined then.
+        :return: A `Metadata` object.
         """
-        for metadata_node in root.iterfind("./3mf:metadata", threemf_namespaces):
+        if original_metadata is not None:
+            metadata = original_metadata
+        else:
+            metadata = Metadata()  # Create a new Metadata object.
+
+        for metadata_node in node.iterfind("./3mf:metadata", threemf_namespaces):
             if "name" not in metadata_node.attrib:
                 log.warning("Metadata entry without name is discarded.")
                 continue  # This attribute has no name, so there's no key by which I can save the metadata.
@@ -274,7 +284,7 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
             value = metadata_node.text
 
             # Always store all metadata so that they are preserved.
-            self.metadata[name] = MetadataEntry(name=name, preserve=preserve, datatype=datatype, value=value)
+            metadata[name] = MetadataEntry(name=name, preserve=preserve, datatype=datatype, value=value)
 
     def read_objects(self, root):
         """
