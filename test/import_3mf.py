@@ -509,8 +509,8 @@ class TestImport3MF(unittest.TestCase):
         """
         object_node = xml.etree.ElementTree.Element("{{{ns}}}object".format(ns=threemf_default_namespace))
 
-        self.importer.read_metadata(object_node)
-        self.assertEqual(len(self.importer.metadata), 0, "There is no metadata in this document, so the metadata is empty.")
+        result = self.importer.read_metadata(object_node)
+        self.assertEqual(len(result), 0, "There is no metadata in this document, so the metadata is empty.")
 
     def test_read_metadata_entries_multiple(self):
         """
@@ -524,8 +524,8 @@ class TestImport3MF(unittest.TestCase):
         metadata2_node.attrib["name"] = "name2"
         metadata2_node.text = "value2"
 
-        self.importer.read_metadata(object_node)
-        self.assertEqual(len(self.importer.metadata), 2, "We added 2 metadata entries.")
+        result = self.importer.read_metadata(object_node)
+        self.assertEqual(len(result), 2, "We added 2 metadata entries.")
 
     def test_read_metadata_name(self):
         """
@@ -536,10 +536,10 @@ class TestImport3MF(unittest.TestCase):
         metadata_node.attrib["name"] = "some name"
         metadata_node.text = "value"
 
-        self.importer.read_metadata(object_node)
-        self.assertIn("some name", self.importer.metadata, "The metadata entry is stored by name.")
-        self.assertEqual(self.importer.metadata["some name"].name, "some name", "This was the name that we added.")
-        self.assertEqual(self.importer.metadata["some name"].value, "value", "The correct value is stored with it.")
+        result = self.importer.read_metadata(object_node)
+        self.assertIn("some name", result, "The metadata entry is stored by name.")
+        self.assertEqual(result["some name"].name, "some name", "This was the name that we added.")
+        self.assertEqual(result["some name"].value, "value", "The correct value is stored with it.")
 
     def test_read_metadata_no_name(self):
         """
@@ -551,8 +551,8 @@ class TestImport3MF(unittest.TestCase):
         metadata_node = xml.etree.ElementTree.SubElement(object_node, "{{{ns}}}metadata".format(ns=threemf_default_namespace))
         metadata_node.text = "value"
 
-        self.importer.read_metadata(object_node)
-        self.assertEqual(len(self.importer.metadata), 0, "The only metadata entry had no name, so it will get ignored.")
+        result = self.importer.read_metadata(object_node)
+        self.assertEqual(len(result), 0, "The only metadata entry had no name, so it will get ignored.")
 
     def test_read_metadata_preserve(self):
         """
@@ -568,16 +568,16 @@ class TestImport3MF(unittest.TestCase):
             metadata_node.text = "value"
             metadata_node.attrib["preserve"] = preserve
 
-        self.importer.read_metadata(object_node)  # Read them all at once.
+        result = self.importer.read_metadata(object_node)  # Read them all at once.
 
         for positive_preserve in positive_preserve_values:
             with self.subTest(preserve=positive_preserve):
-                self.assertIn(positive_preserve, self.importer.metadata, "We added this entry.")
-                self.assertTrue(self.importer.metadata[positive_preserve].preserve, "These are preserve values that indicate that they need to be preserved.")
+                self.assertIn(positive_preserve, result, "We added this entry.")
+                self.assertTrue(result[positive_preserve].preserve, "These are preserve values that indicate that they need to be preserved.")
         for negative_preserve in negative_preserve_values:
             with self.subTest(preserve=negative_preserve):
-                self.assertIn(negative_preserve, self.importer.metadata, "We added this entry.")
-                self.assertFalse(self.importer.metadata[negative_preserve].preserve, "These are preserve values that indicate that they don't need to be preserved.")
+                self.assertIn(negative_preserve, result, "We added this entry.")
+                self.assertFalse(result[negative_preserve].preserve, "These are preserve values that indicate that they don't need to be preserved.")
 
     def test_read_metadata_type(self):
         """
@@ -588,9 +588,9 @@ class TestImport3MF(unittest.TestCase):
         metadata_node.attrib["type"] = "hyperset"
         metadata_node.attrib["name"] = "some metadata"
 
-        self.importer.read_metadata(object_node)
-        self.assertIn("some metadata", self.importer.metadata, "We added this entry.")
-        self.assertEqual(self.importer.metadata["some metadata"].datatype, "hyperset", "We said that the type was a hyperset.")
+        result = self.importer.read_metadata(object_node)
+        self.assertIn("some metadata", result, "We added this entry.")
+        self.assertEqual(result["some metadata"].datatype, "hyperset", "We said that the type was a hyperset.")
 
     def test_read_vertices_missing(self):
         """
