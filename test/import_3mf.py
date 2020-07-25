@@ -592,6 +592,23 @@ class TestImport3MF(unittest.TestCase):
         self.assertIn("some metadata", result, "We added this entry.")
         self.assertEqual(result["some metadata"].datatype, "hyperset", "We said that the type was a hyperset.")
 
+    def test_read_metadata_combined(self):
+        """
+        Tests combining an existing metadata set with new metadata from the
+        document.
+        """
+        object_node = xml.etree.ElementTree.Element("{{{ns}}}object".format(ns=threemf_default_namespace))
+        metadata_node = xml.etree.ElementTree.SubElement(object_node, "{{{ns}}}metadata".format(ns=threemf_default_namespace))
+        metadata_node.attrib["name"] = "cool"
+        metadata_node.text = "definitely"
+        existing_metadata = {"original_entry": "original_value"}  # Using a dict here to mock the Metadata() object! Actual testing of the combining is done with the Metadata class tests.
+
+        result = self.importer.read_metadata(object_node, existing_metadata)
+        self.assertIn("cool", result, "The new metadata entry is put in the result.")
+        self.assertEqual(result["cool"].value, "definitely", "The new metadata value is correctly stored.")
+        self.assertIn("original_entry", result, "The old metadata entry is also still preserved.")
+        self.assertEqual(result["original_entry"], "original_value", "The old metadata value is preserved.")
+
     def test_read_vertices_missing(self):
         """
         Tests reading an object where the <vertices> element is missing.
