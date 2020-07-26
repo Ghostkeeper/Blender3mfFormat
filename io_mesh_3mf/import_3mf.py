@@ -107,7 +107,7 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
                 self.read_objects(root)
                 self.build_items(root, scale_unit)
 
-        self.build_metadata()
+        self.build_metadata(bpy.context.scene, self.metadata)
 
         log.info(f"Imported {self.num_loaded} objects from 3MF files.")
 
@@ -506,13 +506,20 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
             self.build_object(child_object, transform, objectid_stack_trace, parent=blender_object)
             objectid_stack_trace.pop()
 
-    def build_metadata(self):
+    def build_metadata(self, blender_object, metadata):
         """
-        Add a file to the scene containing the 3MF metadata.
+        Add the metadata belonging to an object to that object.
+
+        The metadata will be stored as Blender properties. In the case of
+        properties known to Blender they will be translated appropriately.
+        :param blender_object: The object to which to add these metadata
+        entries.
+        :param metadata: The metadata to build.
         """
-        if ".3mf_metadata" in bpy.data.texts:
-            metadata_text = bpy.data.texts[".3mf_metadata"]
-            metadata_text.clear()
-        else:
-            metadata_text = bpy.data.texts.new(".3mf_metadata")
-        metadata_text.write(self.metadata.serialise())
+        for metadata_entry in metadata.values():
+            name = metadata_entry.name
+            value = metadata_entry.value
+            if name == "Title":  # Has a built-in ID property for objects as well as scenes.
+                blender_object.name = value
+            else:
+                blender_object[name] = value
