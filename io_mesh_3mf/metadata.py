@@ -115,7 +115,11 @@ class Metadata:
             if name == "Title":  # Has a built-in ID property for objects as well as scenes.
                 blender_object.name = value
             else:
-                blender_object[name] = value
+                blender_object[name] = {
+                    "datatype": metadata_entry.datatype,
+                    "preserve": metadata_entry.preserve,
+                    "value": value,
+                }
 
     def deserialise(self, serialised):
         """
