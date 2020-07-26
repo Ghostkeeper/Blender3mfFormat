@@ -60,7 +60,6 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
         super().__init__()
         self.resource_objects = {}
         self.num_loaded = 0
-        self.metadata = Metadata()
 
     def execute(self, context):
         """
@@ -75,9 +74,9 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
         # Reset state.
         self.resource_objects = {}
         self.num_loaded = 0
-        self.metadata = Metadata()
+        scene_metadata = Metadata()
         if ".3mf_metadata" in bpy.data.texts:  # If we already loaded 3MF files before, combine the metadata.
-            self.metadata.deserialise(bpy.data.texts[".3mf_metadata"].as_string())
+            scene_metadata.deserialise(bpy.data.texts[".3mf_metadata"].as_string())
 
         # Preparation of the input parameters.
         paths = [os.path.join(self.directory, name.name) for name in self.files]
@@ -103,11 +102,11 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
 
                 scale_unit = self.unit_scale(context, root)
                 self.resource_objects = {}
-                self.metadata = self.read_metadata(root, self.metadata)
+                scene_metadata = self.read_metadata(root, scene_metadata)
                 self.read_objects(root)
                 self.build_items(root, scale_unit)
 
-        self.metadata.store(bpy.context.scene)
+        scene_metadata.store(bpy.context.scene)
 
         log.info(f"Imported {self.num_loaded} objects from 3MF files.")
 
