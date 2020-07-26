@@ -99,6 +99,20 @@ class Metadata:
         """
         return sum(1 for _ in self.values())
 
+    def __delitem__(self, key):
+        """
+        Completely delete all traces of a metadata entry from this storage.
+
+        Even if there was no real entry, but the shadow of entries being in
+        conflict, that information will be removed. That way it'll allow for a
+        new value to be stored.
+
+        Contrary to the normal dictionary's version, this one does check for the
+        key's existance, so you don't need to do that manually.
+        """
+        if key in self.metadata:
+            del self.metadata[key]
+
     def store(self, blender_object):
         """
         Store this metadata in a Blender object.
