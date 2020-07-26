@@ -101,6 +101,22 @@ class Metadata:
         """
         return sum(1 for _ in self.values())
 
+    def store(self, blender_object):
+        """
+        Store this metadata in a Blender object.
+
+        The metadata will be stored as Blender properties. In the case of
+        properties known to Blender they will be translated appropriately.
+        :param blender_object: The Blender object to store the metadata in.
+        """
+        for metadata_entry in self.values():
+            name = metadata_entry.name
+            value = metadata_entry.value
+            if name == "Title":  # Has a built-in ID property for objects as well as scenes.
+                blender_object.name = value
+            else:
+                blender_object[name] = value
+
     def deserialise(self, serialised):
         """
         Fills this instance with metadata entries from a serialised instance,
