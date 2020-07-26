@@ -7,19 +7,17 @@
 # <pep8 compliant>
 
 import collections  # For named tuples.
-import json  # To serialise and deserialise.
-import logging  # To warn when something is wrong.
 
 MetadataEntry = collections.namedtuple("MetadataEntry", ["name", "preserve", "datatype", "value"])
 
 
 class Metadata:
     """
-    This class tracks the metadata in the scene.
+    This class tracks the metadata of a Blender object.
 
     You can use it to update the metadata when importing, or to get the scene's
-    metadata when exporting. It has a routine to serialize or deserialize the
-    metadata in order for it to be stored in Blender's scene.
+    metadata when exporting. It has a routine to store the metadata in a Blender
+    object and to retrieve it from that Blender object again.
 
     This class functions like a temporary data structure only. It is blissfully
     unaware of the intricacies of the 3MF file format specifically, save for
@@ -139,40 +137,6 @@ class Metadata:
             # Don't mess with metadata added by the user or their other Blender add-ons. Don't want to break their behaviour.
 
         self["Title"] = MetadataEntry(name="Title", preserve=True, datatype="xs:string", value=blender_object.name)
-
-    def deserialise(self, serialised):
-        """
-        Fills this instance with metadata entries from a serialised instance,
-        restoring its state as it was then.
-        """
-        self.metadata = {}  # Clear first. Don't want to be merging metadata this way.
-        try:
-            restored = json.loads(serialised)
-        except json.JSONDecodeError:
-            logging.warning("3MF Metadata file is corrupt. Something seems to have messed with it.")
-            return
-        for name, value in restored.items():
-            if value is None:
-                self.metadata[name] = None  # Flag that they are conflicting.
-                continue
-            self.metadata[name] = MetadataEntry(name=name, preserve=value["preserve"], datatype=value["datatype"], value=value["value"])
-
-    def serialise(self):
-        """
-        Serialises all current metadata entries to a string for storage in
-        Blender's context.
-        :return: A string that fully represents the state of this instance.
-        """
-        result = {}  # Create a dictionary for the JSON library to dump.
-        for key, entry in self.metadata.items():
-            if entry is None:
-                result[key] = None
-                continue
-            result[key] = {}
-            result[key]["preserve"] = entry.preserve
-            result[key]["datatype"] = entry.datatype
-            result[key]["value"] = entry.value
-        return json.dumps(result)
 
     def values(self):
         """
