@@ -121,6 +121,25 @@ class Metadata:
                     "value": value,
                 }
 
+    def retrieve(self, blender_object):
+        """
+        Retrieve metadata from a Blender object.
+
+        The metadata will get stored in this existing instance.
+
+        The metadata from the Blender object will get merged with the data that
+        already exists in this instance. In case of conflicting metadata values,
+        those metadata entries will be left out.
+        :param blender_object: A Blender object to retrieve metadata from.
+        """
+        for key in blender_object.keys():
+            entry = blender_object[key]
+            if isinstance(entry, dict) and "datatype" in entry and "preserve" in entry and "value" in entry:  # Most likely a metadata entry from a previous 3MF file.
+                self[key] = MetadataEntry(name=key, preserve=entry["preserve"], datatype=entry["datatype"], value=entry["value"])
+            # Don't mess with metadata added by the user or their other Blender add-ons. Don't want to break their behaviour.
+
+        self["Title"] = MetadataEntry(name="Title", preserve=True, datatype="xs:string", value=blender_object.name)
+
     def deserialise(self, serialised):
         """
         Fills this instance with metadata entries from a serialised instance,

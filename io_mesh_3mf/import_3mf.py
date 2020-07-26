@@ -75,8 +75,7 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
         self.resource_objects = {}
         self.num_loaded = 0
         scene_metadata = Metadata()
-        if ".3mf_metadata" in bpy.data.texts:  # If we already loaded 3MF files before, combine the metadata.
-            scene_metadata.deserialise(bpy.data.texts[".3mf_metadata"].as_string())
+        scene_metadata.retrieve(bpy.context.scene)  # If there was already metadata in the scene, combine that with this file.
 
         # Preparation of the input parameters.
         paths = [os.path.join(self.directory, name.name) for name in self.files]
