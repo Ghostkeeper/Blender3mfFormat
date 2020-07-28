@@ -42,7 +42,7 @@ from io_mesh_3mf.constants import (
     threemf_model_mimetype,
     threemf_rels_mimetype
 )
-from io_mesh_3mf.metadata import Metadata  # To compare the metadata objects created by the code under test.
+from io_mesh_3mf.metadata import Metadata, MetadataEntry  # To compare the metadata objects created by the code under test.
 
 
 class TestImport3MF(unittest.TestCase):
@@ -952,6 +952,31 @@ class TestImport3MF(unittest.TestCase):
 
         expected_transformation = mathutils.Matrix.Scale(0.5, 4) @ mathutils.Matrix.Translation(mathutils.Vector([30, 40, 0]))  # Both transformation must be applied (and in correct order).
         self.importer.build_object.assert_called_once_with(self.single_triangle, expected_transformation, Metadata(), ["1"])
+
+    def test_build_items_metadata(self):
+        """
+        Tests building an item with metadata information.
+        """
+        self.importer.build_object = unittest.mock.MagicMock()  # Mock out the function that actually creates the object.
+        self.importer.resource_objects["1"] = self.single_triangle
+        root = xml.etree.ElementTree.Element("{{{ns}}}model".format(ns=threemf_default_namespace))  # Build a document with an <item> in it.
+        build_element = xml.etree.ElementTree.SubElement(root, "{{{ns}}}build".format(ns=threemf_default_namespace))
+        item_element = xml.etree.ElementTree.SubElement(build_element, "{{{ns}}}item".format(ns=threemf_default_namespace))
+        item_element.attrib["objectid"] = "1"
+
+        # Add some metadata.
+        item_element.attrib["partnumber"] = "numero uno"
+        metadata_element = xml.etree.ElementTree.SubElement(item_element, "{{{ns}}}metadatagroup".format(ns=threemf_default_namespace))
+        title_element = xml.etree.ElementTree.SubElement(metadata_element, "{{{ns}}}metadata".format(ns=threemf_default_namespace))
+        title_element.attrib["name"] = "Title"
+        title_element.text = "Lead Potato Engineer"
+
+        self.importer.build_items(root, 1.0)  # Build the item, executing the code under test.
+
+        expected_metadata = Metadata()
+        expected_metadata["3mf:partnumber"] = MetadataEntry(name="3mf:partnumber", preserve=True, datatype="xs:string", value="numero uno")
+        expected_metadata["Title"] = MetadataEntry(name="Title", preserve=False, datatype="", value="Lead Potato Engineer")
+        self.importer.build_object.assert_called_once_with(self.single_triangle, mathutils.Matrix.Identity(4), expected_metadata, ["1"])
 
     def test_build_object_mesh_data(self):
         """
