@@ -456,11 +456,15 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
                 log.warning("Encountered build item without object ID.")
                 continue  # Ignore this invalid item.
 
+            metadata = Metadata()
+            for metadata_node in build_item.iterfind("./3mf:metadatagroup", threemf_namespaces):
+                metadata = self.read_metadata(metadata_node, metadata)
+
             transform @= self.parse_transformation(build_item.attrib.get("transform", ""))
 
-            self.build_object(resource_object, transform, [objectid])
+            self.build_object(resource_object, transform, metadata, [objectid])
 
-    def build_object(self, resource_object, transformation, objectid_stack_trace, parent=None):
+    def build_object(self, resource_object, transformation, metadata, objectid_stack_trace, parent=None):
         """
         Converts a resource object into a Blender object.
 
@@ -471,6 +475,7 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
         :param resource_object: The resource object that needs to be converted.
         :param transformation: A transformation matrix to apply to this resource
         object.
+        :param metadata: A collection of metadata belonging to this build item.
         :param objectid_stack_trace: A list of all object IDs that have been
         processed so far, including the object ID we're processing now.
         :param parent: The resulting object must be marked as a child of this
@@ -493,6 +498,7 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
         bpy.context.collection.objects.link(blender_object)
         bpy.context.view_layer.objects.active = blender_object
         blender_object.select_set(True)
+        metadata.store(blender_object)
 
         # Recurse for all components.
         for component in resource_object.components:
@@ -506,5 +512,5 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
                 continue
             transform = transformation @ component.transformation  # Apply the child's transformation and pass it on.
             objectid_stack_trace.append(component.resource_object)
-            self.build_object(child_object, transform, objectid_stack_trace, parent=blender_object)
+            self.build_object(child_object, transform, objectid_stack_trace, metadata, parent=blender_object)
             objectid_stack_trace.pop()
