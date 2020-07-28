@@ -31,7 +31,7 @@ from .unit_conversions import blender_to_metre, threemf_to_metre  # To convert t
 
 log = logging.getLogger(__name__)
 
-ResourceObject = collections.namedtuple("ResourceObject", ["vertices", "triangles", "components"])
+ResourceObject = collections.namedtuple("ResourceObject", ["vertices", "triangles", "components", "metadata"])
 Component = collections.namedtuple("Component", ["resource_object", "transformation"])
 
 
@@ -308,8 +308,11 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
             vertices = self.read_vertices(object_node)
             triangles = self.read_triangles(object_node)
             components = self.read_components(object_node)
+            metadata = Metadata()
+            for metadata_node in object_node.iterfind("./3mf:metadatagroup", threemf_namespaces):
+                metadata = self.read_metadata(metadata_node, metadata)
 
-            self.resource_objects[objectid] = ResourceObject(vertices=vertices, triangles=triangles, components=components)
+            self.resource_objects[objectid] = ResourceObject(vertices=vertices, triangles=triangles, components=components, metadata=metadata)
 
     def read_vertices(self, object_node):
         """
@@ -479,6 +482,7 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
         mesh = bpy.data.meshes.new("3MF Mesh")
         mesh.from_pydata(resource_object.vertices, [], resource_object.triangles)
         mesh.update()
+        resource_object.metadata.store(mesh)
 
         # Create an object.
         blender_object = bpy.data.objects.new("3MF Object", mesh)
