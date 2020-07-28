@@ -42,6 +42,7 @@ from io_mesh_3mf.constants import (
     threemf_model_mimetype,
     threemf_rels_mimetype
 )
+from io_mesh_3mf.metadata import Metadata  # To compare the metadata objects created by the code under test.
 
 
 class TestImport3MF(unittest.TestCase):
@@ -67,7 +68,8 @@ class TestImport3MF(unittest.TestCase):
         self.single_triangle = io_mesh_3mf.import_3mf.ResourceObject(  # A model with just a single triangle.
             vertices=[(0.0, 0.0, 0.0), (5.0, 0.0, 1.0), (0.0, 5.0, 1.0)],
             triangles=[(0, 1, 2)],
-            components=[]
+            components=[],
+            metadata=Metadata()
         )
         self.black_hole = io.BytesIO()  # A dummy stream to write to, in order to construct archives to import from in-memory.
 
@@ -899,9 +901,9 @@ class TestImport3MF(unittest.TestCase):
         self.importer.build_items(root, 1.0)
 
         expected_args_list = [
-            unittest.mock.call(self.importer.resource_objects["1"], mathutils.Matrix.Identity(4), ["1"]),
-            unittest.mock.call(self.importer.resource_objects["2"], mathutils.Matrix.Identity(4), ["2"]),
-            unittest.mock.call(self.importer.resource_objects["ananas"], mathutils.Matrix.Identity(4), ["ananas"])
+            unittest.mock.call(self.importer.resource_objects["1"], mathutils.Matrix.Identity(4), Metadata(), ["1"]),
+            unittest.mock.call(self.importer.resource_objects["2"], mathutils.Matrix.Identity(4), Metadata(), ["2"]),
+            unittest.mock.call(self.importer.resource_objects["ananas"], mathutils.Matrix.Identity(4), Metadata(), ["ananas"])
         ]
         self.assertListEqual(self.importer.build_object.call_args_list, expected_args_list, "We must build these three objects with their correct transformations and object IDs.")
 
@@ -932,7 +934,7 @@ class TestImport3MF(unittest.TestCase):
 
         self.importer.build_items(root, 2.5)  # Build with a unit scale of 250%.
 
-        self.importer.build_object.assert_called_once_with(self.single_triangle, mathutils.Matrix.Scale(2.5, 4), ["1"])
+        self.importer.build_object.assert_called_once_with(self.single_triangle, mathutils.Matrix.Scale(2.5, 4), Metadata(), ["1"])
 
     def test_build_items_transformed(self):
         """
@@ -949,7 +951,7 @@ class TestImport3MF(unittest.TestCase):
         self.importer.build_items(root, 0.5)  # Build with a unit scale of 50%.
 
         expected_transformation = mathutils.Matrix.Scale(0.5, 4) @ mathutils.Matrix.Translation(mathutils.Vector([30, 40, 0]))  # Both transformation must be applied (and in correct order).
-        self.importer.build_object.assert_called_once_with(self.single_triangle, expected_transformation, ["1"])
+        self.importer.build_object.assert_called_once_with(self.single_triangle, expected_transformation, Metadata(), ["1"])
 
     def test_build_object_mesh_data(self):
         """
@@ -957,7 +959,7 @@ class TestImport3MF(unittest.TestCase):
         """
         transformation = mathutils.Matrix.Identity(4)
         objectid_stack_trace = ["1"]
-        self.importer.build_object(self.single_triangle, transformation, objectid_stack_trace)
+        self.importer.build_object(self.single_triangle, transformation, Metadata(), objectid_stack_trace)
 
         # Now look whether the result is put correctly in the context.
         bpy.data.meshes.new.assert_called_once()  # Exactly one mesh must have been created.
@@ -971,7 +973,7 @@ class TestImport3MF(unittest.TestCase):
         """
         transformation = mathutils.Matrix.Identity(4)
         objectid_stack_trace = ["1"]
-        self.importer.build_object(self.single_triangle, transformation, objectid_stack_trace)
+        self.importer.build_object(self.single_triangle, transformation, Metadata(), objectid_stack_trace)
 
         # Now look whether the Blender object is put correctly in the context.
         bpy.data.objects.new.assert_called_once()  # Exactly one object must have been created.
@@ -987,7 +989,7 @@ class TestImport3MF(unittest.TestCase):
         """
         transformation = mathutils.Matrix.Scale(2.0, 4)
         objectid_stack_trace = ["1"]
-        self.importer.build_object(self.single_triangle, transformation, objectid_stack_trace)
+        self.importer.build_object(self.single_triangle, transformation, Metadata(), objectid_stack_trace)
 
         # Now look whether the Blender object has the correct transformation.
         object_mock = bpy.data.objects.new()  # This is the mock object that the code got back from the Blender API call.
@@ -1000,7 +1002,7 @@ class TestImport3MF(unittest.TestCase):
         transformation = mathutils.Matrix.Identity(4)
         objectid_stack_trace = ["1", "2"]
         parent = unittest.mock.MagicMock()
-        self.importer.build_object(self.single_triangle, transformation, objectid_stack_trace, parent)
+        self.importer.build_object(self.single_triangle, transformation, Metadata(), objectid_stack_trace, parent)
 
         # Now look whether the Blender object has the correct parent.
         object_mock = bpy.data.objects.new()  # This is the mock object that the code got back from the Blender API call.
@@ -1017,7 +1019,8 @@ class TestImport3MF(unittest.TestCase):
             components=[io_mesh_3mf.import_3mf.Component(
                 resource_object="1",
                 transformation=mathutils.Matrix.Identity(4)
-            )]
+            )],
+            metadata=Metadata()
         )
         self.importer.resource_objects["1"] = self.single_triangle
         self.importer.resource_objects["2"] = with_component
@@ -1030,7 +1033,7 @@ class TestImport3MF(unittest.TestCase):
         # Call the function under test.
         transformation = mathutils.Matrix.Identity(4)
         objectid_stack_trace = ["2"]
-        self.importer.build_object(with_component, transformation, objectid_stack_trace)
+        self.importer.build_object(with_component, transformation, Metadata(), objectid_stack_trace)
 
         # Test whether the component got created with correct properties.
         self.assertEqual(bpy.data.objects.new.call_count, 2, "We must have created 2 objects from this: the parent and the child.")
@@ -1049,14 +1052,15 @@ class TestImport3MF(unittest.TestCase):
             components=[io_mesh_3mf.import_3mf.Component(
                 resource_object="1",
                 transformation=mathutils.Matrix.Identity(4)
-            )]
+            )],
+            metadata=Metadata()
         )
         self.importer.resource_objects["1"] = resource_object
 
         # Call the function under test.
         transformation = mathutils.Matrix.Identity(4)
         objectid_stack_trace = ["1"]
-        self.importer.build_object(resource_object, transformation, objectid_stack_trace)
+        self.importer.build_object(resource_object, transformation, Metadata(), objectid_stack_trace)
 
         # Test whether the component got created.
         bpy.data.objects.new.assert_called_once()  # May be called only once. Don't call for the recursive component!
@@ -1072,14 +1076,15 @@ class TestImport3MF(unittest.TestCase):
             components=[io_mesh_3mf.import_3mf.Component(
                 resource_object="2",  # This object ID doesn't exist!
                 transformation=mathutils.Matrix.Identity(4)
-            )]
+            )],
+            metadata=Metadata()
         )
         self.importer.resource_objects["1"] = resource_object
 
         # Call the function under test.
         transformation = mathutils.Matrix.Identity(4)
         objectid_stack_trace = ["1"]
-        self.importer.build_object(resource_object, transformation, objectid_stack_trace)
+        self.importer.build_object(resource_object, transformation, Metadata(), objectid_stack_trace)
 
         # Test whether the component got created.
         bpy.data.objects.new.assert_called_once()  # May be called only once. Don't call for the non-existing component!
@@ -1097,7 +1102,8 @@ class TestImport3MF(unittest.TestCase):
             components=[io_mesh_3mf.import_3mf.Component(
                 resource_object="1",
                 transformation=mathutils.Matrix.Scale(2.0, 4)
-            )]
+            )],
+            metadata=Metadata()
         )
         self.importer.resource_objects["1"] = self.single_triangle
         self.importer.resource_objects["2"] = with_transformed_component
@@ -1110,7 +1116,7 @@ class TestImport3MF(unittest.TestCase):
         # Call the function under test.
         transformation = mathutils.Matrix.Translation(mathutils.Vector([100.0, 0.0, 0.0]))
         objectid_stack_trace = ["2"]
-        self.importer.build_object(with_transformed_component, transformation, objectid_stack_trace)
+        self.importer.build_object(with_transformed_component, transformation, Metadata(), objectid_stack_trace)
 
         # Test whether the objects have the correct transformations.
         self.assertEqual(parent_mock.matrix_world, transformation, "Only the translation was applied to the parent.")
