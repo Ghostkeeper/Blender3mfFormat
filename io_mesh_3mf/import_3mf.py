@@ -313,7 +313,7 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
                 metadata = self.read_metadata(metadata_node, metadata)
             if "partnumber" in object_node.attrib:
                 # Blender has no way to ensure that custom properties get preserved if a mesh is split up, but for most operations this is retained properly.
-                metadata["3mf:partnumber"] = MetadataEntry(name="3mf:partnumber", preserve="1", datatype="xs:string", value=object_node.attrib["partnumber"])
+                metadata["3mf:partnumber"] = MetadataEntry(name="3mf:partnumber", preserve=True, datatype="xs:string", value=object_node.attrib["partnumber"])
 
             self.resource_objects[objectid] = ResourceObject(vertices=vertices, triangles=triangles, components=components, metadata=metadata)
 
@@ -463,7 +463,7 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
             for metadata_node in build_item.iterfind("./3mf:metadatagroup", threemf_namespaces):
                 metadata = self.read_metadata(metadata_node, metadata)
             if "partnumber" in build_item.attrib:
-                metadata["3mf:partnumber"] = MetadataEntry(name="3mf:partnumber", preserve="1", datatype="xs:string", value=build_item.attrib["partnumber"])
+                metadata["3mf:partnumber"] = MetadataEntry(name="3mf:partnumber", preserve=True, datatype="xs:string", value=build_item.attrib["partnumber"])
 
             transform @= self.parse_transformation(build_item.attrib.get("transform", ""))
 
