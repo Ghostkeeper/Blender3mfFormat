@@ -108,10 +108,22 @@ class Metadata:
         new value to be stored.
 
         Contrary to the normal dictionary's version, this one does check for the
-        key's existance, so you don't need to do that manually.
+        key's existence, so you don't need to do that manually.
         """
         if key in self.metadata:
             del self.metadata[key]
+
+    def __eq__(self, other):
+        """
+        Compares two metadata groups together.
+
+        This is currently just used for the unit tests to see if the metadata is
+        constructed correctly.
+        :param other: The metadata object to compare to.
+        :return: `True` if the two groups of metadata contain the same metadata
+        (including which entries are in conflict), or `False` otherwise.
+        """
+        return self.metadata == other.metadata
 
     def store(self, blender_object):
         """
