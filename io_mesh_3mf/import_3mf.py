@@ -517,5 +517,5 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
                 continue
             transform = transformation @ component.transformation  # Apply the child's transformation and pass it on.
             objectid_stack_trace.append(component.resource_object)
-            self.build_object(child_object, transform, objectid_stack_trace, metadata, parent=blender_object)
+            self.build_object(child_object, transform, metadata, objectid_stack_trace, parent=blender_object)
             objectid_stack_trace.pop()
