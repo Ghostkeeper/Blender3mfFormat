@@ -488,11 +488,13 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
         :return: A sequence of Blender objects. These objects may be "nested" in
         the sense that they sometimes refer to other objects as their parents.
         """
-        # Create a mesh.
-        mesh = bpy.data.meshes.new("3MF Mesh")
-        mesh.from_pydata(resource_object.vertices, [], resource_object.triangles)
-        mesh.update()
-        resource_object.metadata.store(mesh)
+        # Create a mesh if there is mesh data here.
+        mesh = None
+        if resource_object.triangles:
+            mesh = bpy.data.meshes.new("3MF Mesh")
+            mesh.from_pydata(resource_object.vertices, [], resource_object.triangles)
+            mesh.update()
+            resource_object.metadata.store(mesh)
 
         # Create an object.
         blender_object = bpy.data.objects.new("3MF Object", mesh)
