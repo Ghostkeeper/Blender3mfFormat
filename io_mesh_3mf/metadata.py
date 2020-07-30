@@ -89,6 +89,16 @@ class Metadata:
         """
         return item in self.metadata and self.metadata[item] is not None
 
+    def __bool__(self):
+        """
+        Checks if there is any content in this metadata storage.
+
+        Conflicting metadata entries are not counted as content in this case.
+        :return: `True` if there is metadata in this storage, or `False` if
+        there isn't any.
+        """
+        return any(self.values())
+
     def __len__(self):
         """
         Returns the number of valid items in this metadata storage.
