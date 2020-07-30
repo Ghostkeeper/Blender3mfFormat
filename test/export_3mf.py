@@ -370,6 +370,7 @@ class TestExport3MF(unittest.TestCase):
         child = unittest.mock.MagicMock()
         child.type = 'MESH'
         child.matrix_world = mathutils.Matrix.Scale(2.0, 4)
+        child.children = []
         blender_object.children = [child]
 
         parent_id, _ = self.exporter.write_object_resource(resources_element, blender_object)
