@@ -195,13 +195,6 @@ class Export3MF(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
         object_element.attrib["{{{ns}}}type".format(ns=threemf_default_namespace)] = "model"
         object_element.attrib["{{{ns}}}id".format(ns=threemf_default_namespace)] = str(new_resource_id)
 
-        # If the object has metadata, write that to a metadata object.
-        metadata = Metadata()
-        metadata.retrieve(blender_object)
-        if metadata:
-            metadatagroup_element = xml.etree.ElementTree.SubElement(object_element, "{{{ns}}}metadatagroup".format(ns=threemf_default_namespace))
-            self.write_metadata(metadatagroup_element, metadata)
-
         if blender_object.mode == 'EDIT':
             blender_object.update_from_editmode()  # Apply recent changes made to the model.
         mesh_transformation = blender_object.matrix_world
@@ -234,7 +227,8 @@ class Export3MF(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
             return new_resource_id, mesh_transformation
 
         mesh.calc_loop_triangles()  # Need to convert this to triangles-only, because 3MF doesn't support faces with more than 3 vertices.
-        if len(mesh.vertices) > 0:  # If this object already contains components, we can't also store a mesh. So create a new object and use that object as another component.
+        if len(mesh.vertices) > 0:  # Only write a <mesh> tag if there is mesh data.
+            # If this object already contains components, we can't also store a mesh. So create a new object and use that object as another component.
             if child_objects:
                 mesh_id = self.next_resource_id
                 self.next_resource_id += 1
@@ -249,6 +243,13 @@ class Export3MF(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
             mesh_element = xml.etree.ElementTree.SubElement(mesh_object_element, "{{{ns}}}mesh".format(ns=threemf_default_namespace))
             self.write_vertices(mesh_element, mesh.vertices)
             self.write_triangles(mesh_element, mesh.loop_triangles)
+
+            # If the object has metadata, write that to a metadata object.
+            metadata = Metadata()
+            metadata.retrieve(blender_object.data)
+            if metadata:
+                metadatagroup_element = xml.etree.ElementTree.SubElement(object_element, "{{{ns}}}metadatagroup".format(ns=threemf_default_namespace))
+                self.write_metadata(metadatagroup_element, metadata)
 
         return new_resource_id, mesh_transformation
 
