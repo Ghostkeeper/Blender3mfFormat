@@ -163,13 +163,21 @@ class Export3MF(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
                 continue  # Only write objects that have no parent, since we'll get the child objects recursively.
             if blender_object.type not in {'MESH', 'EMPTY'}:
                 continue
+
             objectid, mesh_transformation = self.write_object_resource(resources_element, blender_object)
+
             item_element = xml.etree.ElementTree.SubElement(build_element, "{{{ns}}}item".format(ns=threemf_default_namespace))
             self.num_written += 1
             item_element.attrib["{{{ns}}}objectid".format(ns=threemf_default_namespace)] = str(objectid)
             mesh_transformation = transformation @ mesh_transformation
             if mesh_transformation != mathutils.Matrix.Identity(4):
                 item_element.attrib["{{{ns}}}transform".format(ns=threemf_default_namespace)] = self.format_transformation(mesh_transformation)
+
+            metadata = Metadata()
+            metadata.retrieve(blender_object)
+            if metadata:
+                metadatagroup_element = xml.etree.ElementTree.SubElement(item_element, "{{{ns}}}metadatagroup".format(ns=threemf_default_namespace))
+                self.write_metadata(metadatagroup_element, metadata)
 
     def write_object_resource(self, resources_element, blender_object):
         """
