@@ -42,6 +42,7 @@ from io_mesh_3mf.constants import (
     threemf_rels_location,
     threemf_rels_xml
 )
+from io_mesh_3mf.metadata import MetadataEntry
 
 
 class TestExport3MF(unittest.TestCase):
@@ -422,6 +423,45 @@ class TestExport3MF(unittest.TestCase):
         mesh_element = mesh_elements[0]
         self.exporter.write_vertices.assert_called_once_with(mesh_element, original_vertices)  # Only one of the objects had a mesh, so it should get called only once.
         self.exporter.write_triangles.assert_called_once_with(mesh_element, original_triangles)
+
+    def test_write_object_resource_metadata(self):
+        """
+        Tests writing an object resource that has metadata.
+        """
+        self.exporter.write_vertices = unittest.mock.MagicMock()  # Mock these two subroutines for this test. Don't want to actually go and fill this with data.
+        self.exporter.write_triangles = unittest.mock.MagicMock()
+
+        resources_element = xml.etree.ElementTree.Element("{{{ns}}}resources".format(ns=threemf_default_namespace))
+        blender_object = unittest.mock.MagicMock()
+        blender_object.matrix_world = mathutils.Matrix.Identity(4)
+
+        # Give the object a (pretend-)mesh.
+        original_vertices = [(1, 2, 3), (4, 5, 6)]
+        original_triangles = [(0, 1, 0), (1, 0, 1)]
+        blender_object.to_mesh().vertices = original_vertices
+        blender_object.to_mesh().loop_triangles = original_triangles
+
+        # Give the object's mesh some metadata.
+        blender_object.data.name = "Sergeant Reckless"
+        blender_object.data["Description"] = MetadataEntry(name="Description", datatype="some_type", preserve=False, value="Pack horse")
+
+        _, _ = self.exporter.write_object_resource(resources_element, blender_object)
+
+        metadatagroup_elements = resources_element.findall("3mf:object/3mf:metadatagroup", namespaces=threemf_namespaces)
+        self.assertEqual(len(metadatagroup_elements), 1, "There is only one metadata group, for just one object.")
+        metadatagroup_element = metadatagroup_elements[0]
+        metadata_elements = metadatagroup_element.findall("3mf:metadata", namespaces=threemf_namespaces)
+        for metadata_element in metadata_elements:
+            if metadata_element.attrib["{{{ns}}}name".format(ns=threemf_default_namespace)] == "Title":
+                self.assertEqual(metadata_element.text, "Sergeant Reckless", "The name of the object was 'Sergeant Reckless', which should get stored as the 'Title' metadata entry.")
+                self.assertEqual(metadata_element.attrib["{{{ns}}}type".format(ns=threemf_default_namespace)], "xs:string", "The object name is always a string.")
+                self.assertEqual(metadata_element.attrib["{{{ns}}}preserve".format(ns=threemf_default_namespace)], "1", "The object name must always be preserved (the way that we write these files).")
+            elif metadata_element.attrib["name"] == "Description":
+                self.assertEqual(metadata_element.text, "Pack horse", "This is the 'Description' metadata, which was set to 'Pack horse'.")
+                self.assertEqual(metadata_element.attrib["{{{ns}}}type".format(ns=threemf_default_namespace)], "some_type", "The data type was set to 'some_type'.")
+                self.assertNotIn("{{{ns}}}preserve".format(ns=threemf_default_namespace), metadata_element.attrib, "Since this metadata isn't preserved, don't write a 'preserve' attribute but let it be the default, which is to not preserve.")
+            else:
+                self.assertFalse("We only had 'Title' and 'Description' metadata, not {name}".format(name=metadata_element.attrib["name"]))
 
     def test_format_transformation_identity(self):
         """
