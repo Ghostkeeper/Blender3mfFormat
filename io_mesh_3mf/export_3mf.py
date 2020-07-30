@@ -85,6 +85,11 @@ class Export3MF(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
         # Bug: https://bugs.python.org/issue17088
         # Workaround: https://stackoverflow.com/questions/4997848/emitting-namespace-specifications-with-elementtree-in-python/4999510#4999510
         root = xml.etree.ElementTree.Element("{{{ns}}}model".format(ns=threemf_default_namespace))
+
+        scene_metadata = Metadata()
+        scene_metadata.retrieve(bpy.context.scene)
+        self.write_metadata(root, scene_metadata)
+
         self.write_objects(root, blender_objects, global_scale)
 
         document = xml.etree.ElementTree.ElementTree(root)
