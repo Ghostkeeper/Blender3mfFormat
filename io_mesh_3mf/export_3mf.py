@@ -174,6 +174,13 @@ class Export3MF(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
         """
         Write a single Blender object and all of its children to the resources
         of a 3MF document.
+
+        If the object contains a mesh it'll get written to the document as an
+        object with a mesh resource. If the object contains children it'll get
+        written to the document as an object with components. If the object
+        contains both, two objects will be written; one with the mesh and
+        another with the components. The mesh then gets added as a component of
+        the object with components.
         :param resources_element: The <resources> element of the 3MF document to
         write into.
         :param blender_object: A Blender object to write to that XML element.
@@ -218,9 +225,22 @@ class Export3MF(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
         if mesh is None:
             return new_resource_id, mesh_transformation
 
+        # If this object already contains components, we can't also store a mesh. So create a new object and use that object as another component.
+        if child_objects:
+            mesh_id = self.next_resource_id
+            self.next_resource_id += 1
+            mesh_object_element = xml.etree.ElementTree.SubElement(resources_element, "{{{ns}}}object".format(ns=threemf_default_namespace))
+            mesh_object_element.attrib["{{{ns}}}type".format(ns=threemf_default_namespace)] = "model"
+            mesh_object_element.attrib["{{{ns}}}id".format(ns=threemf_default_namespace)] = str(mesh_id)
+            component_element = xml.etree.ElementTree.SubElement(components_element, "{{{ns}}}component".format(ns=threemf_default_namespace))
+            self.num_written += 1
+            component_element.attrib["{{{ns}}}objectid".format(ns=threemf_default_namespace)] = str(mesh_id)
+        else:  # No components, then we can write directly into this object resource.
+            mesh_object_element = object_element
+
         mesh.calc_loop_triangles()  # Need to convert this to triangles-only, because 3MF doesn't support faces with more than 3 vertices.
         if len(mesh.vertices) > 0:
-            mesh_element = xml.etree.ElementTree.SubElement(object_element, "{{{ns}}}mesh".format(ns=threemf_default_namespace))
+            mesh_element = xml.etree.ElementTree.SubElement(mesh_object_element, "{{{ns}}}mesh".format(ns=threemf_default_namespace))
             self.write_vertices(mesh_element, mesh.vertices)
             self.write_triangles(mesh_element, mesh.loop_triangles)
 
