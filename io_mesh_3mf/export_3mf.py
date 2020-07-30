@@ -26,6 +26,7 @@ from .constants import (
     threemf_rels_xml
 )
 from .unit_conversions import blender_to_metre, threemf_to_metre
+from .metadata import Metadata  # To store metadata from the Blender scene into the 3MF file.
 
 log = logging.getLogger(__name__)
 
@@ -194,6 +195,13 @@ class Export3MF(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
         object_element.attrib["{{{ns}}}type".format(ns=threemf_default_namespace)] = "model"
         object_element.attrib["{{{ns}}}id".format(ns=threemf_default_namespace)] = str(new_resource_id)
 
+        # If the object has metadata, write that to a metadata object.
+        metadata = Metadata()
+        metadata.retrieve(blender_object)
+        if metadata:
+            metadatagroup_element = xml.etree.ElementTree.SubElement(object_element, "{{{ns}}}metadatagroup".format(ns=threemf_default_namespace))
+            self.write_metadata(metadatagroup_element, metadata)
+
         if blender_object.mode == 'EDIT':
             blender_object.update_from_editmode()  # Apply recent changes made to the model.
         mesh_transformation = blender_object.matrix_world
@@ -243,6 +251,21 @@ class Export3MF(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
             self.write_triangles(mesh_element, mesh.loop_triangles)
 
         return new_resource_id, mesh_transformation
+
+    def write_metadata(self, node, metadata):
+        """
+        Writes metadata from a metadata storage into an XML node.
+        :param node: The node to add <metadata> tags to.
+        :param metadata: The collection of metadata to write to that node.
+        """
+        for metadata_entry in metadata.values():
+            metadata_node = xml.etree.ElementTree.SubElement(node, "{{{ns}}}metadata".format(ns=threemf_default_namespace))
+            metadata_node.attrib["{{{ns}}}name".format(ns=threemf_default_namespace)] = metadata_entry.name
+            if metadata_entry.preserve:
+                metadata_node.attrib["{{{ns}}}preserve".format(ns=threemf_default_namespace)] = "1"
+            if metadata_entry.datatype:
+                metadata_node.attrib["{{{ns}}}type".format(ns=threemf_default_namespace)] = metadata_entry.datatype
+            metadata_node.text = metadata_entry.value
 
     def format_transformation(self, transformation):
         """
