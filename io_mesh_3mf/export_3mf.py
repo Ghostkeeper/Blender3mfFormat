@@ -160,7 +160,7 @@ class Export3MF(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
         for blender_object in blender_objects:
             if blender_object.parent is not None:
                 continue  # Only write objects that have no parent, since we'll get the child objects recursively.
-            if blender_object.type != 'MESH':
+            if blender_object.type not in {'MESH', 'EMPTY'}:
                 continue
             objectid, mesh_transformation = self.write_object_resource(resources_element, blender_object)
             item_element = xml.etree.ElementTree.SubElement(build_element, "{{{ns}}}item".format(ns=threemf_default_namespace))
