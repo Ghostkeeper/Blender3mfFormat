@@ -300,6 +300,39 @@ class TestExport3MF(unittest.TestCase):
         item_element = item_elements[0]
         self.assertEqual(item_element.attrib["{{{ns}}}transform".format(ns=threemf_default_namespace)], str(expected_transformation), "The transformation must be equal to the expected transformation.")
 
+    def test_write_objects_metadata(self):
+        """
+        Tests writing build items with metadata.
+        """
+        root = xml.etree.ElementTree.Element("{{{ns}}}model".format(ns=threemf_default_namespace))
+        self.exporter.write_object_resource = unittest.mock.MagicMock(return_value=(1, mathutils.Matrix.Identity(4)))  # Not interested in testing this code here.
+
+        # Construct an object with metadata to write.
+        the_object = unittest.mock.MagicMock()
+        the_object.parent = None
+        the_object.type = 'MESH'
+        the_object.name = "Acoustic Kitty"
+        the_object["Description"] = MetadataEntry(name="Description", preserve=False, datatype="mostly fur", value="A CIA project to spy on the Soviet embassies.")
+
+        self.exporter.write_objects(root, [the_object], global_scale=1.0)
+
+        # Test that we've created an item with the correct metadata.
+        metadatagroup_elements = list(root.iterfind("3mf:build/3mf:item/3mf:metadatagroup", threemf_namespaces))
+        self.assertEqual(len(metadatagroup_elements), 1, "There is only 1 metadata group for 1 mesh.")
+        metadatagroup_element = metadatagroup_elements[0]
+        metadata_elements = metadatagroup_element.findall("3mf:metadata", namespaces=threemf_namespaces)
+        for metadata_element in metadata_elements:
+            if metadata_element.attrib["{{{ns}}}name".format(ns=threemf_default_namespace)] == "Title":
+                self.assertEqual(metadata_element.text, "Acoustic Kitty", "The name of the object was 'Acoustic Kitty', which should get stored as the 'Title' metadata entry.")
+                self.assertEqual(metadata_element.attrib["{{{ns}}}type".format(ns=threemf_default_namespace)], "xs:string", "The object name is always a string.")
+                self.assertEqual(metadata_element.attrib["{{{ns}}}preserve".format(ns=threemf_default_namespace)], "1", "The object name must always be preserved (the way that we write these files).")
+            elif metadata_element.attrib["name"] == "Description":
+                self.assertEqual(metadata_element.text, "A CIA project to spy on the Soviet embassies.", "This is the 'Description' metadata value.")
+                self.assertEqual(metadata_element.attrib["{{{ns}}}type".format(ns=threemf_default_namespace)], "mostly fur", "The data type was set to 'mostly fur'.")
+                self.assertNotIn("{{{ns}}}preserve".format(ns=threemf_default_namespace), metadata_element.attrib, "Since this metadata isn't preserved, don't write a 'preserve' attribute but let it be the default, which is to not preserve.")
+            else:
+                self.assertFalse("We only had 'Title' and 'Description' metadata, not {name}".format(name=metadata_element.attrib["name"]))
+
     def test_write_object_resource_id(self):
         """
         Ensures that the resource IDs given to the resources are unique positive
@@ -453,7 +486,7 @@ class TestExport3MF(unittest.TestCase):
         metadata_elements = metadatagroup_element.findall("3mf:metadata", namespaces=threemf_namespaces)
         for metadata_element in metadata_elements:
             if metadata_element.attrib["{{{ns}}}name".format(ns=threemf_default_namespace)] == "Title":
-                self.assertEqual(metadata_element.text, "Sergeant Reckless", "The name of the object was 'Sergeant Reckless', which should get stored as the 'Title' metadata entry.")
+                self.assertEqual(metadata_element.text, "Sergeant Reckless", "The name of the mesh was 'Sergeant Reckless', which should get stored as the 'Title' metadata entry.")
                 self.assertEqual(metadata_element.attrib["{{{ns}}}type".format(ns=threemf_default_namespace)], "xs:string", "The object name is always a string.")
                 self.assertEqual(metadata_element.attrib["{{{ns}}}preserve".format(ns=threemf_default_namespace)], "1", "The object name must always be preserved (the way that we write these files).")
             elif metadata_element.attrib["name"] == "Description":
