@@ -381,6 +381,48 @@ class TestExport3MF(unittest.TestCase):
         self.assertNotEqual(int(component_element.attrib["{{{ns}}}objectid".format(ns=threemf_default_namespace)]), int(parent_id), "The ID given to the child object must be unique.")
         self.assertEqual(component_element.attrib["{{{ns}}}transform".format(ns=threemf_default_namespace)], "2 0 0 0 2 0 0 0 2 0 0 0", "The transformation for 200% scale must be given to this component.")
 
+    def test_write_object_resource_children_mesh(self):
+        """
+        Tests writing an object resource that has both child components and mesh
+        data.
+
+        While the 3MF importer doesn't produce this, the user could.
+        """
+        self.exporter.write_vertices = unittest.mock.MagicMock()  # Mock these two subroutines for this test. We'll only verify that they get called with the correct parameters.
+        self.exporter.write_triangles = unittest.mock.MagicMock()
+
+        resources_element = xml.etree.ElementTree.Element("{{{ns}}}resources".format(ns=threemf_default_namespace))
+        blender_object = unittest.mock.MagicMock()
+        blender_object.matrix_world = mathutils.Matrix.Identity(4)
+
+        # Give the object a child.
+        child = unittest.mock.MagicMock()
+        child.type = 'MESH'
+        child.matrix_world = mathutils.Matrix.Identity(4)
+        child.children = []
+        blender_object.children = [child]
+
+        # Give the object a (pretend-)mesh.
+        original_vertices = [(1, 2, 3), (4, 5, 6)]
+        original_triangles = [(0, 1, 0), (1, 0, 1)]
+        blender_object.to_mesh().vertices = original_vertices
+        blender_object.to_mesh().loop_triangles = original_triangles
+
+        parent_id, _ = self.exporter.write_object_resource(resources_element, blender_object)
+
+        component_elements = resources_element.findall("3mf:object/3mf:components/3mf:component", namespaces=threemf_namespaces)
+        self.assertEqual(len(component_elements), 2, "There is 1 child component, and 1 new component created for the mesh in the parent object.")
+        used_ids = {parent_id}
+        for component_element in component_elements:
+            child_id = int(component_element.attrib["{{{ns}}}objectid".format(ns=threemf_default_namespace)])
+            self.assertNotIn(child_id, used_ids, "The ID given to the components must be unique.")
+            used_ids.add(child_id)
+        mesh_elements = resources_element.findall("3mf:object/3mf:mesh", namespaces=threemf_namespaces)
+        self.assertEqual(len(mesh_elements), 1, "There is only one object with a mesh in it. The other one has no mesh data, so no mesh should be created.")
+        mesh_element = mesh_elements[0]
+        self.exporter.write_vertices.assert_called_once_with(mesh_element, original_vertices)  # Only one of the objects had a mesh, so it should get called only once.
+        self.exporter.write_triangles.assert_called_once_with(mesh_element, original_triangles)
+
     def test_format_transformation_identity(self):
         """
         Tests formatting the identity matrix.
