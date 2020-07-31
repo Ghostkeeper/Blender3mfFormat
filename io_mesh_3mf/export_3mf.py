@@ -180,6 +180,9 @@ class Export3MF(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
 
             metadata = Metadata()
             metadata.retrieve(blender_object)
+            if "3mf:partnumber" in metadata:
+                item_element.attrib["{{{ns}}}partnumber".format(ns=threemf_default_namespace)] = metadata["3mf:partnumber"].value
+                del metadata["3mf:partnumber"]
             if metadata:
                 metadatagroup_element = xml.etree.ElementTree.SubElement(item_element, "{{{ns}}}metadatagroup".format(ns=threemf_default_namespace))
                 self.write_metadata(metadatagroup_element, metadata)
@@ -260,6 +263,9 @@ class Export3MF(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
             # If the object has metadata, write that to a metadata object.
             metadata = Metadata()
             metadata.retrieve(blender_object.data)
+            if "3mf:partnumber" in metadata:
+                mesh_object_element.attrib["{{{ns}}}partnumber".format(ns=threemf_default_namespace)] = metadata["3mf:partnumber"].value
+                del metadata["3mf:partnumber"]
             if metadata:
                 metadatagroup_element = xml.etree.ElementTree.SubElement(object_element, "{{{ns}}}metadatagroup".format(ns=threemf_default_namespace))
                 self.write_metadata(metadatagroup_element, metadata)
