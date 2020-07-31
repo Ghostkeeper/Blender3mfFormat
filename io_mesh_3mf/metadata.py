@@ -7,6 +7,7 @@
 # <pep8 compliant>
 
 import collections  # For named tuples.
+import idprop.types  # To interpret property groups as metadata entries.
 
 MetadataEntry = collections.namedtuple("MetadataEntry", ["name", "preserve", "datatype", "value"])
 
@@ -168,8 +169,8 @@ class Metadata:
         """
         for key in blender_object.keys():
             entry = blender_object[key]
-            if isinstance(entry, dict) and "datatype" in entry and "preserve" in entry and "value" in entry:  # Most likely a metadata entry from a previous 3MF file.
-                self[key] = MetadataEntry(name=key, preserve=entry["preserve"], datatype=entry["datatype"], value=entry["value"])
+            if isinstance(entry, idprop.types.IDPropertyGroup) and "datatype" in entry.keys() and "preserve" in entry.keys() and "value" in entry.keys():  # Most likely a metadata entry from a previous 3MF file.
+                self[key] = MetadataEntry(name=key, preserve=entry.get("preserve"), datatype=entry.get("datatype"), value=entry.get("value"))
             # Don't mess with metadata added by the user or their other Blender add-ons. Don't want to break their behaviour.
 
         self["Title"] = MetadataEntry(name="Title", preserve=True, datatype="xs:string", value=blender_object.name)
