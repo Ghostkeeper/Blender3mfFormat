@@ -149,6 +149,8 @@ class Metadata:
             value = metadata_entry.value
             if name == "Title":  # Has a built-in ID property for objects as well as scenes.
                 blender_object.name = value
+            elif name == "3mf:partnumber":  # Special case: This is always a string and doesn't need the preserve attribute. We can simplify this to make it easier to edit.
+                blender_object[name] = value
             else:
                 blender_object[name] = {
                     "datatype": metadata_entry.datatype,
@@ -169,6 +171,9 @@ class Metadata:
         """
         for key in blender_object.keys():
             entry = blender_object[key]
+            if key == "3mf:partnumber":
+                self[key] = MetadataEntry(name=key, preserve=True, datatype="xs:string", value=entry)
+                continue
             if isinstance(entry, idprop.types.IDPropertyGroup) and "datatype" in entry.keys() and "preserve" in entry.keys() and "value" in entry.keys():  # Most likely a metadata entry from a previous 3MF file.
                 self[key] = MetadataEntry(name=key, preserve=entry.get("preserve"), datatype=entry.get("datatype"), value=entry.get("value"))
             # Don't mess with metadata added by the user or their other Blender add-ons. Don't want to break their behaviour.
