@@ -280,6 +280,8 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
 
         # Store annotations for the content types of all files.
         for content_type, file_set in files_by_content_type.items():
+            if content_type == "":
+                continue  # Don't store content type if the content type is unknown.
             for file in file_set:
                 file_path = file.name
                 annotations["/" + file_path].add(('CONTENT_TYPE', content_type))
