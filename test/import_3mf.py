@@ -379,6 +379,28 @@ class TestImport3MF(unittest.TestCase):
         }
         self.assertDictEqual(annotations, expected_annotations, "There is a thumbnail relationship for the thumbnail file.")
 
+    def test_read_annotations_content_type(self):
+        """
+        Tests storing annotations for content types.
+        """
+        thumbnail_file = io.BytesIO()
+        thumbnail_file.name = "path/to/thumbnail.png"
+        texture_file = io.BytesIO()
+        texture_file.name = "path/to/texture.jpg"
+        files_by_content_type = {
+            "image/png": [thumbnail_file],
+            "image/jpg": [texture_file]
+        }
+
+        annotations = {}
+        self.importer.read_annotations(annotations, files_by_content_type)
+
+        expected_annotations = {
+            "/path/to/thumbnail.png": {('CONTENT_TYPE', "image/png")},
+            "/path/to/texture.jpg": {('CONTENT_TYPE', "image/jpg")}
+        }
+        self.assertDictEqual(annotations, expected_annotations, "Each file has a content type assigned.")
+
     def test_is_supported_true(self):
         """
         Tests the detection of whether a document is supported.
