@@ -276,7 +276,7 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
                 except KeyError as e:
                     log.warning("Relationship missing attribute: {attribute}".format(attribute=str(e)))
                     continue  # Skip this relationship.
-                annotations[target] = ('RELATIONSHIP', namespace)  # Add to the annotations as a relationship (since it's a set, don't create duplicates).
+                annotations[target].add(('RELATIONSHIP', namespace))  # Add to the annotations as a relationship (since it's a set, don't create duplicates).
 
         # Remove annotations to files that this add-on understands.
         # We'll write them to the output ourselves anyway.
