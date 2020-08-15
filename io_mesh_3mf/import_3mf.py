@@ -12,6 +12,7 @@ import bpy.types  # This class is an operator in Blender.
 import bpy_extras.io_utils  # Helper functions to import meshes more easily.
 import logging  # To debug and log progress.
 import collections  # For namedtuple.
+import itertools  # Handy for iterating more elegantly.
 import mathutils  # For the transformation matrices.
 import os.path  # To take file paths relative to the selected directory.
 import re  # To find files in the archive based on the content types.
@@ -276,6 +277,14 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
                     log.warning("Relationship missing attribute: {attribute}".format(attribute=str(e)))
                     continue  # Skip this relationship.
                 annotations[target] = ('RELATIONSHIP', namespace)  # Add to the annotations as a relationship (since it's a set, don't create duplicates).
+
+        # Remove annotations to files that this add-on understands.
+        # We'll write them to the output ourselves anyway.
+        # The annotations won't necessarily apply any more, and might point to files that are merged to a standard location in the output.
+        for file in itertools.chain(files_by_content_type[threemf_rels_mimetype], files_by_content_type[threemf_model_mimetype]):
+            target = "/" + file.name
+            if target in annotations:
+                del annotations[target]
 
     def is_supported(self, required_extensions):
         """
