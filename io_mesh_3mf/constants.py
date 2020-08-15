@@ -36,3 +36,7 @@ threemf_rels_xml = """<?xml version="1.0" encoding="UTF-8"?>
 threemf_model_mimetype = "application/vnd.ms-package.3dmanufacturing-3dmodel+xml"  # MIME type of .model files.
 
 threemf_supported_extensions = set()  # Set of namespaces for 3MF extensions that we support.
+
+rels_namespaces = {  # Namespaces used for the rels file.
+    "rel": "http://schemas.openxmlformats.org/package/2006/relationships"
+}

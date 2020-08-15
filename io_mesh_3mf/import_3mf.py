@@ -19,6 +19,7 @@ import xml.etree.ElementTree  # To parse the 3dmodel.model file.
 import zipfile  # To read the 3MF files which are secretly zip archives.
 
 from .constants import (  # Constants associated with the 3MF file format.
+    rels_namespaces,
     threemf_content_types_location,
     threemf_default_unit,
     threemf_model_mimetype,
@@ -222,7 +223,7 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
 
         return result
 
-    def read_annotations(self, annotations, archive, files_by_content_type):
+    def read_annotations(self, annotations, files_by_content_type):
         """
         Gather relationships and other annotations for files in the archive.
 
@@ -245,11 +246,33 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
         dictionary mapping file paths to a set of annotations. Each annotation
         is a tuple consisting of the type of annotation and the value of the
         annotation, both strings.
-        :param archive: A zip archive to read from.
-        :param files_by_content_type: For each content type, a set of files that
+        :param files_by_content_type: For each content type, a list of files that
         match the content type. We'll pick out the files with the relationships
         content type for this function.
         """
+        # Make sure that every file has a set, adding empty sets where necessary.
+        for file_set in files_by_content_type.values():
+            for file in file_set:
+                file_path = file.name
+                if "/" + file_path not in annotations:
+                    annotations["/" + file_path] = set()
+
+        # Read all rels files and add them to the annotations.
+        for rels_file in files_by_content_type[threemf_rels_mimetype]:
+            try:
+                root = xml.etree.ElementTree.ElementTree(file=rels_file)
+            except xml.etree.ElementTree.ParseError as e:
+                log.warning("Relationship file {rels_path} has malformed XML (position {linenr}:{columnnr}).".format(rels_path=rels_file.name, linenr=e.position[0], columnnr=e.position[1]))
+                continue  # Skip this file.
+
+            for relationship_node in root.iterfind("rel:Relationship", rels_namespaces):
+                try:
+                    target = relationship_node.attrib["Target"]
+                    namespace = relationship_node.attrib["Type"]
+                except KeyError as e:
+                    log.warning("Relationship missing attribute: {attribute}".format(attribute=str(e)))
+                    continue  # Skip this relationship.
+                annotations[target] = ('RELATIONSHIP', namespace)  # Add to the annotations as a relationship (since it's a set, don't create duplicates).
 
     def is_supported(self, required_extensions):
         """
