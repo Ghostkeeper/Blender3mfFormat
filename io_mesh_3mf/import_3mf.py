@@ -278,6 +278,12 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
                     continue  # Skip this relationship.
                 annotations[target].add(('RELATIONSHIP', namespace))  # Add to the annotations as a relationship (since it's a set, don't create duplicates).
 
+        # Store annotations for the content types of all files.
+        for content_type, file_set in files_by_content_type.items():
+            for file in file_set:
+                file_path = file.name
+                annotations["/" + file_path].add(('CONTENT_TYPE', content_type))
+
         # Remove annotations to files that this add-on understands.
         # We'll write them to the output ourselves anyway.
         # The annotations won't necessarily apply any more, and might point to files that are merged to a standard location in the output.
