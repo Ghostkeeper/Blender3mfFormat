@@ -26,7 +26,9 @@ A new entry will also appear under the File -> Export menu with the same name. T
 
 Release Plan
 ----
-As you can see, this add-on is currently in a "minimum viable product" like state. It's not feature complete yet. The general plan for this add-on is as follows:
+This add-on is currently mostly functioning fine for the 3D content and the metadata of the file, but some auxiliary parts of the 3MF specification are not implemented yet.
+
+The broad scale plan for the release of this add-on is as follows:
 1. Release 0.1 implements a minimum viable product to be able to import 3MF files into Blender.
 2. Release 0.2 implements a minimum viable product to be able to export 3MF files from Blender.
 3. Release 1.0 needs to implement the full core specification of 3MF and be stable enough for release. This release can maybe be submitted to the Blender community for inclusion in the list of add-ons.
