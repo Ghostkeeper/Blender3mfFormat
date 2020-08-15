@@ -41,3 +41,4 @@ rels_default_namespace = "http://schemas.openxmlformats.org/package/2006/relatio
 rels_namespaces = {  # Namespaces used for the rels file.
     "rel": rels_default_namespace
 }
+rels_thumbnail = "http://schemas.openxmlformats.org/package/2006/relationships/metadata/thumbnail"  # Relationship required for thumbnail files.

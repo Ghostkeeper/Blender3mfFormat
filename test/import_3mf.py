@@ -40,6 +40,7 @@ bpy_extras.io_utils.ExportHelper = MockExportHelper
 import io_mesh_3mf.import_3mf  # Now we may safely import the unit under test.
 from io_mesh_3mf.constants import (
     rels_default_namespace,
+    rels_thumbnail,
     threemf_content_types_location,
     threemf_default_namespace,
     threemf_model_mimetype,
@@ -344,6 +345,39 @@ class TestImport3MF(unittest.TestCase):
         self.importer.read_annotations(annotations, files_by_content_type)
 
         self.assertDictEqual(annotations, {}, "There is a file, but it has no known content type and no rels. And there is a rels file, but that should not be output.")
+
+    def test_read_annotations_relationship(self):
+        """
+        Tests reading a relationship from the rels file.
+
+        This is the simple happy path, just a relationship.
+        """
+        # Construct an empty rels file.
+        root = xml.etree.ElementTree.Element("{{{ns}}}Relationships".format(ns=rels_default_namespace))
+        xml.etree.ElementTree.SubElement(root, "{{{ns}}}Relationship".format(ns=rels_default_namespace), attrib={
+            "Target": "/path/to/thumbnail.png",
+            "Type": rels_thumbnail
+        })
+        document = xml.etree.ElementTree.ElementTree(root)
+        rels_file = io.BytesIO()
+        rels_file.name = "_rels/.rels"
+        document.write(rels_file)
+        rels_file.seek(0)  # Ready for reading again.
+
+        thumbnail_file = io.BytesIO()
+        thumbnail_file.name = "path/to/thumbnail.png"
+        files_by_content_type = {
+            "": [thumbnail_file],
+            threemf_rels_mimetype: [rels_file]
+        }
+
+        annotations = {}
+        self.importer.read_annotations(annotations, files_by_content_type)
+
+        expected_annotations = {
+            "/path/to/thumbnail.png": {('RELATIONSHIP', rels_thumbnail)}
+        }
+        self.assertDictEqual(annotations, expected_annotations, "There is a thumbnail relationship for the thumbnail file.")
 
     def test_is_supported_true(self):
         """
