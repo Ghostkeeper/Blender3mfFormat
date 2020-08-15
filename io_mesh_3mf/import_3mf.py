@@ -95,21 +95,22 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
             files_by_content_type = self.read_archive(path)
             self.read_annotations(annotations, files_by_content_type)
 
-            for model_file in files_by_content_type[threemf_model_mimetype]:
-                document = xml.etree.ElementTree.ElementTree(file=model_file)
-                if document is None:
-                    # This file is corrupt or we can't read it. There is no error code to communicate this to blender though.
-                    continue  # Leave the scene empty / skip this file.
-                root = document.getroot()
-                if not self.is_supported(root.attrib.get("requiredextensions", "")):
-                    log.warning(f"3MF document in {path} requires unknown extensions.")
-                    # Still continue processing even though the spec says not to. Our aim is to retrieve whatever information we can.
+            if threemf_model_mimetype in files_by_content_type:
+                for model_file in files_by_content_type[threemf_model_mimetype]:
+                    document = xml.etree.ElementTree.ElementTree(file=model_file)
+                    if document is None:
+                        # This file is corrupt or we can't read it. There is no error code to communicate this to blender though.
+                        continue  # Leave the scene empty / skip this file.
+                    root = document.getroot()
+                    if not self.is_supported(root.attrib.get("requiredextensions", "")):
+                        log.warning(f"3MF document in {path} requires unknown extensions.")
+                        # Still continue processing even though the spec says not to. Our aim is to retrieve whatever information we can.
 
-                scale_unit = self.unit_scale(context, root)
-                self.resource_objects = {}
-                scene_metadata = self.read_metadata(root, scene_metadata)
-                self.read_objects(root)
-                self.build_items(root, scale_unit)
+                    scale_unit = self.unit_scale(context, root)
+                    self.resource_objects = {}
+                    scene_metadata = self.read_metadata(root, scene_metadata)
+                    self.read_objects(root)
+                    self.build_items(root, scale_unit)
 
         scene_metadata.store(bpy.context.scene)
 
