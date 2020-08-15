@@ -305,6 +305,25 @@ class TestImport3MF(unittest.TestCase):
 
         self.assertDictEqual(annotations, {}, "We have no annotations since there are no files to annotate.")
 
+    def test_read_annotations_no_rels_no_content_types(self):
+        """
+        Tests reading annotations from an archive without rels file or known
+        content types.
+        """
+        annotations = {}
+        thumbnail_file = io.BytesIO()
+        thumbnail_file.name = "path/to/thumbnail.png"
+        files_by_content_type = {
+            "": [thumbnail_file]
+        }
+        self.importer.read_annotations(annotations, files_by_content_type)
+
+        self.assertDictEqual(annotations, {}, "There is a file, but it has no known content type and no rels, so no annotations.")
+
+        # Construct an empty rels file.
+        root = xml.etree.ElementTree.Element("{{{ns}}}Relationships".format(ns=rels_default_namespace))
+
+
     def test_is_supported_true(self):
         """
         Tests the detection of whether a document is supported.
