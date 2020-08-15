@@ -95,22 +95,21 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
             files_by_content_type = self.read_archive(path)
             self.read_annotations(annotations, files_by_content_type)
 
-            if threemf_model_mimetype in files_by_content_type:
-                for model_file in files_by_content_type[threemf_model_mimetype]:
-                    document = xml.etree.ElementTree.ElementTree(file=model_file)
-                    if document is None:
-                        # This file is corrupt or we can't read it. There is no error code to communicate this to blender though.
-                        continue  # Leave the scene empty / skip this file.
-                    root = document.getroot()
-                    if not self.is_supported(root.attrib.get("requiredextensions", "")):
-                        log.warning(f"3MF document in {path} requires unknown extensions.")
-                        # Still continue processing even though the spec says not to. Our aim is to retrieve whatever information we can.
+            for model_file in files_by_content_type.get(threemf_model_mimetype, []):
+                document = xml.etree.ElementTree.ElementTree(file=model_file)
+                if document is None:
+                    # This file is corrupt or we can't read it. There is no error code to communicate this to blender though.
+                    continue  # Leave the scene empty / skip this file.
+                root = document.getroot()
+                if not self.is_supported(root.attrib.get("requiredextensions", "")):
+                    log.warning(f"3MF document in {path} requires unknown extensions.")
+                    # Still continue processing even though the spec says not to. Our aim is to retrieve whatever information we can.
 
-                    scale_unit = self.unit_scale(context, root)
-                    self.resource_objects = {}
-                    scene_metadata = self.read_metadata(root, scene_metadata)
-                    self.read_objects(root)
-                    self.build_items(root, scale_unit)
+                scale_unit = self.unit_scale(context, root)
+                self.resource_objects = {}
+                scene_metadata = self.read_metadata(root, scene_metadata)
+                self.read_objects(root)
+                self.build_items(root, scale_unit)
 
         scene_metadata.store(bpy.context.scene)
 
@@ -263,22 +262,21 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
                     annotations["/" + file_path] = set()
 
         # Read all rels files and add them to the annotations.
-        if threemf_rels_mimetype in files_by_content_type:
-            for rels_file in files_by_content_type[threemf_rels_mimetype]:
-                try:
-                    root = xml.etree.ElementTree.ElementTree(file=rels_file)
-                except xml.etree.ElementTree.ParseError as e:
-                    log.warning("Relationship file {rels_path} has malformed XML (position {linenr}:{columnnr}).".format(rels_path=rels_file.name, linenr=e.position[0], columnnr=e.position[1]))
-                    continue  # Skip this file.
+        for rels_file in files_by_content_type.get(threemf_rels_mimetype, []):
+            try:
+                root = xml.etree.ElementTree.ElementTree(file=rels_file)
+            except xml.etree.ElementTree.ParseError as e:
+                log.warning("Relationship file {rels_path} has malformed XML (position {linenr}:{columnnr}).".format(rels_path=rels_file.name, linenr=e.position[0], columnnr=e.position[1]))
+                continue  # Skip this file.
 
-                for relationship_node in root.iterfind("rel:Relationship", rels_namespaces):
-                    try:
-                        target = relationship_node.attrib["Target"]
-                        namespace = relationship_node.attrib["Type"]
-                    except KeyError as e:
-                        log.warning("Relationship missing attribute: {attribute}".format(attribute=str(e)))
-                        continue  # Skip this relationship.
-                    annotations[target].add(('RELATIONSHIP', namespace))  # Add to the annotations as a relationship (since it's a set, don't create duplicates).
+            for relationship_node in root.iterfind("rel:Relationship", rels_namespaces):
+                try:
+                    target = relationship_node.attrib["Target"]
+                    namespace = relationship_node.attrib["Type"]
+                except KeyError as e:
+                    log.warning("Relationship missing attribute: {attribute}".format(attribute=str(e)))
+                    continue  # Skip this relationship.
+                annotations[target].add(('RELATIONSHIP', namespace))  # Add to the annotations as a relationship (since it's a set, don't create duplicates).
 
         # Store annotations for the content types of all files.
         for content_type, file_set in files_by_content_type.items():
@@ -291,7 +289,7 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
         # Remove annotations to files that this add-on understands.
         # We'll write them to the output ourselves anyway.
         # The annotations won't necessarily apply any more, and might point to files that are merged to a standard location in the output.
-        for file in itertools.chain(files_by_content_type[threemf_rels_mimetype], files_by_content_type[threemf_model_mimetype]):
+        for file in itertools.chain(files_by_content_type.get(threemf_rels_mimetype, []), files_by_content_type.get(threemf_model_mimetype, [])):
             target = "/" + file.name
             if target in annotations:
                 del annotations[target]
