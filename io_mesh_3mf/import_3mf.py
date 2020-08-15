@@ -263,21 +263,22 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
                     annotations["/" + file_path] = set()
 
         # Read all rels files and add them to the annotations.
-        for rels_file in files_by_content_type[threemf_rels_mimetype]:
-            try:
-                root = xml.etree.ElementTree.ElementTree(file=rels_file)
-            except xml.etree.ElementTree.ParseError as e:
-                log.warning("Relationship file {rels_path} has malformed XML (position {linenr}:{columnnr}).".format(rels_path=rels_file.name, linenr=e.position[0], columnnr=e.position[1]))
-                continue  # Skip this file.
-
-            for relationship_node in root.iterfind("rel:Relationship", rels_namespaces):
+        if threemf_rels_mimetype in files_by_content_type:
+            for rels_file in files_by_content_type[threemf_rels_mimetype]:
                 try:
-                    target = relationship_node.attrib["Target"]
-                    namespace = relationship_node.attrib["Type"]
-                except KeyError as e:
-                    log.warning("Relationship missing attribute: {attribute}".format(attribute=str(e)))
-                    continue  # Skip this relationship.
-                annotations[target].add(('RELATIONSHIP', namespace))  # Add to the annotations as a relationship (since it's a set, don't create duplicates).
+                    root = xml.etree.ElementTree.ElementTree(file=rels_file)
+                except xml.etree.ElementTree.ParseError as e:
+                    log.warning("Relationship file {rels_path} has malformed XML (position {linenr}:{columnnr}).".format(rels_path=rels_file.name, linenr=e.position[0], columnnr=e.position[1]))
+                    continue  # Skip this file.
+
+                for relationship_node in root.iterfind("rel:Relationship", rels_namespaces):
+                    try:
+                        target = relationship_node.attrib["Target"]
+                        namespace = relationship_node.attrib["Type"]
+                    except KeyError as e:
+                        log.warning("Relationship missing attribute: {attribute}".format(attribute=str(e)))
+                        continue  # Skip this relationship.
+                    annotations[target].add(('RELATIONSHIP', namespace))  # Add to the annotations as a relationship (since it's a set, don't create duplicates).
 
         # Store annotations for the content types of all files.
         for content_type, file_set in files_by_content_type.items():
