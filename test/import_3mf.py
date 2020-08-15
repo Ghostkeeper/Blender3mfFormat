@@ -39,6 +39,7 @@ bpy_extras.io_utils.ImportHelper = MockImportHelper
 bpy_extras.io_utils.ExportHelper = MockExportHelper
 import io_mesh_3mf.import_3mf  # Now we may safely import the unit under test.
 from io_mesh_3mf.constants import (
+    rels_default_namespace,
     threemf_content_types_location,
     threemf_default_namespace,
     threemf_model_mimetype,
@@ -293,6 +294,16 @@ class TestImport3MF(unittest.TestCase):
         content_types.reverse()  # Reverse the priority. See if it's any different.
         result = self.importer.assign_content_types(archive, content_types)
         self.assertEqual(result, {"some_directory/file.txt": "Second type"}, "Now that the priority is reversed, the second type has highest priority.")
+
+    def test_read_annotations_empty(self):
+        """
+        Tests reading annotations from an empty archive.
+        """
+        annotations = {}
+        files_by_content_type = {}
+        self.importer.read_annotations(annotations, files_by_content_type)
+
+        self.assertDictEqual(annotations, {}, "We have no annotations since there are no files to annotate.")
 
     def test_is_supported_true(self):
         """
