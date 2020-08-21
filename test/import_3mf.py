@@ -375,7 +375,7 @@ class TestImport3MF(unittest.TestCase):
         self.importer.read_annotations(annotations, files_by_content_type)
 
         expected_annotations = {
-            "/path/to/thumbnail.png": {('RELATIONSHIP', rels_thumbnail)}
+            "path/to/thumbnail.png": {('RELATIONSHIP', rels_thumbnail)}
         }
         self.assertDictEqual(annotations, expected_annotations, "There is a thumbnail relationship for the thumbnail file.")
 
@@ -396,8 +396,8 @@ class TestImport3MF(unittest.TestCase):
         self.importer.read_annotations(annotations, files_by_content_type)
 
         expected_annotations = {
-            "/path/to/thumbnail.png": {('CONTENT_TYPE', "image/png")},
-            "/path/to/texture.jpg": {('CONTENT_TYPE', "image/jpg")}
+            "path/to/thumbnail.png": {('CONTENT_TYPE', "image/png")},
+            "path/to/texture.jpg": {('CONTENT_TYPE', "image/jpg")}
         }
         self.assertDictEqual(annotations, expected_annotations, "Each file has a content type assigned.")
 

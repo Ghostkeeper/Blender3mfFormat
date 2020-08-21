@@ -258,7 +258,6 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
         all_paths = set()
         for file in itertools.chain(*files_by_content_type.values()):
             all_paths.add(file.name)
-        print(all_paths)
 
         # Read all rels files and add them to the annotations.
         for rels_file in files_by_content_type.get(threemf_rels_mimetype, []):
@@ -275,7 +274,11 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
                 except KeyError as e:
                     log.warning("Relationship missing attribute: {attribute}".format(attribute=str(e)))
                     continue  # Skip this relationship.
-                if target[1:] not in all_paths:
+                if target[0] != "/":
+                    log.warning(f"Relationship target not local to this 3MF archive: {target}")
+                    continue
+                target = target[1:]
+                if target not in all_paths:
                     log.warning(f"Relationship to non-existing file: {target}")
                     continue  # Don't store those.
                 if target not in annotations:
@@ -287,7 +290,7 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
             if content_type == "":
                 continue  # Don't store content type if the content type is unknown.
             for file in file_set:
-                target = "/" + file.name
+                target = file.name
                 if target not in annotations:
                     annotations[target] = set()
                 annotations[target].add(('CONTENT_TYPE', content_type))
@@ -296,7 +299,7 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
         # We'll write them to the output ourselves anyway.
         # The annotations won't necessarily apply any more, and might point to files that are merged to a standard location in the output.
         for file in itertools.chain(files_by_content_type.get(threemf_rels_mimetype, []), files_by_content_type.get(threemf_model_mimetype, [])):
-            target = "/" + file.name
+            target = file.name
             if target in annotations:
                 del annotations[target]
 
