@@ -254,6 +254,12 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
         match the content type. We'll pick out the files with the relationships
         content type for this function.
         """
+        # Find the paths to all files. We'll only allow annotations to existing files.
+        all_paths = set()
+        for file in itertools.chain(*files_by_content_type.values()):
+            all_paths.add(file.name)
+        print(all_paths)
+
         # Read all rels files and add them to the annotations.
         for rels_file in files_by_content_type.get(threemf_rels_mimetype, []):
             try:
@@ -269,6 +275,9 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
                 except KeyError as e:
                     log.warning("Relationship missing attribute: {attribute}".format(attribute=str(e)))
                     continue  # Skip this relationship.
+                if target[1:] not in all_paths:
+                    log.warning(f"Relationship to non-existing file: {target}")
+                    continue  # Don't store those.
                 if target not in annotations:
                     annotations[target] = set()
                 annotations[target].add(('RELATIONSHIP', namespace))  # Add to the annotations as a relationship (since it's a set, don't create duplicates).
