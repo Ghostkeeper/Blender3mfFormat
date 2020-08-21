@@ -429,6 +429,39 @@ class TestImport3MF(unittest.TestCase):
 
         self.assertDictEqual(annotations, {}, "The only relationship we received is for a file that doesn't exist.")
 
+    def test_read_annotations_duplicate_rel(self):
+        """
+        Tests what happens when the same relationship is encountered four times.
+
+        We should store only one of them then.
+        """
+        root = xml.etree.ElementTree.Element("{{{ns}}}Relationships".format(ns=rels_default_namespace))
+        for i in range(4):
+            xml.etree.ElementTree.SubElement(root, "{{{ns}}}Relationship".format(ns=rels_default_namespace), attrib={
+                "Target": "/path/to/thumbnail.png",
+                "Type": rels_thumbnail
+            })
+        document = xml.etree.ElementTree.ElementTree(root)
+        rels_file = io.BytesIO()
+        rels_file.name = "_rels/.rels"
+        document.write(rels_file)
+        rels_file.seek(0)  # Ready for reading again.
+
+        thumbnail_file = io.BytesIO()
+        thumbnail_file.name = "path/to/thumbnail.png"
+        files_by_content_type = {
+            threemf_rels_mimetype: [rels_file],
+            "": [thumbnail_file]
+        }
+
+        annotations = {}
+        self.importer.read_annotations(annotations, files_by_content_type)
+
+        expected_annotations = {
+            "path/to/thumbnail.png": {('RELATIONSHIP', rels_thumbnail)},
+        }
+        self.assertDictEqual(annotations, expected_annotations, "While we got 4 annotations, they were all the same so we store only one, no duplicates.")
+
     def test_is_supported_true(self):
         """
         Tests the detection of whether a document is supported.
