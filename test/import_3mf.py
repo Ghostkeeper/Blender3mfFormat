@@ -352,7 +352,7 @@ class TestImport3MF(unittest.TestCase):
 
         This is the simple happy path, just a relationship.
         """
-        # Construct an empty rels file.
+        # Construct a rels file with a relationship.
         root = xml.etree.ElementTree.Element("{{{ns}}}Relationships".format(ns=rels_default_namespace))
         xml.etree.ElementTree.SubElement(root, "{{{ns}}}Relationship".format(ns=rels_default_namespace), attrib={
             "Target": "/path/to/thumbnail.png",
@@ -400,6 +400,34 @@ class TestImport3MF(unittest.TestCase):
             "/path/to/texture.jpg": {('CONTENT_TYPE', "image/jpg")}
         }
         self.assertDictEqual(annotations, expected_annotations, "Each file has a content type assigned.")
+
+    def test_read_annotations_unused_rel(self):
+        """
+        Tests what happens when a relationship is encountered for a file that is
+        not present in the archive.
+
+        Those relationships should not get stored then.
+        """
+        # Construct a rels file with a relationship.
+        root = xml.etree.ElementTree.Element("{{{ns}}}Relationships".format(ns=rels_default_namespace))
+        xml.etree.ElementTree.SubElement(root, "{{{ns}}}Relationship".format(ns=rels_default_namespace), attrib={
+            "Target": "/path/to/thumbnail.png",  # But don't actually create this file.
+            "Type": rels_thumbnail
+        })
+        document = xml.etree.ElementTree.ElementTree(root)
+        rels_file = io.BytesIO()
+        rels_file.name = "_rels/.rels"
+        document.write(rels_file)
+        rels_file.seek(0)  # Ready for reading again.
+
+        files_by_content_type = {
+            threemf_rels_mimetype: [rels_file]
+        }
+
+        annotations = {}
+        self.importer.read_annotations(annotations, files_by_content_type)
+
+        self.assertDictEqual(annotations, {}, "The only relationship we received is for a file that doesn't exist.")
 
     def test_is_supported_true(self):
         """
