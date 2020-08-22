@@ -406,7 +406,7 @@ class TestImport3MF(unittest.TestCase):
         Tests what happens when a relationship is encountered for a file that is
         not present in the archive.
 
-        Those relationships should not get stored then.
+        We should still store that relationship.
         """
         # Construct a rels file with a relationship.
         root = xml.etree.ElementTree.Element("{{{ns}}}Relationships".format(ns=rels_default_namespace))
@@ -427,7 +427,10 @@ class TestImport3MF(unittest.TestCase):
         annotations = {}
         self.importer.read_annotations(annotations, files_by_content_type)
 
-        self.assertDictEqual(annotations, {}, "The only relationship we received is for a file that doesn't exist.")
+        expected_annotations = {
+            "path/to/thumbnail.png": {('RELATIONSHIP', rels_thumbnail)}
+        }
+        self.assertDictEqual(annotations, expected_annotations, "While the annotation has a target that's not in the archive, we must still retain it.")
 
     def test_read_annotations_duplicate_rel(self):
         """

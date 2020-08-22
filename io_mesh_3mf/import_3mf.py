@@ -16,6 +16,7 @@ import itertools  # Handy for iterating more elegantly.
 import mathutils  # For the transformation matrices.
 import os.path  # To take file paths relative to the selected directory.
 import re  # To find files in the archive based on the content types.
+import urllib.parse  # To resolve URIs to relationships.
 import xml.etree.ElementTree  # To parse the 3dmodel.model file.
 import zipfile  # To read the 3MF files which are secretly zip archives.
 
@@ -261,6 +262,11 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
 
         # Read all rels files and add them to the annotations.
         for rels_file in files_by_content_type.get(threemf_rels_mimetype, []):
+            # Relationships are evaluated relative to the path that the _rels folder around the .rels file is on. If any.
+            base_path = rels_file.name
+            if os.path.basename(os.path.dirname(base_path)) == "_rels":
+                base_path = os.path.dirname(os.path.dirname(base_path))
+
             try:
                 root = xml.etree.ElementTree.ElementTree(file=rels_file)
             except xml.etree.ElementTree.ParseError as e:
@@ -274,13 +280,9 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
                 except KeyError as e:
                     log.warning("Relationship missing attribute: {attribute}".format(attribute=str(e)))
                     continue  # Skip this relationship.
-                if target[0] != "/":
-                    log.warning(f"Relationship target not local to this 3MF archive: {target}")
-                    continue
-                target = target[1:]
-                if target not in all_paths:
-                    log.warning(f"Relationship to non-existing file: {target}")
-                    continue  # Don't store those.
+                target = urllib.parse.urljoin(base_path, target)  # Evaluate any relative URIs based on the path to this .rels file in the archive.
+                if target[0] == "/":
+                    target = target[1:]  # To coincide with the convention held by the zipfile package, paths in this archive will not start with a slash.
                 if target not in annotations:
                     annotations[target] = set()
                 annotations[target].add(('RELATIONSHIP', namespace))  # Add to the annotations as a relationship (since it's a set, don't create duplicates).
