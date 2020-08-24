@@ -375,7 +375,7 @@ class TestImport3MF(unittest.TestCase):
         self.importer.read_annotations(annotations, files_by_content_type)
 
         expected_annotations = {
-            "path/to/thumbnail.png": {('RELATIONSHIP', rels_thumbnail, "")}
+            "path/to/thumbnail.png": {('RELATIONSHIP', rels_thumbnail, "", "")}
         }
         self.assertDictEqual(annotations, expected_annotations, "There is a thumbnail relationship for the thumbnail file.")
 
@@ -428,7 +428,7 @@ class TestImport3MF(unittest.TestCase):
         self.importer.read_annotations(annotations, files_by_content_type)
 
         expected_annotations = {
-            "path/to/thumbnail.png": {('RELATIONSHIP', rels_thumbnail, "")}
+            "path/to/thumbnail.png": {('RELATIONSHIP', rels_thumbnail, "", "")}
         }
         self.assertDictEqual(annotations, expected_annotations, "While the annotation has a target that's not in the archive, we must still retain it.")
 
@@ -461,7 +461,7 @@ class TestImport3MF(unittest.TestCase):
         self.importer.read_annotations(annotations, files_by_content_type)
 
         expected_annotations = {
-            "path/to/thumbnail.png": {('RELATIONSHIP', rels_thumbnail, "")},
+            "path/to/thumbnail.png": {('RELATIONSHIP', rels_thumbnail, "", "")},
         }
         self.assertDictEqual(annotations, expected_annotations, "While we got 4 annotations, they were all the same so we store only one, no duplicates.")
 
