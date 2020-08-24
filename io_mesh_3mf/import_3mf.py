@@ -20,6 +20,7 @@ import urllib.parse  # To resolve URIs to relationships.
 import xml.etree.ElementTree  # To parse the 3dmodel.model file.
 import zipfile  # To read the 3MF files which are secretly zip archives.
 
+from .annotations import Annotations  # To store and serialise file annotations.
 from .constants import (  # Constants associated with the 3MF file format.
     rels_namespaces,
     threemf_content_types_location,
@@ -80,7 +81,7 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
         scene_metadata = Metadata()
         scene_metadata.retrieve(bpy.context.scene)  # If there was already metadata in the scene, combine that with this file.
         del scene_metadata["Title"]  # Don't load the title from the old scene. If there is a title in the imported 3MF, use that. Else, we'll not override the scene title and it gets retained.
-        annotations = {}
+        annotations = Annotations()
 
         # Preparation of the input parameters.
         paths = [os.path.join(self.directory, name.name) for name in self.files]
@@ -257,33 +258,7 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
         """
         # Read all rels files and add them to the annotations.
         for rels_file in files_by_content_type.get(threemf_rels_mimetype, []):
-            # Relationships are evaluated relative to the path that the _rels folder around the .rels file is on. If any.
-            base_path = os.path.dirname(rels_file.name) + "/"
-            if os.path.basename(os.path.dirname(base_path)) == "_rels":
-                base_path = os.path.dirname(os.path.dirname(base_path)) + "/"
-
-            try:
-                root = xml.etree.ElementTree.ElementTree(file=rels_file)
-            except xml.etree.ElementTree.ParseError as e:
-                log.warning("Relationship file {rels_path} has malformed XML (position {linenr}:{columnnr}).".format(rels_path=rels_file.name, linenr=e.position[0], columnnr=e.position[1]))
-                continue  # Skip this file.
-
-            for relationship_node in root.iterfind("rel:Relationship", rels_namespaces):
-                try:
-                    target = relationship_node.attrib["Target"]
-                    namespace = relationship_node.attrib["Type"]
-                except KeyError as e:
-                    log.warning("Relationship missing attribute: {attribute}".format(attribute=str(e)))
-                    continue  # Skip this relationship.
-
-                target = urllib.parse.urljoin(base_path, target)  # Evaluate any relative URIs based on the path to this .rels file in the archive.
-                if target != "" and target[0] == "/":
-                    target = target[1:]  # To coincide with the convention held by the zipfile package, paths in this archive will not start with a slash.
-
-                if target not in annotations:
-                    annotations[target] = set()
-
-                annotations[target].add(('RELATIONSHIP', namespace, base_path))  # Add to the annotations as a relationship (since it's a set, don't create duplicates).
+            annotations.add_from_rels(rels_file)
 
         # Store annotations for the content types of all files.
         for content_type, file_set in files_by_content_type.items():
