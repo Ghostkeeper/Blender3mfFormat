@@ -292,7 +292,7 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
                 if target not in annotations:
                     annotations[target] = set()
 
-                annotations[target].add(('RELATIONSHIP', namespace, base_path, source))  # Add to the annotations as a relationship (since it's a set, don't create duplicates).
+                annotations[target].add(('RELATIONSHIP', namespace, source))  # Add to the annotations as a relationship (since it's a set, don't create duplicates).
 
         # Store annotations for the content types of all files.
         for content_type, file_set in files_by_content_type.items():
