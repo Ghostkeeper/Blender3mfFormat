@@ -524,6 +524,34 @@ class TestImport3MF(unittest.TestCase):
         }
         self.assertDictEqual(annotations, expected_annotations, "There was a relationship with a defined source path, so that source must be retained.")
 
+    def test_read_annotations_base_path(self):
+        """
+        Tests reading a relationship with a different base path.
+        """
+        root = xml.etree.ElementTree.Element("{{{ns}}}Relationships".format(ns=rels_default_namespace))
+        xml.etree.ElementTree.SubElement(root, "{{{ns}}}Relationship".format(ns=rels_default_namespace), attrib={
+            "Target": "thumbnail.png",
+            "Type": rels_thumbnail,
+            "Source": "../3D/3dmodel.model"
+        })
+        document = xml.etree.ElementTree.ElementTree(root)
+        rels_file = io.BytesIO()
+        rels_file.name = "metadata/_rels/.rels"  # The _rels directory is NOT in the root of the archive.
+        document.write(rels_file)
+        rels_file.seek(0)  # Ready for reading again.
+
+        files_by_content_type = {
+            threemf_rels_mimetype: [rels_file]
+        }
+
+        annotations = {}
+        self.importer.read_annotations(annotations, files_by_content_type)
+
+        expected_annotations = {
+            "metadata/thumbnail.png": {('RELATIONSHIP', rels_thumbnail, "metadata", "3D/3dmodel.model")}
+        }
+        self.assertDictEqual(annotations, expected_annotations, "The relationship was stored in the metadata folder, so the source and target must be taken relative to that.")
+
     def test_is_supported_true(self):
         """
         Tests the detection of whether a document is supported.
