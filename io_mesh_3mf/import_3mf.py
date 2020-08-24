@@ -255,11 +255,6 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
         match the content type. We'll pick out the files with the relationships
         content type for this function.
         """
-        # Find the paths to all files. We'll only allow annotations to existing files.
-        all_paths = set()
-        for file in itertools.chain(*files_by_content_type.values()):
-            all_paths.add(file.name)
-
         # Read all rels files and add them to the annotations.
         for rels_file in files_by_content_type.get(threemf_rels_mimetype, []):
             # Relationships are evaluated relative to the path that the _rels folder around the .rels file is on. If any.
