@@ -375,7 +375,7 @@ class TestImport3MF(unittest.TestCase):
         self.importer.read_annotations(annotations, files_by_content_type)
 
         expected_annotations = {
-            "path/to/thumbnail.png": {('RELATIONSHIP', rels_thumbnail, "")}
+            "path/to/thumbnail.png": {('RELATIONSHIP', rels_thumbnail, "/")}
         }
         self.assertDictEqual(annotations, expected_annotations, "There is a thumbnail relationship for the thumbnail file.")
 
@@ -428,7 +428,7 @@ class TestImport3MF(unittest.TestCase):
         self.importer.read_annotations(annotations, files_by_content_type)
 
         expected_annotations = {
-            "path/to/thumbnail.png": {('RELATIONSHIP', rels_thumbnail, "")}
+            "path/to/thumbnail.png": {('RELATIONSHIP', rels_thumbnail, "/")}
         }
         self.assertDictEqual(annotations, expected_annotations, "While the annotation has a target that's not in the archive, we must still retain it.")
 
@@ -461,7 +461,7 @@ class TestImport3MF(unittest.TestCase):
         self.importer.read_annotations(annotations, files_by_content_type)
 
         expected_annotations = {
-            "path/to/thumbnail.png": {('RELATIONSHIP', rels_thumbnail, "")},
+            "path/to/thumbnail.png": {('RELATIONSHIP', rels_thumbnail, "/")},
         }
         self.assertDictEqual(annotations, expected_annotations, "While we got 4 annotations, they were all the same so we store only one, no duplicates.")
 
@@ -496,34 +496,6 @@ class TestImport3MF(unittest.TestCase):
 
         self.assertDictEqual(annotations, {}, "There were two relationship tags, but both are missing a required attribute, so neither gets loaded.")
 
-    def test_read_annotations_source(self):
-        """
-        Tests reading the source from a relationship.
-        """
-        root = xml.etree.ElementTree.Element("{{{ns}}}Relationships".format(ns=rels_default_namespace))
-        xml.etree.ElementTree.SubElement(root, "{{{ns}}}Relationship".format(ns=rels_default_namespace), attrib={
-            "Target": "/path/to/thumbnail.png",
-            "Type": rels_thumbnail,
-            "Source": "/3D/3dmodel.model"
-        })
-        document = xml.etree.ElementTree.ElementTree(root)
-        rels_file = io.BytesIO()
-        rels_file.name = "_rels/.rels"
-        document.write(rels_file)
-        rels_file.seek(0)  # Ready for reading again.
-
-        files_by_content_type = {
-            threemf_rels_mimetype: [rels_file]
-        }
-
-        annotations = {}
-        self.importer.read_annotations(annotations, files_by_content_type)
-
-        expected_annotations = {
-            "path/to/thumbnail.png": {('RELATIONSHIP', rels_thumbnail, "3D/3dmodel.model")}
-        }
-        self.assertDictEqual(annotations, expected_annotations, "There was a relationship with a defined source path, so that source must be retained.")
-
     def test_read_annotations_base_path(self):
         """
         Tests reading a relationship with a different base path.
@@ -531,8 +503,7 @@ class TestImport3MF(unittest.TestCase):
         root = xml.etree.ElementTree.Element("{{{ns}}}Relationships".format(ns=rels_default_namespace))
         xml.etree.ElementTree.SubElement(root, "{{{ns}}}Relationship".format(ns=rels_default_namespace), attrib={
             "Target": "thumbnail.png",
-            "Type": rels_thumbnail,
-            "Source": "../3D/3dmodel.model"
+            "Type": rels_thumbnail
         })
         document = xml.etree.ElementTree.ElementTree(root)
         rels_file = io.BytesIO()
@@ -548,7 +519,7 @@ class TestImport3MF(unittest.TestCase):
         self.importer.read_annotations(annotations, files_by_content_type)
 
         expected_annotations = {
-            "metadata/thumbnail.png": {('RELATIONSHIP', rels_thumbnail, "3D/3dmodel.model")}
+            "metadata/thumbnail.png": {('RELATIONSHIP', rels_thumbnail, "metadata/")}
         }
         self.assertDictEqual(annotations, expected_annotations, "The relationship was stored in the metadata folder, so the source and target must be taken relative to that.")
 

@@ -284,15 +284,11 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
                 target = urllib.parse.urljoin(base_path, target)  # Evaluate any relative URIs based on the path to this .rels file in the archive.
                 if target != "" and target[0] == "/":
                     target = target[1:]  # To coincide with the convention held by the zipfile package, paths in this archive will not start with a slash.
-                source = relationship_node.attrib.get("Source", "")
-                source = urllib.parse.urljoin(base_path, source)
-                if source != "" and source[0] == "/":
-                    source = source[1:]
 
                 if target not in annotations:
                     annotations[target] = set()
 
-                annotations[target].add(('RELATIONSHIP', namespace, source))  # Add to the annotations as a relationship (since it's a set, don't create duplicates).
+                annotations[target].add(('RELATIONSHIP', namespace, base_path))  # Add to the annotations as a relationship (since it's a set, don't create duplicates).
 
         # Store annotations for the content types of all files.
         for content_type, file_set in files_by_content_type.items():
