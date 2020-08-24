@@ -263,9 +263,9 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
         # Read all rels files and add them to the annotations.
         for rels_file in files_by_content_type.get(threemf_rels_mimetype, []):
             # Relationships are evaluated relative to the path that the _rels folder around the .rels file is on. If any.
-            base_path = os.path.dirname(rels_file.name)
-            if os.path.basename(base_path) == "_rels":
-                base_path = os.path.dirname(base_path)
+            base_path = os.path.dirname(rels_file.name) + "/"
+            if os.path.basename(os.path.dirname(base_path)) == "_rels":
+                base_path = os.path.dirname(os.path.dirname(base_path)) + "/"
 
             try:
                 root = xml.etree.ElementTree.ElementTree(file=rels_file)
