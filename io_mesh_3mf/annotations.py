@@ -19,8 +19,12 @@ from .constants import (
 )
 
 
+# These are the different types of annotations we can store.
 Relationship = collections.namedtuple("Relationship", ["namespace", "source"])
 ContentType = collections.namedtuple("ContentType", ["mime_type"])
+
+
+ConflictingContentType = object()  # Flag object to denote that different 3MF archives give different content types to the same file in the archive.
 
 
 class Annotations:
@@ -113,4 +117,13 @@ class Annotations:
                 filename = file.name
                 if filename not in self.annotations:
                     self.annotations[filename] = set()
-                self.annotations[filename].add(ContentType(content_type))
+                if ConflictingContentType in self.annotations[filename]:
+                    continue  # Content type was already conflicting through multiple previous files. It'll stay in conflict.
+                content_type_annotations = list(filter(lambda annotation: type(annotation) == ContentType, self.annotations[filename]))
+                if any(content_type_annotations) and content_type_annotations[0].mime_type != content_type:  # There was already a content type and it is different from this one.
+                    # This file now has conflicting content types!
+                    for annotation in content_type_annotations:
+                        self.annotations[filename].remove(annotation)
+                    self.annotations[filename].add(ConflictingContentType)
+                else:  # No content type yet, or the existing content type is the same (so adding it again won't have any effect).
+                    self.annotations[filename].add(ContentType(content_type))
