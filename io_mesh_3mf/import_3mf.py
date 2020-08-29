@@ -261,22 +261,7 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
             annotations.add_from_rels(rels_file)
 
         # Store annotations for the content types of all files.
-        for content_type, file_set in files_by_content_type.items():
-            if content_type == "":
-                continue  # Don't store content type if the content type is unknown.
-            for file in file_set:
-                target = file.name
-                if target not in annotations:
-                    annotations[target] = set()
-                annotations[target].add(('CONTENT_TYPE', content_type))
-
-        # Remove annotations to files that this add-on understands.
-        # We'll write them to the output ourselves anyway.
-        # The annotations won't necessarily apply any more, and might point to files that are merged to a standard location in the output.
-        for file in itertools.chain(files_by_content_type.get(threemf_rels_mimetype, []), files_by_content_type.get(threemf_model_mimetype, [])):
-            target = file.name
-            if target in annotations:
-                del annotations[target]
+        annotations.add_content_types(files_by_content_type)
 
     def is_supported(self, required_extensions):
         """

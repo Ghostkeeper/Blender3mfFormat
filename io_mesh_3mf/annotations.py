@@ -12,7 +12,11 @@ import os.path  # To parse target paths in relationships.
 import urllib.parse  # To parse relative target paths in relationships.
 import xml.etree.ElementTree  # To parse the relationships files.
 
-from .constants import rels_namespaces  # Namespace for relationships files.
+from .constants import (
+    rels_namespaces,  # Namespace for relationships files.
+    threemf_rels_mimetype,
+    threemf_model_mimetype
+)
 
 
 Relationship = collections.namedtuple("Relationship", ["namespace", "source"])
@@ -84,3 +88,29 @@ class Annotations:
                 self.annotations[target] = set()
 
             self.annotations[target].add(Relationship(namespace=namespace, source=base_path))  # Add to the annotations as a relationship (since it's a set, don't create duplicates).
+
+    def add_content_types(self, files_by_content_type):
+        """
+        Add annotations that signal the content types of the files in the
+        archive.
+
+        If a file already got a different content type from a different 3MF
+        archive, the content type of the file now becomes unknown (and
+        subsequently won't get stored in any exported 3MF archive).
+
+        Content types for files known to this 3MF implementation will not get
+        stored. This add-on will rewrite those files and may change the file
+        location and such.
+        :param files_by_content_type: The files in this archive, sorted by
+        content type.
+        """
+        for content_type, file_set in files_by_content_type.items():
+            if content_type == "":
+                continue  # Don't store content type if the content type is unknown.
+            if content_type in {threemf_rels_mimetype, threemf_model_mimetype}:
+                continue  # Don't store content type if it's a file we'll rewrite with this add-on.
+            for file in file_set:
+                filename = file.name
+                if filename not in self.annotations:
+                    self.annotations[filename] = set()
+                self.annotations[filename].add(('CONTENT_TYPE', content_type))
