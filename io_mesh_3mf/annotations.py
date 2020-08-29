@@ -113,4 +113,4 @@ class Annotations:
                 filename = file.name
                 if filename not in self.annotations:
                     self.annotations[filename] = set()
-                self.annotations[filename].add(('CONTENT_TYPE', content_type))
+                self.annotations[filename].add(ContentType(content_type))
