@@ -94,9 +94,14 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
             bpy.ops.object.select_all(action='DESELECT')  # Deselect other files.
 
         for path in paths:
-            files_by_content_type = self.read_archive(path)
-            self.read_annotations(annotations, files_by_content_type)
+            files_by_content_type = self.read_archive(path)  # Get the files from the archive.
 
+            # File metadata.
+            for rels_file in files_by_content_type.get(threemf_rels_mimetype, []):
+                annotations.add_from_rels(rels_file)
+            annotations.add_content_types(files_by_content_type)
+
+            # Read the model data.
             for model_file in files_by_content_type.get(threemf_model_mimetype, []):
                 document = xml.etree.ElementTree.ElementTree(file=model_file)
                 if document is None:
@@ -228,40 +233,6 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
                 result[file_path] = ""
 
         return result
-
-    def read_annotations(self, annotations, files_by_content_type):
-        """
-        Gather relationships and other annotations for files in the archive.
-
-        Relationships are treated as annotations to the files. Each file can
-        have an arbitrary number of "relationships" but each relationship is
-        just a namespace and a meaningless ID. The IDs of the relationships are
-        not read, and they do not need to be preserved.
-
-        These annotations must be preserved when re-saving the file, and merged
-        when opening multiple files.
-
-        The types of annotations gathered by this function are:
-        * `'RELATIONSHIP'`: A relationship read from the _rels file.
-        * `'CONTENT_TYPE'`: The MIME type of the file.
-
-        Duplicate annotations will be discarded.
-        :param annotations: Previously found annotations from other 3MF
-        archives. Annotations from this archive will be merged in with these, so
-        this is also the output of the function. This must take the form of a
-        dictionary mapping file paths to a set of annotations. Each annotation
-        is a tuple consisting of the type of annotation and an arbitrary number
-        of strings representing the annotation data.
-        :param files_by_content_type: For each content type, a list of files that
-        match the content type. We'll pick out the files with the relationships
-        content type for this function.
-        """
-        # Read all rels files and add them to the annotations.
-        for rels_file in files_by_content_type.get(threemf_rels_mimetype, []):
-            annotations.add_from_rels(rels_file)
-
-        # Store annotations for the content types of all files.
-        annotations.add_content_types(files_by_content_type)
 
     def is_supported(self, required_extensions):
         """
