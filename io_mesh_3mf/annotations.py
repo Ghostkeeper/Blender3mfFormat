@@ -6,7 +6,9 @@
 
 # <pep8 compliant>
 
+import bpy  # To store the annotations long-term in the Blender context.
 import collections  # Namedtuple data structure for annotations.
+import json  # To serialise the data for long-term storage in the Blender scene.
 import logging  # Reporting parsing errors.
 import os.path  # To parse target paths in relationships.
 import urllib.parse  # To parse relative target paths in relationships.
@@ -127,3 +129,41 @@ class Annotations:
                     self.annotations[filename].add(ConflictingContentType)
                 else:  # No content type yet, or the existing content type is the same (so adding it again won't have any effect).
                     self.annotations[filename].add(ContentType(content_type))
+
+    def store(self):
+        """
+        Stores this `Annotations` instance in the Blender scene.
+
+        The instance will serialise itself and put that data in a hidden JSON
+        file in the scene. This way the data can survive until it needs to be
+        saved to a 3MF document again, even when shared through a Blend file.
+        """
+        # Generate a JSON document containing all annotations.
+        document = {}
+        for target, annotations in self.annotations.items():
+            serialised_annotations = []
+            for annotation in annotations:
+                if type(annotation) == Relationship:
+                    serialised_annotations.append({
+                        "relationship": {
+                            "namespace": annotation.namespace,
+                            "source": annotation.source
+                        }
+                    })
+                elif type(annotation) == ContentType:
+                    serialised_annotations.append({
+                        "content_type": {
+                            "mime_type": annotation.mime_type
+                        }
+                    })
+                elif type(annotation) == ConflictingContentType:
+                    serialised_annotations.append({
+                        "content_type": {
+                            "conflict": True
+                        }
+                    })
+            document[target] = serialised_annotations
+
+        # Store this in the Blender context.
+        text_file = bpy.data.texts.new("3mf_annotations")
+        text_file.write(json.dumps(document))

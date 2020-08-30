@@ -119,6 +119,7 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
                 self.build_items(root, scale_unit)
 
         scene_metadata.store(bpy.context.scene)
+        annotations.store()
 
         log.info(f"Imported {self.num_loaded} objects from 3MF files.")
 
