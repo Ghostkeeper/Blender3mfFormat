@@ -104,3 +104,27 @@ class TestAnnotations(unittest.TestCase):
             "path/to/thumbnail.png": {io_mesh_3mf.annotations.Relationship(namespace=rels_thumbnail, source="/")}
         }
         self.assertDictEqual(self.annotations.annotations, expected_annotations, "There is a thumbnail relationship.")
+
+    def test_add_rels_duplicates(self):
+        """
+        Tests adding the same relationship multiple times.
+
+        We expect to see only one copy of it in the result.
+        """
+        # Construct a relationships file with four identical relationships in it.
+        root = xml.etree.ElementTree.Element("{{{ns}}}Relationships".format(ns=rels_default_namespace))
+        for i in range(4):
+            xml.etree.ElementTree.SubElement(root, "{{{ns}}}Relationship".format(ns=rels_default_namespace), attrib={
+                "Target": "/path/to/thumbnail.png",
+                "Type": rels_thumbnail
+            })
+        rels_file = self.xml_to_filestream(root, "_rels/.rels")
+
+        self.annotations.add_rels(rels_file)
+        rels_file.seek(0)
+        self.annotations.add_rels(rels_file)  # Also add the same file twice, to test removal of duplicates over multiple files.
+
+        expected_annotations = {
+            "path/to/thumbnail.png": {io_mesh_3mf.annotations.Relationship(namespace=rels_thumbnail, source="/")}
+        }
+        self.assertDictEqual(self.annotations.annotations, expected_annotations, "There is a thumbnail relationship.")
