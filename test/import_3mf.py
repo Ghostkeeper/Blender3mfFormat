@@ -318,37 +318,6 @@ class TestImport3MF(unittest.TestCase):
         }
         self.assertDictEqual(annotations, expected_annotations, "Each file has a content type assigned.")
 
-    def test_read_annotations_unused_rel(self):
-        """
-        Tests what happens when a relationship is encountered for a file that is
-        not present in the archive.
-
-        We should still store that relationship.
-        """
-        # Construct a rels file with a relationship.
-        root = xml.etree.ElementTree.Element("{{{ns}}}Relationships".format(ns=rels_default_namespace))
-        xml.etree.ElementTree.SubElement(root, "{{{ns}}}Relationship".format(ns=rels_default_namespace), attrib={
-            "Target": "/path/to/thumbnail.png",  # But don't actually create this file.
-            "Type": rels_thumbnail
-        })
-        document = xml.etree.ElementTree.ElementTree(root)
-        rels_file = io.BytesIO()
-        rels_file.name = "_rels/.rels"
-        document.write(rels_file)
-        rels_file.seek(0)  # Ready for reading again.
-
-        files_by_content_type = {
-            threemf_rels_mimetype: [rels_file]
-        }
-
-        annotations = {}
-        self.importer.read_annotations(annotations, files_by_content_type)
-
-        expected_annotations = {
-            "path/to/thumbnail.png": {('RELATIONSHIP', rels_thumbnail, "/")}
-        }
-        self.assertDictEqual(annotations, expected_annotations, "While the annotation has a target that's not in the archive, we must still retain it.")
-
     def test_read_annotations_duplicate_rel(self):
         """
         Tests what happens when the same relationship is encountered four times.
