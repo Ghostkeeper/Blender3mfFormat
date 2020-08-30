@@ -14,3 +14,4 @@ This imports all test classes so that they get run then.
 from .import_3mf import TestImport3MF
 from .export_3mf import TestExport3MF
 from .metadata import TestMetadata
+from .annotations import TestAnnotations

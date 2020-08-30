@@ -296,16 +296,6 @@ class TestImport3MF(unittest.TestCase):
         result = self.importer.assign_content_types(archive, content_types)
         self.assertEqual(result, {"some_directory/file.txt": "Second type"}, "Now that the priority is reversed, the second type has highest priority.")
 
-    def test_read_annotations_empty(self):
-        """
-        Tests reading annotations from an empty archive.
-        """
-        annotations = {}
-        files_by_content_type = {}
-        self.importer.read_annotations(annotations, files_by_content_type)
-
-        self.assertDictEqual(annotations, {}, "We have no annotations since there are no files to annotate.")
-
     def test_read_annotations_no_rels_no_content_types(self):
         """
         Tests reading annotations from an archive without rels file or known
