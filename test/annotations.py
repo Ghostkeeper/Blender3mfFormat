@@ -235,3 +235,29 @@ class TestAnnotations(unittest.TestCase):
         self.annotations.add_content_types(files_by_content_type)
 
         self.assertDictEqual(self.annotations.annotations, {}, "Both files had content types that we already know, so those shouldn't get stored.")
+
+    def test_add_content_types_conflict(self):
+        """
+        Tests what happens when we get a conflict for the content types.
+        """
+        file_stream = io.BytesIO()
+        file_stream.name = "some_file.bin"
+        files_by_content_type = {
+            "type A": {file_stream},  # Same file, different MIME types.
+            "type B": {file_stream}
+        }
+
+        self.annotations.add_content_types(files_by_content_type)
+
+        expected_annotations = {
+            "some_file.bin": {io_mesh_3mf.annotations.ConflictingContentType}
+        }
+        self.assertDictEqual(self.annotations.annotations, expected_annotations, "The same file had multiple content types, so it is now in conflict.")
+
+        files_by_content_type = {
+            "type A": {file_stream}
+        }
+
+        self.annotations.add_content_types(files_by_content_type)
+
+        self.assertDictEqual(self.annotations.annotations, expected_annotations, "Adding a content type again should still let it be in conflict.")
