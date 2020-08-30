@@ -34,7 +34,10 @@ bpy.types.Operator = MockOperator
 bpy_extras.io_utils.ImportHelper = MockImportHelper
 bpy_extras.io_utils.ExportHelper = MockExportHelper
 import io_mesh_3mf.annotations  # Now finally we can import the unit under test.
-from io_mesh_3mf.constants import rels_default_namespace
+from io_mesh_3mf.constants import (
+    rels_default_namespace,
+    rels_thumbnail
+)
 
 
 class TestAnnotations(unittest.TestCase):
@@ -82,3 +85,22 @@ class TestAnnotations(unittest.TestCase):
         self.annotations.add_rels(rels_file)
 
         self.assertDictEqual(self.annotations.annotations, {}, "The relationships file was empty, so there should not be any annotations yet.")
+
+    def test_add_rels_relationship(self):
+        """
+        Tests adding a relationships file with a relationship in it.
+        """
+        # Construct a relationships file with a relationship in it.
+        root = xml.etree.ElementTree.Element("{{{ns}}}Relationships".format(ns=rels_default_namespace))
+        xml.etree.ElementTree.SubElement(root, "{{{ns}}}Relationship".format(ns=rels_default_namespace), attrib={
+            "Target": "/path/to/thumbnail.png",
+            "Type": rels_thumbnail
+        })
+        rels_file = self.xml_to_filestream(root, "_rels/.rels")
+
+        self.annotations.add_rels(rels_file)
+
+        expected_annotations = {
+            "path/to/thumbnail.png": {io_mesh_3mf.annotations.Relationship(namespace=rels_thumbnail, source="/")}
+        }
+        self.assertDictEqual(self.annotations.annotations, expected_annotations, "There is a thumbnail relationship.")
