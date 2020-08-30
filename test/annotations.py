@@ -150,3 +150,22 @@ class TestAnnotations(unittest.TestCase):
         self.annotations.add_rels(rels_file)
 
         self.assertDictEqual(self.annotations.annotations, {}, "Both relationships were broken, so they should not get stored.")
+
+    def test_add_rels_base_path(self):
+        """
+        Tests adding a relationships file with a relationship in it.
+        """
+        # Construct a relationships file with a different base path
+        root = xml.etree.ElementTree.Element("{{{ns}}}Relationships".format(ns=rels_default_namespace))
+        xml.etree.ElementTree.SubElement(root, "{{{ns}}}Relationship".format(ns=rels_default_namespace), attrib={
+            "Target": "/path/to/thumbnail.png",
+            "Type": rels_thumbnail
+        })
+        rels_file = self.xml_to_filestream(root, "metadata/_rels/.rels")  # The _rels directory is NOT in the root of the archive.
+
+        self.annotations.add_rels(rels_file)
+
+        expected_annotations = {
+            "path/to/thumbnail.png": {io_mesh_3mf.annotations.Relationship(namespace=rels_thumbnail, source="metadata/")}
+        }
+        self.assertDictEqual(self.annotations.annotations, expected_annotations, "The source of the annotation is the metadata directory.")
