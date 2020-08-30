@@ -189,9 +189,26 @@ class TestAnnotations(unittest.TestCase):
         files_by_content_type = {
             "unknown MIME type": {file_stream}
         }
+
         self.annotations.add_content_types(files_by_content_type)
 
         expected_annotations = {
             "some_file.bin": {io_mesh_3mf.annotations.ContentType(mime_type="unknown MIME type")}
         }
         self.assertDictEqual(self.annotations.annotations, expected_annotations, "There was a content type specified, so we should store that.")
+
+    def test_add_content_types_unspecified(self):
+        """
+        Tests adding files without a specified content type.
+
+        We should not store that as an annotation.
+        """
+        file_stream = io.BytesIO()
+        file_stream.name = "some_file.bin"
+        files_by_content_type = {
+            "": {file_stream}
+        }
+
+        self.annotations.add_content_types(files_by_content_type)
+
+        self.assertDictEqual(self.annotations.annotations, {}, "The file had no specified content type, so we shouldn't store that.")
