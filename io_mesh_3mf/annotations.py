@@ -121,6 +121,7 @@ class Annotations:
                 content_type_annotations = list(filter(lambda annotation: type(annotation) == ContentType, self.annotations[filename]))
                 if any(content_type_annotations) and content_type_annotations[0].mime_type != content_type:  # There was already a content type and it is different from this one.
                     # This file now has conflicting content types!
+                    logging.warning(f"Found conflicting content types for file: {filename}")
                     for annotation in content_type_annotations:
                         self.annotations[filename].remove(annotation)
                     self.annotations[filename].add(ConflictingContentType)
