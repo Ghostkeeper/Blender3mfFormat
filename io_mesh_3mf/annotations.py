@@ -35,21 +35,20 @@ class Annotations:
     The class contains serialisation and deserialisation functions in order to
     be able to load and save the annotations from/to a 3MF archive, and to load
     and save the annotations in the Blender scene.
-    """
 
-    annotations = {}
-    """
-    All annotations stored thus far.
-
-    The keys of this dictionary is the targets of the annotations, normally the
-    files in this archive. It can be any URI however, and the files don't
-    necessarily need to exist.
+    The annotations are stored in the `self.annotations` dictionary. The keys of
+    this dictionary are the targets of the annotations, normally the files in
+    this archive. It can be any URI however, and the files don't necessarily
+    need to exist.
 
     The values are sets of annotations. The annotations are named tuples as
-    described at the beginning of this module. The set can contain any mixture
-    of these named tuples. Duplicates will get filtered out through the virtue
-    of storing sets.
+    described in the beginning of this module. The set can contain any mixture
+    of these named tuples. Duplicates will get filtered out by the nature of the
+    set data structure.
     """
+
+    def __init__(self):
+        self.annotations = {}  # All annotations stored thus far.
 
     def add_rels(self, rels_file):
         """
