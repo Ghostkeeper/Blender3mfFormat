@@ -296,46 +296,6 @@ class TestImport3MF(unittest.TestCase):
         result = self.importer.assign_content_types(archive, content_types)
         self.assertEqual(result, {"some_directory/file.txt": "Second type"}, "Now that the priority is reversed, the second type has highest priority.")
 
-    def test_read_annotations_no_rels_no_content_types(self):
-        """
-        Tests reading annotations from an archive without rels file or known
-        content types.
-        """
-        thumbnail_file = io.BytesIO()
-        thumbnail_file.name = "path/to/thumbnail.png"
-        files_by_content_type = {
-            "": [thumbnail_file]
-        }
-
-        annotations = {}
-        self.importer.read_annotations(annotations, files_by_content_type)
-
-        self.assertDictEqual(annotations, {}, "There is a file, but it has no known content type and no rels, so no annotations.")
-
-    def test_read_annotations_empty_rels(self):
-        """
-        Tests reading annotations from an archive with an empty rels file.
-        """
-        # Construct an empty rels file.
-        root = xml.etree.ElementTree.Element("{{{ns}}}Relationships".format(ns=rels_default_namespace))
-        document = xml.etree.ElementTree.ElementTree(root)
-        rels_file = io.BytesIO()
-        rels_file.name = "_rels/.rels"
-        document.write(rels_file)
-        rels_file.seek(0)  # Ready for reading again.
-
-        thumbnail_file = io.BytesIO()
-        thumbnail_file.name = "path/to/thumbnail.png"
-        files_by_content_type = {
-            "": [thumbnail_file],
-            threemf_rels_mimetype: [rels_file]
-        }
-
-        annotations = {}
-        self.importer.read_annotations(annotations, files_by_content_type)
-
-        self.assertDictEqual(annotations, {}, "There is a file, but it has no known content type and no rels. And there is a rels file, but that should not be output.")
-
     def test_read_annotations_relationship(self):
         """
         Tests reading a relationship from the rels file.
