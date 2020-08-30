@@ -127,4 +127,26 @@ class TestAnnotations(unittest.TestCase):
         expected_annotations = {
             "path/to/thumbnail.png": {io_mesh_3mf.annotations.Relationship(namespace=rels_thumbnail, source="/")}
         }
-        self.assertDictEqual(self.annotations.annotations, expected_annotations, "There is a thumbnail relationship.")
+        self.assertDictEqual(self.annotations.annotations, expected_annotations, "Even though the relationship was added 8 times, there may only be one resulting relationship.")
+
+    def test_add_rels_missing_attributes(self):
+        """
+        Tests adding relationships which are missing required attributes.
+
+        Those relationships should get ignored.
+        """
+        # Construct a relationships file with two broken relationships in it.
+        root = xml.etree.ElementTree.Element("{{{ns}}}Relationships".format(ns=rels_default_namespace))
+        xml.etree.ElementTree.SubElement(root, "{{{ns}}}Relationship".format(ns=rels_default_namespace), attrib={
+            "Target": "/path/to/thumbnail.png"
+            # Missing type.
+        })
+        xml.etree.ElementTree.SubElement(root, "{{{ns}}}Relationship".format(ns=rels_default_namespace), attrib={
+            # Missing target.
+            "Type": rels_thumbnail
+        })
+        rels_file = self.xml_to_filestream(root, "_rels/.rels")
+
+        self.annotations.add_rels(rels_file)
+
+        self.assertDictEqual(self.annotations.annotations, {}, "Both relationships were broken, so they should not get stored.")

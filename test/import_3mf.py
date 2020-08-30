@@ -318,37 +318,6 @@ class TestImport3MF(unittest.TestCase):
         }
         self.assertDictEqual(annotations, expected_annotations, "Each file has a content type assigned.")
 
-    def test_read_annotations_missing_attributes(self):
-        """
-        Tests reading relationships that are missing an attribute that is
-        required.
-
-        Those relationships should be ignored.
-        """
-        root = xml.etree.ElementTree.Element("{{{ns}}}Relationships".format(ns=rels_default_namespace))
-        xml.etree.ElementTree.SubElement(root, "{{{ns}}}Relationship".format(ns=rels_default_namespace), attrib={
-            "Target": "/path/to/thumbnail.png"
-            # Missing type.
-        })
-        xml.etree.ElementTree.SubElement(root, "{{{ns}}}Relationship".format(ns=rels_default_namespace), attrib={
-            # Missing target.
-            "Type": rels_thumbnail
-        })
-        document = xml.etree.ElementTree.ElementTree(root)
-        rels_file = io.BytesIO()
-        rels_file.name = "_rels/.rels"
-        document.write(rels_file)
-        rels_file.seek(0)  # Ready for reading again.
-
-        files_by_content_type = {
-            threemf_rels_mimetype: [rels_file],
-        }
-
-        annotations = {}
-        self.importer.read_annotations(annotations, files_by_content_type)
-
-        self.assertDictEqual(annotations, {}, "There were two relationship tags, but both are missing a required attribute, so neither gets loaded.")
-
     def test_read_annotations_base_path(self):
         """
         Tests reading a relationship with a different base path.
