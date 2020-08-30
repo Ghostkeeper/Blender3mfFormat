@@ -169,3 +169,10 @@ class TestAnnotations(unittest.TestCase):
             "path/to/thumbnail.png": {io_mesh_3mf.annotations.Relationship(namespace=rels_thumbnail, source="metadata/")}
         }
         self.assertDictEqual(self.annotations.annotations, expected_annotations, "The source of the annotation is the metadata directory.")
+
+    def test_add_content_types_empty(self):
+        """
+        Tests adding an empty set of content types.
+        """
+        self.annotations.add_content_types({})
+        self.assertDictEqual(self.annotations.annotations, {}, "There were no content types to add.")
