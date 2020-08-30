@@ -7,7 +7,7 @@
 # <pep8 compliant>
 
 import collections  # Namedtuple data structure for annotations.
-import log  # Reporting parsing errors.
+import logging  # Reporting parsing errors.
 import os.path  # To parse target paths in relationships.
 import urllib.parse  # To parse relative target paths in relationships.
 import xml.etree.ElementTree  # To parse the relationships files.
