@@ -36,7 +36,9 @@ bpy_extras.io_utils.ExportHelper = MockExportHelper
 import io_mesh_3mf.annotations  # Now finally we can import the unit under test.
 from io_mesh_3mf.constants import (
     rels_default_namespace,
-    rels_thumbnail
+    rels_thumbnail,
+    threemf_model_mimetype,
+    threemf_rels_mimetype
 )
 
 
@@ -212,3 +214,24 @@ class TestAnnotations(unittest.TestCase):
         self.annotations.add_content_types(files_by_content_type)
 
         self.assertDictEqual(self.annotations.annotations, {}, "The file had no specified content type, so we shouldn't store that.")
+
+    def test_add_content_types_known(self):
+        """
+        Tests adding files with a content type that the 3MF format add-on will
+        write.
+
+        We shouldn't store those annotations since they can change since this
+        add-on decides for itself where the files are saved.
+        """
+        model_file = io.BytesIO()
+        model_file.name = "3D/3dmodel.model"
+        rels_file = io.BytesIO()
+        rels_file.name = "_rels/.rels"
+        files_by_content_type = {
+            threemf_model_mimetype: {model_file},
+            threemf_rels_mimetype: {rels_file}
+        }
+
+        self.annotations.add_content_types(files_by_content_type)
+
+        self.assertDictEqual(self.annotations.annotations, {}, "Both files had content types that we already know, so those shouldn't get stored.")
