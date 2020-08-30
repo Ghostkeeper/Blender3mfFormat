@@ -71,7 +71,7 @@ class TestAnnotations(unittest.TestCase):
         """
         self.assertDictEqual(self.annotations.annotations, {}, "There must not be any annotations at first.")
 
-    def test_add_from_rels_empty(self):
+    def test_add_rels_empty(self):
         """
         Tests adding an empty relationships file.
         """
@@ -79,6 +79,6 @@ class TestAnnotations(unittest.TestCase):
         root = xml.etree.ElementTree.Element("{{{ns}}}Relationships".format(ns=rels_default_namespace))
         rels_file = self.xml_to_filestream(root, "_rels/.rels")
 
-        self.annotations.add_from_rels(rels_file)
+        self.annotations.add_rels(rels_file)
 
         self.assertDictEqual(self.annotations.annotations, {}, "The relationships file was empty, so there should not be any annotations yet.")

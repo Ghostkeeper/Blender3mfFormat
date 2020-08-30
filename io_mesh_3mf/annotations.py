@@ -51,7 +51,7 @@ class Annotations:
     of storing sets.
     """
 
-    def add_from_rels(self, rels_file):
+    def add_rels(self, rels_file):
         """
         Add relationships to this collection from a file stream containing a
         .rels file from a 3MF archive.

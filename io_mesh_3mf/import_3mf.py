@@ -98,7 +98,7 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
 
             # File metadata.
             for rels_file in files_by_content_type.get(threemf_rels_mimetype, []):
-                annotations.add_from_rels(rels_file)
+                annotations.add_rels(rels_file)
             annotations.add_content_types(files_by_content_type)
 
             # Read the model data.
