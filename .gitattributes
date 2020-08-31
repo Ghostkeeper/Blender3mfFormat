@@ -1,0 +1,3 @@
+# Linguist misattributes 3MF files as "Roff", whatever that may be. It's not a programming language so don't classify it.
+*.3mf -linguist-detectable
+
