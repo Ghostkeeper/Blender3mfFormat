@@ -23,6 +23,7 @@ blender_to_metre = {  # Scale of each of Blender's length units to a metre.
     'CENTIMETERS': 0.01,
     'DECIMETERS': 0.1,
     'METERS': 1,
+    'ADAPTIVE': 1,
     'DEKAMETERS': 10,
     'HECTOMETERS': 100,
     'KILOMETERS': 1000
