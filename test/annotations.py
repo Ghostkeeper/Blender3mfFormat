@@ -7,6 +7,7 @@
 # <pep8 compliant>
 
 import io  # To create file streams as input for reading files that create these annotations.
+import json  # To get the ground truth of stored data from the annotations.
 import unittest.mock  # To mock away the Blender API.
 import xml.etree.ElementTree  # To create relationships documents.
 
@@ -249,3 +250,11 @@ class TestAnnotations(unittest.TestCase):
         self.annotations.add_content_types(files_by_content_type)
 
         self.assertDictEqual(self.annotations.annotations, expected_annotations, "Adding a content type again should still let it be in conflict.")
+
+    def test_store_empty(self):
+        """
+        Tests storing an empty collection of annotations.
+        """
+        self.annotations.store()
+
+        bpy.data.texts.new().write.assert_called_with(json.dumps({}))
