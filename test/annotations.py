@@ -270,7 +270,7 @@ class TestAnnotations(unittest.TestCase):
         ground_truth = {
             "some/file.txt": [
                 {
-                    "annotation": "relationship",
+                    "annotation": 'relationship',
                     "namespace": "nsp",
                     "source": "src"
                 }
@@ -288,9 +288,25 @@ class TestAnnotations(unittest.TestCase):
         ground_truth = {
             "some/file.txt": [
                 {
-                    "annotation": "content_type",
+                    "annotation": 'content_type',
                     "mime_type": "mim"
                 }
             ]
         }
         bpy.data.texts.new().write.assert_called_once_with(json.dumps(ground_truth))  # There must be a content type in the JSON dump of this instance.
+
+    def test_store_content_type_conflict(self):
+        """
+        Test storing an annotation that the content type is in conflict.
+        """
+        self.annotations.annotations["some/file.txt"] = {io_mesh_3mf.annotations.ConflictingContentType}
+        self.annotations.store()
+
+        ground_truth = {
+            "some/file.txt": [
+                {
+                    "annotation": 'content_type_conflict'
+                }
+            ]
+        }
+        bpy.data.texts.new().write.assert_called_once_with(json.dumps(ground_truth))  # There must be a marker in the JSON dump to indicate the content type conflict.
