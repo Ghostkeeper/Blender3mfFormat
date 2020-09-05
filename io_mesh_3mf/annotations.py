@@ -149,22 +149,18 @@ class Annotations:
             for annotation in annotations:
                 if type(annotation) == Relationship:
                     serialised_annotations.append({
-                        "relationship": {
-                            "namespace": annotation.namespace,
-                            "source": annotation.source
-                        }
+                        "annotation": 'relationship',
+                        "namespace": annotation.namespace,
+                        "source": annotation.source
                     })
                 elif type(annotation) == ContentType:
                     serialised_annotations.append({
-                        "content_type": {
-                            "mime_type": annotation.mime_type
-                        }
+                        "annotation": 'content_type',
+                        "mime_type": annotation.mime_type
                     })
                 elif type(annotation) == ConflictingContentType:
                     serialised_annotations.append({
-                        "content_type": {
-                            "conflict": True
-                        }
+                        "annotation": 'content_type_conflict'
                     })
             document[target] = serialised_annotations
 
