@@ -41,6 +41,7 @@ class TestAnnotations(unittest.TestCase):
         Creates some fixtures to use for the tests.
         """
         self.annotations = io_mesh_3mf.annotations.Annotations()
+        bpy.data.texts.new().write.reset_mock()  # We're going to be counting calls to this function in multiple tests.
 
     def xml_to_filestream(self, root, path):
         """
@@ -257,4 +258,22 @@ class TestAnnotations(unittest.TestCase):
         """
         self.annotations.store()
 
-        bpy.data.texts.new().write.assert_called_with(json.dumps({}))
+        bpy.data.texts.new().write.assert_called_once_with(json.dumps({}))  # The JSON dump is empty since there is no annotation.
+
+    def test_store_relationship(self):
+        """
+        Test storing relationship annotations.
+        """
+        self.annotations.annotations["some/file.txt"] = {io_mesh_3mf.annotations.Relationship(namespace="nsp", source="src")}
+        self.annotations.store()
+
+        ground_truth = {
+            "some/file.txt": [
+                {
+                    "annotation": "relationship",
+                    "namespace": "nsp",
+                    "source": "src"
+                }
+            ]
+        }
+        bpy.data.texts.new().write.assert_called_once_with(json.dumps(ground_truth))  # There must be a relationship in the JSON dump of this instance.
