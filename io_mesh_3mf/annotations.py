@@ -51,7 +51,10 @@ class Annotations:
     """
 
     def __init__(self):
-        self.annotations = {}  # All annotations stored thus far.
+        """
+        Creates an empty collection of annotations.
+        """
+        self.annotations = {}  # All of the annotations so far. Keys are the target files of the annotations. Values are sets of annotation objects.
 
     def add_rels(self, rels_file):
         """
