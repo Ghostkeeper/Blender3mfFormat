@@ -6,21 +6,9 @@
 
 # <pep8 compliant>
 
-import sys  # To mock entire packages.
-import unittest  # To run the tests.
 import unittest.mock  # To mock away the Blender API.
 
 from .mock.bpy import MockOperator, MockExportHelper, MockImportHelper
-
-# Mock all of the Blender API packages.
-sys.modules["bpy"] = unittest.mock.MagicMock()
-sys.modules["bpy.props"] = unittest.mock.MagicMock()
-sys.modules["bpy.types"] = unittest.mock.MagicMock()
-sys.modules["bpy.utils"] = unittest.mock.MagicMock()
-sys.modules["bpy_extras"] = unittest.mock.MagicMock()
-sys.modules["bpy_extras.io_utils"] = unittest.mock.MagicMock()
-sys.modules["idprop"] = unittest.mock.MagicMock()
-sys.modules["idprop.types"] = unittest.mock.MagicMock()
 
 # The import and export classes inherit from classes from the Blender API. These classes would be MagicMocks as well.
 # However their metaclasses are then also MagicMocks, but different instances of MagicMock.

@@ -11,6 +11,19 @@ Allows running all tests by calling `python3 -m unittest test` from the base dir
 This imports all test classes so that they get run then.
 """
 
+import sys  # To mock entire packages.
+import unittest.mock  # To mock away the Blender API.
+
+# Mock all of the Blender API packages.
+sys.modules["bpy"] = unittest.mock.MagicMock()
+sys.modules["bpy.props"] = unittest.mock.MagicMock()
+sys.modules["bpy.types"] = unittest.mock.MagicMock()
+sys.modules["bpy.utils"] = unittest.mock.MagicMock()
+sys.modules["bpy_extras"] = unittest.mock.MagicMock()
+sys.modules["bpy_extras.io_utils"] = unittest.mock.MagicMock()
+sys.modules["idprop"] = unittest.mock.MagicMock()
+sys.modules["idprop.types"] = unittest.mock.MagicMock()
+
 from .import_3mf import TestImport3MF
 from .export_3mf import TestExport3MF
 from .metadata import TestMetadata

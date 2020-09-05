@@ -10,23 +10,12 @@ import io  # To simulate output streams to create input archives to test with.
 import mathutils  # To compare transformation matrices.
 import os.path  # To find the test resources.
 import re  # To test matching with content types.
-import sys  # To mock entire packages.
 import unittest  # To run the tests.
 import unittest.mock  # To mock away the Blender API.
 import xml.etree.ElementTree  # To construct 3MF documents as input for the importer functions.
 import zipfile  # To provide zip archives to some functions.
 
 from .mock.bpy import MockOperator, MockExportHelper, MockImportHelper
-
-# Mock all of the Blender API packages.
-sys.modules["bpy"] = unittest.mock.MagicMock()
-sys.modules["bpy.props"] = unittest.mock.MagicMock()
-sys.modules["bpy.types"] = unittest.mock.MagicMock()
-sys.modules["bpy.utils"] = unittest.mock.MagicMock()
-sys.modules["bpy_extras"] = unittest.mock.MagicMock()
-sys.modules["bpy_extras.io_utils"] = unittest.mock.MagicMock()
-sys.modules["idprop"] = unittest.mock.MagicMock()
-sys.modules["idprop.types"] = unittest.mock.MagicMock()
 
 # The import and export classes inherit from classes from the Blender API. These classes would be MagicMocks as well.
 # However their metaclasses are then also MagicMocks, but different instances of MagicMock.
@@ -39,8 +28,6 @@ bpy_extras.io_utils.ImportHelper = MockImportHelper
 bpy_extras.io_utils.ExportHelper = MockExportHelper
 import io_mesh_3mf.import_3mf  # Now we may safely import the unit under test.
 from io_mesh_3mf.constants import (
-    rels_default_namespace,
-    rels_thumbnail,
     threemf_content_types_location,
     threemf_default_namespace,
     threemf_model_mimetype,
