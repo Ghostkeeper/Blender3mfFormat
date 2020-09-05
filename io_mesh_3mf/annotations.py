@@ -165,5 +165,5 @@ class Annotations:
             document[target] = serialised_annotations
 
         # Store this in the Blender context.
-        text_file = bpy.data.texts.new("3mf_annotations")
+        text_file = bpy.data.texts.new(".3mf_annotations")
         text_file.write(json.dumps(document))
