@@ -27,6 +27,7 @@ ContentType = collections.namedtuple("ContentType", ["mime_type"])
 
 
 ConflictingContentType = object()  # Flag object to denote that different 3MF archives give different content types to the same file in the archive.
+ANNOTATION_FILE = "3mf_annotations"  # File name to use to store the annotations in the Blender data.
 
 
 class Annotations:
@@ -165,5 +166,7 @@ class Annotations:
             document[target] = serialised_annotations
 
         # Store this in the Blender context.
-        text_file = bpy.data.texts.new(".3mf_annotations")
+        if ANNOTATION_FILE in bpy.data.texts:
+            bpy.data.texts.remove(bpy.data.texts[ANNOTATION_FILE])
+        text_file = bpy.data.texts.new(ANNOTATION_FILE)
         text_file.write(json.dumps(document))
