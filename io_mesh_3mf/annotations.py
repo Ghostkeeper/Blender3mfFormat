@@ -27,7 +27,7 @@ ContentType = collections.namedtuple("ContentType", ["mime_type"])
 
 
 ConflictingContentType = object()  # Flag object to denote that different 3MF archives give different content types to the same file in the archive.
-ANNOTATION_FILE = "3mf_annotations"  # File name to use to store the annotations in the Blender data.
+ANNOTATION_FILE = ".3mf_annotations"  # File name to use to store the annotations in the Blender data.
 
 
 class Annotations:

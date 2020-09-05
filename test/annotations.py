@@ -277,3 +277,20 @@ class TestAnnotations(unittest.TestCase):
             ]
         }
         bpy.data.texts.new().write.assert_called_once_with(json.dumps(ground_truth))  # There must be a relationship in the JSON dump of this instance.
+
+    def test_store_content_type(self):
+        """
+        Test storing a content type annotation.
+        """
+        self.annotations.annotations["some/file.txt"] = {io_mesh_3mf.annotations.ContentType(mime_type="mim")}
+        self.annotations.store()
+
+        ground_truth = {
+            "some/file.txt": [
+                {
+                    "annotation": "content_type",
+                    "mime_type": "mim"
+                }
+            ]
+        }
+        bpy.data.texts.new().write.assert_called_once_with(json.dumps(ground_truth))  # There must be a content type in the JSON dump of this instance.
