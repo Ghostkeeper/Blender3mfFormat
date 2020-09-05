@@ -101,7 +101,7 @@ class TestImport3MF(unittest.TestCase):
         self.assertEqual(len(model_files), 1, "There was just 1 model file.")
 
         document = xml.etree.ElementTree.ElementTree(file=model_files[0])
-        self.assertEqual(document.getroot().tag, "{{{ns}}}model".format(ns=threemf_default_namespace), "The file is an XML document with a <model> tag in the root.")
+        self.assertEqual(document.getroot().tag, f"{{{threemf_default_namespace}}}model", "The file is an XML document with a <model> tag in the root.")
 
     def test_read_content_types_missing(self):
         """
@@ -329,7 +329,7 @@ class TestImport3MF(unittest.TestCase):
         # Stuff not considered for this test.
         context = unittest.mock.MagicMock()
         context.scene.unit_settings.scale_length = 0
-        root = xml.etree.ElementTree.Element("{{{ns}}}model".format(ns=threemf_default_namespace))
+        root = xml.etree.ElementTree.Element(f"{{{threemf_default_namespace}}}model")
         root.attrib["unit"] = 'meter'
         context.scene.unit_settings.length_unit = 'METERS'
 
@@ -346,7 +346,7 @@ class TestImport3MF(unittest.TestCase):
 
         # Stuff not considered for this test.
         self.importer.global_scale = 1.0
-        root = xml.etree.ElementTree.Element("{{{ns}}}model".format(ns=threemf_default_namespace))
+        root = xml.etree.ElementTree.Element(f"{{{threemf_default_namespace}}}model")
         root.attrib["unit"] = 'meter'
         context.scene.unit_settings.length_unit = 'METERS'
 
@@ -360,7 +360,7 @@ class TestImport3MF(unittest.TestCase):
         context = unittest.mock.MagicMock()
         context.scene.unit_settings.scale_length = 0  # Not considered for this test.
         self.importer.global_scale = 1.0  # Not considered for this test.
-        root = xml.etree.ElementTree.Element("{{{ns}}}model".format(ns=threemf_default_namespace))
+        root = xml.etree.ElementTree.Element(f"{{{threemf_default_namespace}}}model")
 
         # Table of correct conversions! This is the ground truth.
         # From 3MF unit (outer dict) to Blender unit (inner dicts), i.e. how many Blender units go in one 3MF unit.
@@ -500,7 +500,7 @@ class TestImport3MF(unittest.TestCase):
         """
         Tests reading metadata entries when there are no <metadata> elements.
         """
-        object_node = xml.etree.ElementTree.Element("{{{ns}}}object".format(ns=threemf_default_namespace))
+        object_node = xml.etree.ElementTree.Element(f"{{{threemf_default_namespace}}}object")
 
         result = self.importer.read_metadata(object_node)
         self.assertEqual(len(result), 0, "There is no metadata in this document, so the metadata is empty.")
@@ -509,11 +509,11 @@ class TestImport3MF(unittest.TestCase):
         """
         Tests reading multiple metadata entries from the document.
         """
-        object_node = xml.etree.ElementTree.Element("{{{ns}}}object".format(ns=threemf_default_namespace))
-        metadata1_node = xml.etree.ElementTree.SubElement(object_node, "{{{ns}}}metadata".format(ns=threemf_default_namespace))
+        object_node = xml.etree.ElementTree.Element(f"{{{threemf_default_namespace}}}object")
+        metadata1_node = xml.etree.ElementTree.SubElement(object_node, f"{{{threemf_default_namespace}}}metadata")
         metadata1_node.attrib["name"] = "name1"
         metadata1_node.text = "value1"
-        metadata2_node = xml.etree.ElementTree.SubElement(object_node, "{{{ns}}}metadata".format(ns=threemf_default_namespace))
+        metadata2_node = xml.etree.ElementTree.SubElement(object_node, f"{{{threemf_default_namespace}}}metadata")
         metadata2_node.attrib["name"] = "name2"
         metadata2_node.text = "value2"
 
@@ -524,8 +524,8 @@ class TestImport3MF(unittest.TestCase):
         """
         Tests reading the name from a metadata entry.
         """
-        object_node = xml.etree.ElementTree.Element("{{{ns}}}object".format(ns=threemf_default_namespace))
-        metadata_node = xml.etree.ElementTree.SubElement(object_node, "{{{ns}}}metadata".format(ns=threemf_default_namespace))
+        object_node = xml.etree.ElementTree.Element(f"{{{threemf_default_namespace}}}object")
+        metadata_node = xml.etree.ElementTree.SubElement(object_node, f"{{{threemf_default_namespace}}}metadata")
         metadata_node.attrib["name"] = "some name"
         metadata_node.text = "value"
 
@@ -540,8 +540,8 @@ class TestImport3MF(unittest.TestCase):
 
         Those entries should get ignored.
         """
-        object_node = xml.etree.ElementTree.Element("{{{ns}}}object".format(ns=threemf_default_namespace))
-        metadata_node = xml.etree.ElementTree.SubElement(object_node, "{{{ns}}}metadata".format(ns=threemf_default_namespace))
+        object_node = xml.etree.ElementTree.Element(f"{{{threemf_default_namespace}}}object")
+        metadata_node = xml.etree.ElementTree.SubElement(object_node, f"{{{threemf_default_namespace}}}metadata")
         metadata_node.text = "value"
 
         result = self.importer.read_metadata(object_node)
@@ -554,9 +554,9 @@ class TestImport3MF(unittest.TestCase):
         positive_preserve_values = ["1", "true", "tRuE", "bla", "anything really"]
         negative_preserve_values = ["0", "false", "fAlSe"]
 
-        object_node = xml.etree.ElementTree.Element("{{{ns}}}object".format(ns=threemf_default_namespace))
+        object_node = xml.etree.ElementTree.Element(f"{{{threemf_default_namespace}}}object")
         for preserve in positive_preserve_values + negative_preserve_values:
-            metadata_node = xml.etree.ElementTree.SubElement(object_node, "{{{ns}}}metadata".format(ns=threemf_default_namespace))
+            metadata_node = xml.etree.ElementTree.SubElement(object_node, f"{{{threemf_default_namespace}}}metadata")
             metadata_node.attrib["name"] = preserve
             metadata_node.text = "value"
             metadata_node.attrib["preserve"] = preserve
@@ -576,8 +576,8 @@ class TestImport3MF(unittest.TestCase):
         """
         Tests reading the type from metadata entries.
         """
-        object_node = xml.etree.ElementTree.Element("{{{ns}}}object".format(ns=threemf_default_namespace))
-        metadata_node = xml.etree.ElementTree.SubElement(object_node, "{{{ns}}}metadata".format(ns=threemf_default_namespace))
+        object_node = xml.etree.ElementTree.Element(f"{{{threemf_default_namespace}}}object")
+        metadata_node = xml.etree.ElementTree.SubElement(object_node, f"{{{threemf_default_namespace}}}metadata")
         metadata_node.attrib["type"] = "hyperset"
         metadata_node.attrib["name"] = "some metadata"
 
@@ -590,8 +590,8 @@ class TestImport3MF(unittest.TestCase):
         Tests combining an existing metadata set with new metadata from the
         document.
         """
-        object_node = xml.etree.ElementTree.Element("{{{ns}}}object".format(ns=threemf_default_namespace))
-        metadata_node = xml.etree.ElementTree.SubElement(object_node, "{{{ns}}}metadata".format(ns=threemf_default_namespace))
+        object_node = xml.etree.ElementTree.Element(f"{{{threemf_default_namespace}}}object")
+        metadata_node = xml.etree.ElementTree.SubElement(object_node, f"{{{threemf_default_namespace}}}metadata")
         metadata_node.attrib["name"] = "cool"
         metadata_node.text = "definitely"
         existing_metadata = {"original_entry": "original_value"}  # Using a dict here to mock the Metadata() object! Actual testing of the combining is done with the Metadata class tests.
@@ -606,8 +606,8 @@ class TestImport3MF(unittest.TestCase):
         """
         Tests reading an object where the <vertices> element is missing.
         """
-        object_node = xml.etree.ElementTree.Element("{{{ns}}}object".format(ns=threemf_default_namespace))
-        xml.etree.ElementTree.SubElement(object_node, "{{{ns}}}mesh".format(ns=threemf_default_namespace))
+        object_node = xml.etree.ElementTree.Element(f"{{{threemf_default_namespace}}}object")
+        xml.etree.ElementTree.SubElement(object_node, f"{{{threemf_default_namespace}}}mesh")
 
         self.assertListEqual(self.importer.read_vertices(object_node), [], "There is no <vertices> element, so the resulting vertex list is empty.")
 
@@ -615,9 +615,9 @@ class TestImport3MF(unittest.TestCase):
         """
         Tests reading an object where the <vertices> element is present, but empty.
         """
-        object_node = xml.etree.ElementTree.Element("{{{ns}}}object".format(ns=threemf_default_namespace))
-        mesh_node = xml.etree.ElementTree.SubElement(object_node, "{{{ns}}}mesh".format(ns=threemf_default_namespace))
-        xml.etree.ElementTree.SubElement(mesh_node, "{{{ns}}}vertices".format(ns=threemf_default_namespace))
+        object_node = xml.etree.ElementTree.Element(f"{{{threemf_default_namespace}}}object")
+        mesh_node = xml.etree.ElementTree.SubElement(object_node, f"{{{threemf_default_namespace}}}mesh")
+        xml.etree.ElementTree.SubElement(mesh_node, f"{{{threemf_default_namespace}}}vertices")
 
         self.assertListEqual(self.importer.read_vertices(object_node), [], "There are no vertices in the <vertices> element, so the resulting vertex list is empty.")
 
@@ -631,11 +631,11 @@ class TestImport3MF(unittest.TestCase):
         vertices = [(1.0, 2.0, 3.0), (4.0, 5.0, 6.0), (7.0, 8.0, 9.0)]  # A few vertices to test with.
 
         # Set up the XML data to parse.
-        object_node = xml.etree.ElementTree.Element("{{{ns}}}object".format(ns=threemf_default_namespace))
-        mesh_node = xml.etree.ElementTree.SubElement(object_node, "{{{ns}}}mesh".format(ns=threemf_default_namespace))
-        vertices_node = xml.etree.ElementTree.SubElement(mesh_node, "{{{ns}}}vertices".format(ns=threemf_default_namespace))
+        object_node = xml.etree.ElementTree.Element(f"{{{threemf_default_namespace}}}object")
+        mesh_node = xml.etree.ElementTree.SubElement(object_node, f"{{{threemf_default_namespace}}}mesh")
+        vertices_node = xml.etree.ElementTree.SubElement(mesh_node, f"{{{threemf_default_namespace}}}vertices")
         for vertex in vertices:
-            vertex_node = xml.etree.ElementTree.SubElement(vertices_node, "{{{ns}}}vertex".format(ns=threemf_default_namespace))
+            vertex_node = xml.etree.ElementTree.SubElement(vertices_node, f"{{{threemf_default_namespace}}}vertex")
             vertex_node.attrib["x"] = str(vertex[0])
             vertex_node.attrib["y"] = str(vertex[1])
             vertex_node.attrib["z"] = str(vertex[2])
@@ -646,10 +646,10 @@ class TestImport3MF(unittest.TestCase):
         """
         Tests reading vertices where some coordinate might be missing.
         """
-        object_node = xml.etree.ElementTree.Element("{{{ns}}}object".format(ns=threemf_default_namespace))
-        mesh_node = xml.etree.ElementTree.SubElement(object_node, "{{{ns}}}mesh".format(ns=threemf_default_namespace))
-        vertices_node = xml.etree.ElementTree.SubElement(mesh_node, "{{{ns}}}vertices".format(ns=threemf_default_namespace))
-        vertex_node = xml.etree.ElementTree.SubElement(vertices_node, "{{{ns}}}vertex".format(ns=threemf_default_namespace))
+        object_node = xml.etree.ElementTree.Element(f"{{{threemf_default_namespace}}}object")
+        mesh_node = xml.etree.ElementTree.SubElement(object_node, f"{{{threemf_default_namespace}}}mesh")
+        vertices_node = xml.etree.ElementTree.SubElement(mesh_node, f"{{{threemf_default_namespace}}}vertices")
+        vertex_node = xml.etree.ElementTree.SubElement(vertices_node, f"{{{threemf_default_namespace}}}vertex")
 
         vertex_node.attrib["x"] = "13.37"
         # Don't write a Y value.
@@ -662,10 +662,10 @@ class TestImport3MF(unittest.TestCase):
         Tests reading vertices where some coordinate is not a floating point
         value.
         """
-        object_node = xml.etree.ElementTree.Element("{{{ns}}}object".format(ns=threemf_default_namespace))
-        mesh_node = xml.etree.ElementTree.SubElement(object_node, "{{{ns}}}mesh".format(ns=threemf_default_namespace))
-        vertices_node = xml.etree.ElementTree.SubElement(mesh_node, "{{{ns}}}vertices".format(ns=threemf_default_namespace))
-        vertex_node = xml.etree.ElementTree.SubElement(vertices_node, "{{{ns}}}vertex".format(ns=threemf_default_namespace))
+        object_node = xml.etree.ElementTree.Element(f"{{{threemf_default_namespace}}}object")
+        mesh_node = xml.etree.ElementTree.SubElement(object_node, f"{{{threemf_default_namespace}}}mesh")
+        vertices_node = xml.etree.ElementTree.SubElement(mesh_node, f"{{{threemf_default_namespace}}}vertices")
+        vertex_node = xml.etree.ElementTree.SubElement(vertices_node, f"{{{threemf_default_namespace}}}vertex")
 
         vertex_node.attrib["x"] = "42"
         vertex_node.attrib["y"] = "23,37"  # Must use period as the decimal separator.
@@ -677,8 +677,8 @@ class TestImport3MF(unittest.TestCase):
         """
         Tests reading triangles when the <triangles> element is missing.
         """
-        object_node = xml.etree.ElementTree.Element("{{{ns}}}object".format(ns=threemf_default_namespace))
-        xml.etree.ElementTree.SubElement(object_node, "{{{ns}}}mesh".format(ns=threemf_default_namespace))
+        object_node = xml.etree.ElementTree.Element(f"{{{threemf_default_namespace}}}object")
+        xml.etree.ElementTree.SubElement(object_node, f"{{{threemf_default_namespace}}}mesh")
 
         self.assertListEqual(self.importer.read_triangles(object_node), [], "There is no <triangles> element, so the resulting triangle list is empty.")
 
@@ -686,9 +686,9 @@ class TestImport3MF(unittest.TestCase):
         """
         Tests reading triangles when the <triangles> element is empty.
         """
-        object_node = xml.etree.ElementTree.Element("{{{ns}}}object".format(ns=threemf_default_namespace))
-        mesh_node = xml.etree.ElementTree.SubElement(object_node, "{{{ns}}}mesh".format(ns=threemf_default_namespace))
-        xml.etree.ElementTree.SubElement(mesh_node, "{{{ns}}}triangles".format(ns=threemf_default_namespace))
+        object_node = xml.etree.ElementTree.Element(f"{{{threemf_default_namespace}}}object")
+        mesh_node = xml.etree.ElementTree.SubElement(object_node, f"{{{threemf_default_namespace}}}mesh")
+        xml.etree.ElementTree.SubElement(mesh_node, f"{{{threemf_default_namespace}}}triangles")
 
         self.assertListEqual(self.importer.read_triangles(object_node), [], "There are no triangles in the <triangles> element, so the resulting triangle list is empty.")
 
@@ -700,11 +700,11 @@ class TestImport3MF(unittest.TestCase):
         """
         triangles = [(1, 2, 3), (4, 5, 6), (7, 8, 9)]  # A few triangles to test with.
 
-        object_node = xml.etree.ElementTree.Element("{{{ns}}}object".format(ns=threemf_default_namespace))
-        mesh_node = xml.etree.ElementTree.SubElement(object_node, "{{{ns}}}mesh".format(ns=threemf_default_namespace))
-        triangles_node = xml.etree.ElementTree.SubElement(mesh_node, "{{{ns}}}triangles".format(ns=threemf_default_namespace))
+        object_node = xml.etree.ElementTree.Element(f"{{{threemf_default_namespace}}}object")
+        mesh_node = xml.etree.ElementTree.SubElement(object_node, f"{{{threemf_default_namespace}}}mesh")
+        triangles_node = xml.etree.ElementTree.SubElement(mesh_node, f"{{{threemf_default_namespace}}}triangles")
         for triangle in triangles:
-            triangle_node = xml.etree.ElementTree.SubElement(triangles_node, "{{{ns}}}triangle".format(ns=threemf_default_namespace))
+            triangle_node = xml.etree.ElementTree.SubElement(triangles_node, f"{{{threemf_default_namespace}}}triangle")
             triangle_node.attrib["v1"] = str(triangle[0])
             triangle_node.attrib["v2"] = str(triangle[1])
             triangle_node.attrib["v3"] = str(triangle[2])
@@ -717,10 +717,10 @@ class TestImport3MF(unittest.TestCase):
 
         That's a broken triangle then and it shouldn't be returned.
         """
-        object_node = xml.etree.ElementTree.Element("{{{ns}}}object".format(ns=threemf_default_namespace))
-        mesh_node = xml.etree.ElementTree.SubElement(object_node, "{{{ns}}}mesh".format(ns=threemf_default_namespace))
-        triangles_node = xml.etree.ElementTree.SubElement(mesh_node, "{{{ns}}}triangles".format(ns=threemf_default_namespace))
-        triangle_node = xml.etree.ElementTree.SubElement(triangles_node, "{{{ns}}}triangle".format(ns=threemf_default_namespace))
+        object_node = xml.etree.ElementTree.Element(f"{{{threemf_default_namespace}}}object")
+        mesh_node = xml.etree.ElementTree.SubElement(object_node, f"{{{threemf_default_namespace}}}mesh")
+        triangles_node = xml.etree.ElementTree.SubElement(mesh_node, f"{{{threemf_default_namespace}}}triangles")
+        triangle_node = xml.etree.ElementTree.SubElement(triangles_node, f"{{{threemf_default_namespace}}}triangle")
         triangle_node.attrib["v1"] = "1"
         triangle_node.attrib["v2"] = "2"
         # Leave out v3. It's missing then.
@@ -733,18 +733,18 @@ class TestImport3MF(unittest.TestCase):
 
         That's a broken triangle then and it shouldn't be returned.
         """
-        object_node = xml.etree.ElementTree.Element("{{{ns}}}object".format(ns=threemf_default_namespace))
-        mesh_node = xml.etree.ElementTree.SubElement(object_node, "{{{ns}}}mesh".format(ns=threemf_default_namespace))
-        triangles_node = xml.etree.ElementTree.SubElement(mesh_node, "{{{ns}}}triangles".format(ns=threemf_default_namespace))
-        negative_index_triangle_node = xml.etree.ElementTree.SubElement(triangles_node, "{{{ns}}}triangle".format(ns=threemf_default_namespace))
+        object_node = xml.etree.ElementTree.Element(f"{{{threemf_default_namespace}}}object")
+        mesh_node = xml.etree.ElementTree.SubElement(object_node, f"{{{threemf_default_namespace}}}mesh")
+        triangles_node = xml.etree.ElementTree.SubElement(mesh_node, f"{{{threemf_default_namespace}}}triangles")
+        negative_index_triangle_node = xml.etree.ElementTree.SubElement(triangles_node, f"{{{threemf_default_namespace}}}triangle")
         negative_index_triangle_node.attrib["v1"] = "1"
         negative_index_triangle_node.attrib["v2"] = "-1"  # Invalid! Makes the triangle go missing.
         negative_index_triangle_node.attrib["v3"] = "2"
-        float_index_triangle_node = xml.etree.ElementTree.SubElement(triangles_node, "{{{ns}}}triangle".format(ns=threemf_default_namespace))
+        float_index_triangle_node = xml.etree.ElementTree.SubElement(triangles_node, f"{{{threemf_default_namespace}}}triangle")
         float_index_triangle_node.attrib["v1"] = "2.5"  # Not an integer! Should make the triangle go missing.
         float_index_triangle_node.attrib["v2"] = "3"
         float_index_triangle_node.attrib["v3"] = "4"
-        invalid_index_triangle_node = xml.etree.ElementTree.SubElement(triangles_node, "{{{ns}}}triangle".format(ns=threemf_default_namespace))
+        invalid_index_triangle_node = xml.etree.ElementTree.SubElement(triangles_node, f"{{{threemf_default_namespace}}}triangle")
         invalid_index_triangle_node.attrib["v1"] = "5"
         invalid_index_triangle_node.attrib["v2"] = "6"
         invalid_index_triangle_node.attrib["v3"] = "doodie"  # Doesn't parse as integer! Should make the triangle go missing.
@@ -755,7 +755,7 @@ class TestImport3MF(unittest.TestCase):
         """
         Tests reading components when the <components> element is missing.
         """
-        object_node = xml.etree.ElementTree.Element("{{{ns}}}object".format(ns=threemf_default_namespace))
+        object_node = xml.etree.ElementTree.Element(f"{{{threemf_default_namespace}}}object")
 
         self.assertListEqual(self.importer.read_components(object_node), [], "There is no <components> element, so the resulting component list is empty.")
 
@@ -763,8 +763,8 @@ class TestImport3MF(unittest.TestCase):
         """
         Tests reading components when the <components> element is empty.
         """
-        object_node = xml.etree.ElementTree.Element("{{{ns}}}object".format(ns=threemf_default_namespace))
-        xml.etree.ElementTree.SubElement(object_node, "{{{ns}}}components".format(ns=threemf_default_namespace))
+        object_node = xml.etree.ElementTree.Element(f"{{{threemf_default_namespace}}}object")
+        xml.etree.ElementTree.SubElement(object_node, f"{{{threemf_default_namespace}}}components")
 
         self.assertListEqual(self.importer.read_components(object_node), [], "There are no components in the <components> element, so the resulting component list is empty.")
 
@@ -779,10 +779,10 @@ class TestImport3MF(unittest.TestCase):
         """
         component_objectids = {"3", "4.2", "-5", "llama"}  # A few object IDs that must be present. They don't necessarily need to appear in order though.
 
-        object_node = xml.etree.ElementTree.Element("{{{ns}}}object".format(ns=threemf_default_namespace))
-        components_node = xml.etree.ElementTree.SubElement(object_node, "{{{ns}}}components".format(ns=threemf_default_namespace))
+        object_node = xml.etree.ElementTree.Element(f"{{{threemf_default_namespace}}}object")
+        components_node = xml.etree.ElementTree.SubElement(object_node, f"{{{threemf_default_namespace}}}components")
         for component_objectid in component_objectids:
-            component_node = xml.etree.ElementTree.SubElement(components_node, "{{{ns}}}component".format(ns=threemf_default_namespace))
+            component_node = xml.etree.ElementTree.SubElement(components_node, f"{{{threemf_default_namespace}}}component")
             component_node.attrib["objectid"] = component_objectid
 
         result = self.importer.read_components(object_node)
@@ -794,9 +794,9 @@ class TestImport3MF(unittest.TestCase):
 
         This component must not be in the output then.
         """
-        object_node = xml.etree.ElementTree.Element("{{{ns}}}object".format(ns=threemf_default_namespace))
-        components_node = xml.etree.ElementTree.SubElement(object_node, "{{{ns}}}components".format(ns=threemf_default_namespace))
-        xml.etree.ElementTree.SubElement(components_node, "{{{ns}}}component".format(ns=threemf_default_namespace))
+        object_node = xml.etree.ElementTree.Element(f"{{{threemf_default_namespace}}}object")
+        components_node = xml.etree.ElementTree.SubElement(object_node, f"{{{threemf_default_namespace}}}components")
+        xml.etree.ElementTree.SubElement(components_node, f"{{{threemf_default_namespace}}}component")
         # No objectid attribute!
 
         self.assertListEqual(self.importer.read_components(object_node), [], "The only component in the input had no object ID, so it must not be included in the output.")
@@ -805,11 +805,11 @@ class TestImport3MF(unittest.TestCase):
         """
         Tests reading the transformation from a component.
         """
-        object_node = xml.etree.ElementTree.Element("{{{ns}}}object".format(ns=threemf_default_namespace))
-        components_node = xml.etree.ElementTree.SubElement(object_node, "{{{ns}}}components".format(ns=threemf_default_namespace))
-        component_node_no_transform = xml.etree.ElementTree.SubElement(components_node, "{{{ns}}}component".format(ns=threemf_default_namespace))  # One node without transformation.
+        object_node = xml.etree.ElementTree.Element(f"{{{threemf_default_namespace}}}object")
+        components_node = xml.etree.ElementTree.SubElement(object_node, f"{{{threemf_default_namespace}}}components")
+        component_node_no_transform = xml.etree.ElementTree.SubElement(components_node, f"{{{threemf_default_namespace}}}component")  # One node without transformation.
         component_node_no_transform.attrib["objectid"] = "1"
-        component_node_scaled = xml.etree.ElementTree.SubElement(components_node, "{{{ns}}}component".format(ns=threemf_default_namespace))
+        component_node_scaled = xml.etree.ElementTree.SubElement(components_node, f"{{{threemf_default_namespace}}}component")
         component_node_scaled.attrib["objectid"] = "1"
         component_node_scaled.attrib["transform"] = "2 0 0 0 2 0 0 0 2 0 0 0"  # Scaled 200%.
 
@@ -850,7 +850,7 @@ class TestImport3MF(unittest.TestCase):
         Tests building the items when the <build> element is missing.
         """
         self.importer.build_object = unittest.mock.MagicMock()  # Mock out the function that actually creates the object.
-        root = xml.etree.ElementTree.Element("{{{ns}}}model".format(ns=threemf_default_namespace))
+        root = xml.etree.ElementTree.Element(f"{{{threemf_default_namespace}}}model")
 
         self.importer.build_items(root, 1.0)
 
@@ -861,8 +861,8 @@ class TestImport3MF(unittest.TestCase):
         Tests building the items when the <build> element is empty.
         """
         self.importer.build_object = unittest.mock.MagicMock()  # Mock out the function that actually creates the object.
-        root = xml.etree.ElementTree.Element("{{{ns}}}model".format(ns=threemf_default_namespace))
-        xml.etree.ElementTree.SubElement(root, "{{{ns}}}build".format(ns=threemf_default_namespace))
+        root = xml.etree.ElementTree.Element(f"{{{threemf_default_namespace}}}model")
+        xml.etree.ElementTree.SubElement(root, f"{{{threemf_default_namespace}}}build")
         # <build> element left empty.
 
         self.importer.build_items(root, 1.0)
@@ -880,13 +880,13 @@ class TestImport3MF(unittest.TestCase):
         self.importer.resource_objects["1"] = unittest.mock.MagicMock()  # Add a few "resources".
         self.importer.resource_objects["2"] = unittest.mock.MagicMock()
         self.importer.resource_objects["ananas"] = unittest.mock.MagicMock()
-        root = xml.etree.ElementTree.Element("{{{ns}}}model".format(ns=threemf_default_namespace))  # Build a document with three <item> elements in the <build> element.
-        build_element = xml.etree.ElementTree.SubElement(root, "{{{ns}}}build".format(ns=threemf_default_namespace))
-        item1_element = xml.etree.ElementTree.SubElement(build_element, "{{{ns}}}item".format(ns=threemf_default_namespace))
+        root = xml.etree.ElementTree.Element(f"{{{threemf_default_namespace}}}model")  # Build a document with three <item> elements in the <build> element.
+        build_element = xml.etree.ElementTree.SubElement(root, f"{{{threemf_default_namespace}}}build")
+        item1_element = xml.etree.ElementTree.SubElement(build_element, f"{{{threemf_default_namespace}}}item")
         item1_element.attrib["objectid"] = "1"
-        item2_element = xml.etree.ElementTree.SubElement(build_element, "{{{ns}}}item".format(ns=threemf_default_namespace))
+        item2_element = xml.etree.ElementTree.SubElement(build_element, f"{{{threemf_default_namespace}}}item")
         item2_element.attrib["objectid"] = "2"
-        itemananas_element = xml.etree.ElementTree.SubElement(build_element, "{{{ns}}}item".format(ns=threemf_default_namespace))
+        itemananas_element = xml.etree.ElementTree.SubElement(build_element, f"{{{threemf_default_namespace}}}item")
         itemananas_element.attrib["objectid"] = "ananas"
 
         self.importer.build_items(root, 1.0)
@@ -903,9 +903,9 @@ class TestImport3MF(unittest.TestCase):
         Tests building items with object IDs that don't exist.
         """
         self.importer.build_object = unittest.mock.MagicMock()  # Mock out the function that actually creates the object.
-        root = xml.etree.ElementTree.Element("{{{ns}}}model".format(ns=threemf_default_namespace))  # Build a document with an <item> in it.
-        build_element = xml.etree.ElementTree.SubElement(root, "{{{ns}}}build".format(ns=threemf_default_namespace))
-        item_element = xml.etree.ElementTree.SubElement(build_element, "{{{ns}}}item".format(ns=threemf_default_namespace))
+        root = xml.etree.ElementTree.Element(f"{{{threemf_default_namespace}}}model")  # Build a document with an <item> in it.
+        build_element = xml.etree.ElementTree.SubElement(root, f"{{{threemf_default_namespace}}}build")
+        item_element = xml.etree.ElementTree.SubElement(build_element, f"{{{threemf_default_namespace}}}item")
         item_element.attrib["objectid"] = "bombosity"  # Object ID doesn't exist.
 
         self.importer.build_items(root, 1.0)
@@ -918,9 +918,9 @@ class TestImport3MF(unittest.TestCase):
         """
         self.importer.build_object = unittest.mock.MagicMock()  # Mock out the function that actually creates the object.
         self.importer.resource_objects["1"] = self.single_triangle
-        root = xml.etree.ElementTree.Element("{{{ns}}}model".format(ns=threemf_default_namespace))  # Build a document with an <item> in it.
-        build_element = xml.etree.ElementTree.SubElement(root, "{{{ns}}}build".format(ns=threemf_default_namespace))
-        item_element = xml.etree.ElementTree.SubElement(build_element, "{{{ns}}}item".format(ns=threemf_default_namespace))
+        root = xml.etree.ElementTree.Element(f"{{{threemf_default_namespace}}}model")  # Build a document with an <item> in it.
+        build_element = xml.etree.ElementTree.SubElement(root, f"{{{threemf_default_namespace}}}build")
+        item_element = xml.etree.ElementTree.SubElement(build_element, f"{{{threemf_default_namespace}}}item")
         item_element.attrib["objectid"] = "1"
 
         self.importer.build_items(root, 2.5)  # Build with a unit scale of 250%.
@@ -933,9 +933,9 @@ class TestImport3MF(unittest.TestCase):
         """
         self.importer.build_object = unittest.mock.MagicMock()  # Mock out the function that actually creates the object.
         self.importer.resource_objects["1"] = self.single_triangle
-        root = xml.etree.ElementTree.Element("{{{ns}}}model".format(ns=threemf_default_namespace))  # Build a document with an <item> in it.
-        build_element = xml.etree.ElementTree.SubElement(root, "{{{ns}}}build".format(ns=threemf_default_namespace))
-        item_element = xml.etree.ElementTree.SubElement(build_element, "{{{ns}}}item".format(ns=threemf_default_namespace))
+        root = xml.etree.ElementTree.Element(f"{{{threemf_default_namespace}}}model")  # Build a document with an <item> in it.
+        build_element = xml.etree.ElementTree.SubElement(root, f"{{{threemf_default_namespace}}}build")
+        item_element = xml.etree.ElementTree.SubElement(build_element, f"{{{threemf_default_namespace}}}item")
         item_element.attrib["objectid"] = "1"
         item_element.attrib["transform"] = "1 0 0 0 1 0 0 0 1 30 40 0"
 
@@ -950,15 +950,15 @@ class TestImport3MF(unittest.TestCase):
         """
         self.importer.build_object = unittest.mock.MagicMock()  # Mock out the function that actually creates the object.
         self.importer.resource_objects["1"] = self.single_triangle
-        root = xml.etree.ElementTree.Element("{{{ns}}}model".format(ns=threemf_default_namespace))  # Build a document with an <item> in it.
-        build_element = xml.etree.ElementTree.SubElement(root, "{{{ns}}}build".format(ns=threemf_default_namespace))
-        item_element = xml.etree.ElementTree.SubElement(build_element, "{{{ns}}}item".format(ns=threemf_default_namespace))
+        root = xml.etree.ElementTree.Element(f"{{{threemf_default_namespace}}}model")  # Build a document with an <item> in it.
+        build_element = xml.etree.ElementTree.SubElement(root, f"{{{threemf_default_namespace}}}build")
+        item_element = xml.etree.ElementTree.SubElement(build_element, f"{{{threemf_default_namespace}}}item")
         item_element.attrib["objectid"] = "1"
 
         # Add some metadata.
         item_element.attrib["partnumber"] = "numero uno"
-        metadata_element = xml.etree.ElementTree.SubElement(item_element, "{{{ns}}}metadatagroup".format(ns=threemf_default_namespace))
-        title_element = xml.etree.ElementTree.SubElement(metadata_element, "{{{ns}}}metadata".format(ns=threemf_default_namespace))
+        metadata_element = xml.etree.ElementTree.SubElement(item_element, f"{{{threemf_default_namespace}}}metadatagroup")
+        title_element = xml.etree.ElementTree.SubElement(metadata_element, f"{{{threemf_default_namespace}}}metadata")
         title_element.attrib["name"] = "Title"
         title_element.text = "Lead Potato Engineer"
 

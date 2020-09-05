@@ -179,7 +179,7 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
                 try:
                     root = xml.etree.ElementTree.ElementTree(file=f)
                 except xml.etree.ElementTree.ParseError as e:
-                    log.warning("{threemf_content_types_location} has malformed XML (position {linenr}:{columnnr}).".format(threemf_content_types_location=threemf_content_types_location, linenr=e.position[0], columnnr=e.position[1]))
+                    log.warning(f"{threemf_content_types_location} has malformed XML (position {e.position[0]}:{e.position[1]}).")
                     root = None
 
                 if root is not None:

@@ -78,7 +78,7 @@ class Annotations:
         try:
             root = xml.etree.ElementTree.ElementTree(file=rels_file)
         except xml.etree.ElementTree.ParseError as e:
-            logging.warning("Relationship file {rels_path} has malformed XML (position {linenr}:{columnnr}).".format(rels_path=rels_file.name, linenr=e.position[0], columnnr=e.position[1]))
+            logging.warning(f"Relationship file {rels_file.name} has malformed XML (position {e.position[0]}:{e.position[1]}).")
             return  # Skip this file.
 
         for relationship_node in root.iterfind("rel:Relationship", rels_namespaces):
@@ -86,7 +86,7 @@ class Annotations:
                 target = relationship_node.attrib["Target"]
                 namespace = relationship_node.attrib["Type"]
             except KeyError as e:
-                logging.warning("Relationship missing attribute: {attribute}".format(attribute=str(e)))
+                logging.warning(f"Relationship missing attribute: {str(e)}")
                 continue  # Skip this relationship.
 
             target = urllib.parse.urljoin(base_path, target)  # Evaluate any relative URIs based on the path to this .rels file in the archive.

@@ -152,7 +152,7 @@ class TestExport3MF(unittest.TestCase):
         """
         Tests writing objects when there are no objects in the scene.
         """
-        root = xml.etree.ElementTree.Element("{{{ns}}}model".format(ns=threemf_default_namespace))
+        root = xml.etree.ElementTree.Element(f"{{{threemf_default_namespace}}}model")
         self.exporter.write_object_resource = unittest.mock.MagicMock()  # Record how this gets called.
         self.exporter.write_objects(root, [], global_scale=1.0)  # Empty list of Blender objects.
 
@@ -164,7 +164,7 @@ class TestExport3MF(unittest.TestCase):
         """
         Tests writing a single object into the XML document.
         """
-        root = xml.etree.ElementTree.Element("{{{ns}}}model".format(ns=threemf_default_namespace))
+        root = xml.etree.ElementTree.Element(f"{{{threemf_default_namespace}}}model")
         self.exporter.write_object_resource = unittest.mock.MagicMock(return_value=(1, mathutils.Matrix.Identity(4)))  # Record how this gets called.
 
         # Construct an object to add.
@@ -184,14 +184,14 @@ class TestExport3MF(unittest.TestCase):
         item_elements = list(root.iterfind("3mf:build/3mf:item", threemf_namespaces))
         self.assertEqual(len(item_elements), 1, "There was one build item, building the only Blender object.")
         item_element = item_elements[0]
-        self.assertEqual(item_element.attrib["{{{ns}}}objectid".format(ns=threemf_default_namespace)], "1", "The object ID must be equal to what the write_object_resource function returned.")
-        self.assertNotIn("{{{ns}}}transform".format(ns=threemf_default_namespace), item_element.attrib, "There should not be a transformation since the transformation returned by write_object_resource was Identity.")
+        self.assertEqual(item_element.attrib[f"{{{threemf_default_namespace}}}objectid"], "1", "The object ID must be equal to what the write_object_resource function returned.")
+        self.assertNotIn(f"{{{threemf_default_namespace}}}transform", item_element.attrib, "There should not be a transformation since the transformation returned by write_object_resource was Identity.")
 
     def test_write_objects_nested(self):
         """
         Tests writing one object contained inside another.
         """
-        root = xml.etree.ElementTree.Element("{{{ns}}}model".format(ns=threemf_default_namespace))
+        root = xml.etree.ElementTree.Element(f"{{{threemf_default_namespace}}}model")
         self.exporter.write_object_resource = unittest.mock.MagicMock(return_value=(1, mathutils.Matrix.Identity(4)))  # Record how this gets called.
 
         # Construct two objects to add, one the parent of the other.
@@ -218,7 +218,7 @@ class TestExport3MF(unittest.TestCase):
         """
         Tests that Blender objects with different types get ignored.
         """
-        root = xml.etree.ElementTree.Element("{{{ns}}}model".format(ns=threemf_default_namespace))
+        root = xml.etree.ElementTree.Element(f"{{{threemf_default_namespace}}}model")
         self.exporter.write_object_resource = unittest.mock.MagicMock(return_value=(1, mathutils.Matrix.Identity(4)))  # Record whether this gets called.
 
         # Construct an object with the wrong object type to add.
@@ -236,7 +236,7 @@ class TestExport3MF(unittest.TestCase):
         """
         Tests writing two objects.
         """
-        root = xml.etree.ElementTree.Element("{{{ns}}}model".format(ns=threemf_default_namespace))
+        root = xml.etree.ElementTree.Element(f"{{{threemf_default_namespace}}}model")
         self.exporter.write_object_resource = unittest.mock.MagicMock(side_effect=[
             (1, mathutils.Matrix.Identity(4)),
             (2, mathutils.Matrix.Identity(4))
@@ -270,7 +270,7 @@ class TestExport3MF(unittest.TestCase):
         This tests both the global scale as well as a scale applied to the
         object itself.
         """
-        root = xml.etree.ElementTree.Element("{{{ns}}}model".format(ns=threemf_default_namespace))
+        root = xml.etree.ElementTree.Element(f"{{{threemf_default_namespace}}}model")
         self.exporter.format_transformation = lambda x: str(x)  # The transformation formatter is not being tested here.
 
         object_transformation = mathutils.Matrix.Translation(mathutils.Vector([10, 20, 30]))  # The object itself is moved.
@@ -289,13 +289,13 @@ class TestExport3MF(unittest.TestCase):
         item_elements = list(root.iterfind("3mf:build/3mf:item", threemf_namespaces))
         self.assertEqual(len(item_elements), 1, "There was only one object to build.")
         item_element = item_elements[0]
-        self.assertEqual(item_element.attrib["{{{ns}}}transform".format(ns=threemf_default_namespace)], str(expected_transformation), "The transformation must be equal to the expected transformation.")
+        self.assertEqual(item_element.attrib[f"{{{threemf_default_namespace}}}transform"], str(expected_transformation), "The transformation must be equal to the expected transformation.")
 
     def test_write_objects_metadata(self):
         """
         Tests writing build items with metadata.
         """
-        root = xml.etree.ElementTree.Element("{{{ns}}}model".format(ns=threemf_default_namespace))
+        root = xml.etree.ElementTree.Element(f"{{{threemf_default_namespace}}}model")
         self.exporter.write_object_resource = unittest.mock.MagicMock(return_value=(1, mathutils.Matrix.Identity(4)))  # Not interested in testing this code here.
 
         # Construct an object with metadata to write.
@@ -313,14 +313,14 @@ class TestExport3MF(unittest.TestCase):
         metadatagroup_element = metadatagroup_elements[0]
         metadata_elements = metadatagroup_element.findall("3mf:metadata", namespaces=threemf_namespaces)
         for metadata_element in metadata_elements:
-            if metadata_element.attrib["{{{ns}}}name".format(ns=threemf_default_namespace)] == "Title":
+            if metadata_element.attrib[f"{{{threemf_default_namespace}}}name"] == "Title":
                 self.assertEqual(metadata_element.text, "Acoustic Kitty", "The name of the object was 'Acoustic Kitty', which should get stored as the 'Title' metadata entry.")
-                self.assertEqual(metadata_element.attrib["{{{ns}}}type".format(ns=threemf_default_namespace)], "xs:string", "The object name is always a string.")
-                self.assertEqual(metadata_element.attrib["{{{ns}}}preserve".format(ns=threemf_default_namespace)], "1", "The object name must always be preserved (the way that we write these files).")
+                self.assertEqual(metadata_element.attrib[f"{{{threemf_default_namespace}}}type"], "xs:string", "The object name is always a string.")
+                self.assertEqual(metadata_element.attrib[f"{{{threemf_default_namespace}}}preserve"], "1", "The object name must always be preserved (the way that we write these files).")
             elif metadata_element.attrib["name"] == "Description":
                 self.assertEqual(metadata_element.text, "A CIA project to spy on the Soviet embassies.", "This is the 'Description' metadata value.")
-                self.assertEqual(metadata_element.attrib["{{{ns}}}type".format(ns=threemf_default_namespace)], "mostly fur", "The data type was set to 'mostly fur'.")
-                self.assertNotIn("{{{ns}}}preserve".format(ns=threemf_default_namespace), metadata_element.attrib, "Since this metadata isn't preserved, don't write a 'preserve' attribute but let it be the default, which is to not preserve.")
+                self.assertEqual(metadata_element.attrib[f"{{{threemf_default_namespace}}}type"], "mostly fur", "The data type was set to 'mostly fur'.")
+                self.assertNotIn(f"{{{threemf_default_namespace}}}preserve", metadata_element.attrib, "Since this metadata isn't preserved, don't write a 'preserve' attribute but let it be the default, which is to not preserve.")
             else:
                 self.assertFalse("We only had 'Title' and 'Description' metadata, not {name}".format(name=metadata_element.attrib["name"]))
 
@@ -332,7 +332,7 @@ class TestExport3MF(unittest.TestCase):
         The IDs are probably just ascending numbers, but we only need to test
         that they are positive integers that were not used before.
         """
-        resources_element = xml.etree.ElementTree.Element("{{{ns}}}resources".format(ns=threemf_default_namespace))
+        resources_element = xml.etree.ElementTree.Element(f"{{{threemf_default_namespace}}}resources")
         blender_object = unittest.mock.MagicMock()
 
         given_ids = set()
@@ -349,7 +349,7 @@ class TestExport3MF(unittest.TestCase):
 
         It should become an empty <object> element then.
         """
-        resources_element = xml.etree.ElementTree.Element("{{{ns}}}resources".format(ns=threemf_default_namespace))
+        resources_element = xml.etree.ElementTree.Element(f"{{{threemf_default_namespace}}}resources")
         blender_object = unittest.mock.MagicMock()
 
         blender_object.to_mesh.return_value = None  # Indicates that there is no Mesh in this object.
@@ -364,7 +364,7 @@ class TestExport3MF(unittest.TestCase):
         """
         Tests writing the mesh of an object resource.
         """
-        resources_element = xml.etree.ElementTree.Element("{{{ns}}}resources".format(ns=threemf_default_namespace))
+        resources_element = xml.etree.ElementTree.Element(f"{{{threemf_default_namespace}}}resources")
         blender_object = unittest.mock.MagicMock()
         self.exporter.write_vertices = unittest.mock.MagicMock()  # Mock these two subroutines. We'll only verify that they get called with the correct parameters.
         self.exporter.write_triangles = unittest.mock.MagicMock()
@@ -387,7 +387,7 @@ class TestExport3MF(unittest.TestCase):
         """
         Tests writing an object resource that has children.
         """
-        resources_element = xml.etree.ElementTree.Element("{{{ns}}}resources".format(ns=threemf_default_namespace))
+        resources_element = xml.etree.ElementTree.Element(f"{{{threemf_default_namespace}}}resources")
         blender_object = unittest.mock.MagicMock()
         blender_object.matrix_world = mathutils.Matrix.Identity(4)
 
@@ -403,8 +403,8 @@ class TestExport3MF(unittest.TestCase):
         component_elements = resources_element.findall("3mf:object/3mf:components/3mf:component", namespaces=threemf_namespaces)
         self.assertEqual(len(component_elements), 1, "There was 1 child, so there should be 1 component.")
         component_element = component_elements[0]
-        self.assertNotEqual(int(component_element.attrib["{{{ns}}}objectid".format(ns=threemf_default_namespace)]), int(parent_id), "The ID given to the child object must be unique.")
-        self.assertEqual(component_element.attrib["{{{ns}}}transform".format(ns=threemf_default_namespace)], "2 0 0 0 2 0 0 0 2 0 0 0", "The transformation for 200% scale must be given to this component.")
+        self.assertNotEqual(int(component_element.attrib[f"{{{threemf_default_namespace}}}objectid"]), int(parent_id), "The ID given to the child object must be unique.")
+        self.assertEqual(component_element.attrib[f"{{{threemf_default_namespace}}}transform"], "2 0 0 0 2 0 0 0 2 0 0 0", "The transformation for 200% scale must be given to this component.")
 
     def test_write_object_resource_children_mesh(self):
         """
@@ -416,7 +416,7 @@ class TestExport3MF(unittest.TestCase):
         self.exporter.write_vertices = unittest.mock.MagicMock()  # Mock these two subroutines for this test. We'll only verify that they get called with the correct parameters.
         self.exporter.write_triangles = unittest.mock.MagicMock()
 
-        resources_element = xml.etree.ElementTree.Element("{{{ns}}}resources".format(ns=threemf_default_namespace))
+        resources_element = xml.etree.ElementTree.Element(f"{{{threemf_default_namespace}}}resources")
         blender_object = unittest.mock.MagicMock()
         blender_object.matrix_world = mathutils.Matrix.Identity(4)
 
@@ -439,7 +439,7 @@ class TestExport3MF(unittest.TestCase):
         self.assertEqual(len(component_elements), 2, "There is 1 child component, and 1 new component created for the mesh in the parent object.")
         used_ids = {parent_id}
         for component_element in component_elements:
-            child_id = int(component_element.attrib["{{{ns}}}objectid".format(ns=threemf_default_namespace)])
+            child_id = int(component_element.attrib[f"{{{threemf_default_namespace}}}objectid"])
             self.assertNotIn(child_id, used_ids, "The ID given to the components must be unique.")
             used_ids.add(child_id)
         mesh_elements = resources_element.findall("3mf:object/3mf:mesh", namespaces=threemf_namespaces)
@@ -455,7 +455,7 @@ class TestExport3MF(unittest.TestCase):
         self.exporter.write_vertices = unittest.mock.MagicMock()  # Mock these two subroutines for this test. Don't want to actually go and fill this with data.
         self.exporter.write_triangles = unittest.mock.MagicMock()
 
-        resources_element = xml.etree.ElementTree.Element("{{{ns}}}resources".format(ns=threemf_default_namespace))
+        resources_element = xml.etree.ElementTree.Element(f"{{{threemf_default_namespace}}}resources")
         blender_object = unittest.mock.MagicMock()
         blender_object.matrix_world = mathutils.Matrix.Identity(4)
 
@@ -476,14 +476,14 @@ class TestExport3MF(unittest.TestCase):
         metadatagroup_element = metadatagroup_elements[0]
         metadata_elements = metadatagroup_element.findall("3mf:metadata", namespaces=threemf_namespaces)
         for metadata_element in metadata_elements:
-            if metadata_element.attrib["{{{ns}}}name".format(ns=threemf_default_namespace)] == "Title":
+            if metadata_element.attrib[f"{{{threemf_default_namespace}}}name"] == "Title":
                 self.assertEqual(metadata_element.text, "Sergeant Reckless", "The name of the mesh was 'Sergeant Reckless', which should get stored as the 'Title' metadata entry.")
-                self.assertEqual(metadata_element.attrib["{{{ns}}}type".format(ns=threemf_default_namespace)], "xs:string", "The object name is always a string.")
-                self.assertEqual(metadata_element.attrib["{{{ns}}}preserve".format(ns=threemf_default_namespace)], "1", "The object name must always be preserved (the way that we write these files).")
+                self.assertEqual(metadata_element.attrib[f"{{{threemf_default_namespace}}}type"], "xs:string", "The object name is always a string.")
+                self.assertEqual(metadata_element.attrib[f"{{{threemf_default_namespace}}}preserve"], "1", "The object name must always be preserved (the way that we write these files).")
             elif metadata_element.attrib["name"] == "Description":
                 self.assertEqual(metadata_element.text, "Pack horse", "This is the 'Description' metadata, which was set to 'Pack horse'.")
-                self.assertEqual(metadata_element.attrib["{{{ns}}}type".format(ns=threemf_default_namespace)], "some_type", "The data type was set to 'some_type'.")
-                self.assertNotIn("{{{ns}}}preserve".format(ns=threemf_default_namespace), metadata_element.attrib, "Since this metadata isn't preserved, don't write a 'preserve' attribute but let it be the default, which is to not preserve.")
+                self.assertEqual(metadata_element.attrib[f"{{{threemf_default_namespace}}}type"], "some_type", "The data type was set to 'some_type'.")
+                self.assertNotIn(f"{{{threemf_default_namespace}}}preserve", metadata_element.attrib, "Since this metadata isn't preserved, don't write a 'preserve' attribute but let it be the default, which is to not preserve.")
             else:
                 self.assertFalse("We only had 'Title' and 'Description' metadata, not {name}".format(name=metadata_element.attrib["name"]))
 
@@ -511,7 +511,7 @@ class TestExport3MF(unittest.TestCase):
         element then. We merely test this for defensive coding. The function
         should be reliable as a stand-alone routine regardless of input.
         """
-        mesh_element = xml.etree.ElementTree.Element("{{{ns}}}mesh".format(ns=threemf_default_namespace))
+        mesh_element = xml.etree.ElementTree.Element(f"{{{threemf_default_namespace}}}mesh")
         vertices = []
 
         self.exporter.write_vertices(mesh_element, vertices)
@@ -522,7 +522,7 @@ class TestExport3MF(unittest.TestCase):
         """
         Tests writing several vertices to the 3MF document.
         """
-        mesh_element = xml.etree.ElementTree.Element("{{{ns}}}mesh".format(ns=threemf_default_namespace))
+        mesh_element = xml.etree.ElementTree.Element(f"{{{threemf_default_namespace}}}mesh")
         vertex1 = unittest.mock.MagicMock(co=(0.0, 1.1, 2.2))  # The vertices this function accepts are Blender's implementation, where the coordinates are in the "co" property.
         vertex2 = unittest.mock.MagicMock(co=(3.3, 4.4, 5.5))
         vertex3 = unittest.mock.MagicMock(co=(6.6, 7.7, 8.8))
@@ -532,15 +532,15 @@ class TestExport3MF(unittest.TestCase):
 
         vertex_elements = mesh_element.findall("3mf:vertices/3mf:vertex", namespaces=threemf_namespaces)
         self.assertEqual(len(vertex_elements), 3, "There were 3 vertices to write.")
-        self.assertEqual(vertex_elements[0].attrib["{{{ns}}}x".format(ns=threemf_default_namespace)], "0", "Formatting must format as integers if possible.")
-        self.assertEqual(vertex_elements[0].attrib["{{{ns}}}y".format(ns=threemf_default_namespace)], "1.1", "Formatting must format as floats if necessary.")
-        self.assertEqual(vertex_elements[0].attrib["{{{ns}}}z".format(ns=threemf_default_namespace)], "2.2")
-        self.assertEqual(vertex_elements[1].attrib["{{{ns}}}x".format(ns=threemf_default_namespace)], "3.3")
-        self.assertEqual(vertex_elements[1].attrib["{{{ns}}}y".format(ns=threemf_default_namespace)], "4.4")
-        self.assertEqual(vertex_elements[1].attrib["{{{ns}}}z".format(ns=threemf_default_namespace)], "5.5")
-        self.assertEqual(vertex_elements[2].attrib["{{{ns}}}x".format(ns=threemf_default_namespace)], "6.6")
-        self.assertEqual(vertex_elements[2].attrib["{{{ns}}}y".format(ns=threemf_default_namespace)], "7.7")
-        self.assertEqual(vertex_elements[2].attrib["{{{ns}}}z".format(ns=threemf_default_namespace)], "8.8")
+        self.assertEqual(vertex_elements[0].attrib[f"{{{threemf_default_namespace}}}x"], "0", "Formatting must format as integers if possible.")
+        self.assertEqual(vertex_elements[0].attrib[f"{{{threemf_default_namespace}}}y"], "1.1", "Formatting must format as floats if necessary.")
+        self.assertEqual(vertex_elements[0].attrib[f"{{{threemf_default_namespace}}}z"], "2.2")
+        self.assertEqual(vertex_elements[1].attrib[f"{{{threemf_default_namespace}}}x"], "3.3")
+        self.assertEqual(vertex_elements[1].attrib[f"{{{threemf_default_namespace}}}y"], "4.4")
+        self.assertEqual(vertex_elements[1].attrib[f"{{{threemf_default_namespace}}}z"], "5.5")
+        self.assertEqual(vertex_elements[2].attrib[f"{{{threemf_default_namespace}}}x"], "6.6")
+        self.assertEqual(vertex_elements[2].attrib[f"{{{threemf_default_namespace}}}y"], "7.7")
+        self.assertEqual(vertex_elements[2].attrib[f"{{{threemf_default_namespace}}}z"], "8.8")
 
     def test_write_triangles_empty(self):
         """
@@ -549,7 +549,7 @@ class TestExport3MF(unittest.TestCase):
         Contrary to the similar test for writing vertices, this may actually
         happen in the field, if a mesh consists of only vertices or edges.
         """
-        mesh_element = xml.etree.ElementTree.Element("{{{ns}}}mesh".format(ns=threemf_default_namespace))
+        mesh_element = xml.etree.ElementTree.Element(f"{{{threemf_default_namespace}}}mesh")
         triangles = []
 
         self.exporter.write_triangles(mesh_element, triangles)
@@ -560,7 +560,7 @@ class TestExport3MF(unittest.TestCase):
         """
         Tests writing several triangles to the 3MF document.
         """
-        mesh_element = xml.etree.ElementTree.Element("{{{ns}}}mesh".format(ns=threemf_default_namespace))
+        mesh_element = xml.etree.ElementTree.Element(f"{{{threemf_default_namespace}}}mesh")
         triangle1 = unittest.mock.MagicMock(vertices=[0, 1, 2])
         triangle2 = unittest.mock.MagicMock(vertices=[3, 4, 5])
         triangle3 = unittest.mock.MagicMock(vertices=[4, 2, 0])
@@ -570,12 +570,12 @@ class TestExport3MF(unittest.TestCase):
 
         triangle_elements = mesh_element.findall("3mf:triangles/3mf:triangle", namespaces=threemf_namespaces)
         self.assertEqual(len(triangle_elements), 3, "There were 3 triangles to write.")
-        self.assertEqual(triangle_elements[0].attrib["{{{ns}}}v1".format(ns=threemf_default_namespace)], "0")
-        self.assertEqual(triangle_elements[0].attrib["{{{ns}}}v2".format(ns=threemf_default_namespace)], "1")
-        self.assertEqual(triangle_elements[0].attrib["{{{ns}}}v3".format(ns=threemf_default_namespace)], "2")
-        self.assertEqual(triangle_elements[1].attrib["{{{ns}}}v1".format(ns=threemf_default_namespace)], "3")
-        self.assertEqual(triangle_elements[1].attrib["{{{ns}}}v2".format(ns=threemf_default_namespace)], "4")
-        self.assertEqual(triangle_elements[1].attrib["{{{ns}}}v3".format(ns=threemf_default_namespace)], "5")
-        self.assertEqual(triangle_elements[2].attrib["{{{ns}}}v1".format(ns=threemf_default_namespace)], "4")
-        self.assertEqual(triangle_elements[2].attrib["{{{ns}}}v2".format(ns=threemf_default_namespace)], "2")
-        self.assertEqual(triangle_elements[2].attrib["{{{ns}}}v3".format(ns=threemf_default_namespace)], "0")
+        self.assertEqual(triangle_elements[0].attrib[f"{{{threemf_default_namespace}}}v1"], "0")
+        self.assertEqual(triangle_elements[0].attrib[f"{{{threemf_default_namespace}}}v2"], "1")
+        self.assertEqual(triangle_elements[0].attrib[f"{{{threemf_default_namespace}}}v3"], "2")
+        self.assertEqual(triangle_elements[1].attrib[f"{{{threemf_default_namespace}}}v1"], "3")
+        self.assertEqual(triangle_elements[1].attrib[f"{{{threemf_default_namespace}}}v2"], "4")
+        self.assertEqual(triangle_elements[1].attrib[f"{{{threemf_default_namespace}}}v3"], "5")
+        self.assertEqual(triangle_elements[2].attrib[f"{{{threemf_default_namespace}}}v1"], "4")
+        self.assertEqual(triangle_elements[2].attrib[f"{{{threemf_default_namespace}}}v2"], "2")
+        self.assertEqual(triangle_elements[2].attrib[f"{{{threemf_default_namespace}}}v3"], "0")

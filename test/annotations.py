@@ -71,7 +71,7 @@ class TestAnnotations(unittest.TestCase):
         Tests adding an empty relationships file.
         """
         # Construct an empty rels file.
-        root = xml.etree.ElementTree.Element("{{{ns}}}Relationships".format(ns=rels_default_namespace))
+        root = xml.etree.ElementTree.Element(f"{{{rels_default_namespace}}}Relationships")
         rels_file = self.xml_to_filestream(root, "_rels/.rels")
 
         self.annotations.add_rels(rels_file)
@@ -83,8 +83,8 @@ class TestAnnotations(unittest.TestCase):
         Tests adding a relationships file with a relationship in it.
         """
         # Construct a relationships file with a relationship in it.
-        root = xml.etree.ElementTree.Element("{{{ns}}}Relationships".format(ns=rels_default_namespace))
-        xml.etree.ElementTree.SubElement(root, "{{{ns}}}Relationship".format(ns=rels_default_namespace), attrib={
+        root = xml.etree.ElementTree.Element(f"{{{rels_default_namespace}}}Relationships")
+        xml.etree.ElementTree.SubElement(root, f"{{{rels_default_namespace}}}Relationship", attrib={
             "Target": "/path/to/thumbnail.png",
             "Type": rels_thumbnail
         })
@@ -104,9 +104,9 @@ class TestAnnotations(unittest.TestCase):
         We expect to see only one copy of it in the result.
         """
         # Construct a relationships file with four identical relationships in it.
-        root = xml.etree.ElementTree.Element("{{{ns}}}Relationships".format(ns=rels_default_namespace))
+        root = xml.etree.ElementTree.Element(f"{{{rels_default_namespace}}}Relationships")
         for i in range(4):
-            xml.etree.ElementTree.SubElement(root, "{{{ns}}}Relationship".format(ns=rels_default_namespace), attrib={
+            xml.etree.ElementTree.SubElement(root, f"{{{rels_default_namespace}}}Relationship", attrib={
                 "Target": "/path/to/thumbnail.png",
                 "Type": rels_thumbnail
             })
@@ -128,12 +128,12 @@ class TestAnnotations(unittest.TestCase):
         Those relationships should get ignored.
         """
         # Construct a relationships file with two broken relationships in it.
-        root = xml.etree.ElementTree.Element("{{{ns}}}Relationships".format(ns=rels_default_namespace))
-        xml.etree.ElementTree.SubElement(root, "{{{ns}}}Relationship".format(ns=rels_default_namespace), attrib={
+        root = xml.etree.ElementTree.Element(f"{{{rels_default_namespace}}}Relationships")
+        xml.etree.ElementTree.SubElement(root, f"{{{rels_default_namespace}}}Relationship", attrib={
             "Target": "/path/to/thumbnail.png"
             # Missing type.
         })
-        xml.etree.ElementTree.SubElement(root, "{{{ns}}}Relationship".format(ns=rels_default_namespace), attrib={
+        xml.etree.ElementTree.SubElement(root, f"{{{rels_default_namespace}}}Relationship", attrib={
             # Missing target.
             "Type": rels_thumbnail
         })
@@ -148,8 +148,8 @@ class TestAnnotations(unittest.TestCase):
         Tests adding a relationships file with a relationship in it.
         """
         # Construct a relationships file with a different base path
-        root = xml.etree.ElementTree.Element("{{{ns}}}Relationships".format(ns=rels_default_namespace))
-        xml.etree.ElementTree.SubElement(root, "{{{ns}}}Relationship".format(ns=rels_default_namespace), attrib={
+        root = xml.etree.ElementTree.Element(f"{{{rels_default_namespace}}}Relationships")
+        xml.etree.ElementTree.SubElement(root, f"{{{rels_default_namespace}}}Relationship", attrib={
             "Target": "/path/to/thumbnail.png",
             "Type": rels_thumbnail
         })

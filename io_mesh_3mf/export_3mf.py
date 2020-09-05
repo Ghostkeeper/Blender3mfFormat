@@ -84,7 +84,7 @@ class Export3MF(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
         # Due to an open bug in Python 3.7 (Blender's version) we need to prefix all elements with the namespace.
         # Bug: https://bugs.python.org/issue17088
         # Workaround: https://stackoverflow.com/questions/4997848/emitting-namespace-specifications-with-elementtree-in-python/4999510#4999510
-        root = xml.etree.ElementTree.Element("{{{ns}}}model".format(ns=threemf_default_namespace))
+        root = xml.etree.ElementTree.Element(f"{{{threemf_default_namespace}}}model")
 
         scene_metadata = Metadata()
         scene_metadata.retrieve(bpy.context.scene)
@@ -161,8 +161,8 @@ class Export3MF(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
         """
         transformation = mathutils.Matrix.Scale(global_scale, 4)
 
-        resources_element = xml.etree.ElementTree.SubElement(root, "{{{ns}}}resources".format(ns=threemf_default_namespace))
-        build_element = xml.etree.ElementTree.SubElement(root, "{{{ns}}}build".format(ns=threemf_default_namespace))
+        resources_element = xml.etree.ElementTree.SubElement(root, f"{{{threemf_default_namespace}}}resources")
+        build_element = xml.etree.ElementTree.SubElement(root, f"{{{threemf_default_namespace}}}build")
         for blender_object in blender_objects:
             if blender_object.parent is not None:
                 continue  # Only write objects that have no parent, since we'll get the child objects recursively.
@@ -171,20 +171,20 @@ class Export3MF(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
 
             objectid, mesh_transformation = self.write_object_resource(resources_element, blender_object)
 
-            item_element = xml.etree.ElementTree.SubElement(build_element, "{{{ns}}}item".format(ns=threemf_default_namespace))
+            item_element = xml.etree.ElementTree.SubElement(build_element, f"{{{threemf_default_namespace}}}item")
             self.num_written += 1
-            item_element.attrib["{{{ns}}}objectid".format(ns=threemf_default_namespace)] = str(objectid)
+            item_element.attrib[f"{{{threemf_default_namespace}}}objectid"] = str(objectid)
             mesh_transformation = transformation @ mesh_transformation
             if mesh_transformation != mathutils.Matrix.Identity(4):
-                item_element.attrib["{{{ns}}}transform".format(ns=threemf_default_namespace)] = self.format_transformation(mesh_transformation)
+                item_element.attrib[f"{{{threemf_default_namespace}}}transform"] = self.format_transformation(mesh_transformation)
 
             metadata = Metadata()
             metadata.retrieve(blender_object)
             if "3mf:partnumber" in metadata:
-                item_element.attrib["{{{ns}}}partnumber".format(ns=threemf_default_namespace)] = metadata["3mf:partnumber"].value
+                item_element.attrib[f"{{{threemf_default_namespace}}}partnumber"] = metadata["3mf:partnumber"].value
                 del metadata["3mf:partnumber"]
             if metadata:
-                metadatagroup_element = xml.etree.ElementTree.SubElement(item_element, "{{{ns}}}metadatagroup".format(ns=threemf_default_namespace))
+                metadatagroup_element = xml.etree.ElementTree.SubElement(item_element, f"{{{threemf_default_namespace}}}metadatagroup")
                 self.write_metadata(metadatagroup_element, metadata)
 
     def write_object_resource(self, resources_element, blender_object):
@@ -207,9 +207,9 @@ class Export3MF(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
         """
         new_resource_id = self.next_resource_id
         self.next_resource_id += 1
-        object_element = xml.etree.ElementTree.SubElement(resources_element, "{{{ns}}}object".format(ns=threemf_default_namespace))
-        object_element.attrib["{{{ns}}}type".format(ns=threemf_default_namespace)] = "model"
-        object_element.attrib["{{{ns}}}id".format(ns=threemf_default_namespace)] = str(new_resource_id)
+        object_element = xml.etree.ElementTree.SubElement(resources_element, f"{{{threemf_default_namespace}}}object")
+        object_element.attrib[f"{{{threemf_default_namespace}}}type"] = "model"
+        object_element.attrib[f"{{{threemf_default_namespace}}}id"] = str(new_resource_id)
 
         if blender_object.mode == 'EDIT':
             blender_object.update_from_editmode()  # Apply recent changes made to the model.
@@ -217,17 +217,17 @@ class Export3MF(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
 
         child_objects = blender_object.children
         if child_objects:  # Only write the <components> tag if there are actually components.
-            components_element = xml.etree.ElementTree.SubElement(object_element, "{{{ns}}}components".format(ns=threemf_default_namespace))
+            components_element = xml.etree.ElementTree.SubElement(object_element, f"{{{threemf_default_namespace}}}components")
             for child in blender_object.children:
                 if child.type != 'MESH':
                     continue
                 child_id, child_transformation = self.write_object_resource(resources_element, child)  # Recursively write children to the resources.
                 child_transformation = mesh_transformation.inverted_safe() @ child_transformation  # Use pseudoinverse for safety, but the epsilon then doesn't matter since it'll get multiplied by 0 later anyway then.
-                component_element = xml.etree.ElementTree.SubElement(components_element, "{{{ns}}}component".format(ns=threemf_default_namespace))
+                component_element = xml.etree.ElementTree.SubElement(components_element, f"{{{threemf_default_namespace}}}component")
                 self.num_written += 1
-                component_element.attrib["{{{ns}}}objectid".format(ns=threemf_default_namespace)] = str(child_id)
+                component_element.attrib[f"{{{threemf_default_namespace}}}objectid"] = str(child_id)
                 if child_transformation != mathutils.Matrix.Identity(4):
-                    component_element.attrib["{{{ns}}}transform".format(ns=threemf_default_namespace)] = self.format_transformation(child_transformation)
+                    component_element.attrib[f"{{{threemf_default_namespace}}}transform"] = self.format_transformation(child_transformation)
 
         # In the tail recursion, get the vertex data.
         # This is necessary because we may need to apply the mesh modifiers, which causes these objects to lose their children.
@@ -248,15 +248,15 @@ class Export3MF(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
             if child_objects:
                 mesh_id = self.next_resource_id
                 self.next_resource_id += 1
-                mesh_object_element = xml.etree.ElementTree.SubElement(resources_element, "{{{ns}}}object".format(ns=threemf_default_namespace))
-                mesh_object_element.attrib["{{{ns}}}type".format(ns=threemf_default_namespace)] = "model"
-                mesh_object_element.attrib["{{{ns}}}id".format(ns=threemf_default_namespace)] = str(mesh_id)
-                component_element = xml.etree.ElementTree.SubElement(components_element, "{{{ns}}}component".format(ns=threemf_default_namespace))
+                mesh_object_element = xml.etree.ElementTree.SubElement(resources_element, f"{{{threemf_default_namespace}}}object")
+                mesh_object_element.attrib[f"{{{threemf_default_namespace}}}type"] = "model"
+                mesh_object_element.attrib[f"{{{threemf_default_namespace}}}id"] = str(mesh_id)
+                component_element = xml.etree.ElementTree.SubElement(components_element, f"{{{threemf_default_namespace}}}component")
                 self.num_written += 1
-                component_element.attrib["{{{ns}}}objectid".format(ns=threemf_default_namespace)] = str(mesh_id)
+                component_element.attrib[f"{{{threemf_default_namespace}}}objectid"] = str(mesh_id)
             else:  # No components, then we can write directly into this object resource.
                 mesh_object_element = object_element
-            mesh_element = xml.etree.ElementTree.SubElement(mesh_object_element, "{{{ns}}}mesh".format(ns=threemf_default_namespace))
+            mesh_element = xml.etree.ElementTree.SubElement(mesh_object_element, f"{{{threemf_default_namespace}}}mesh")
             self.write_vertices(mesh_element, mesh.vertices)
             self.write_triangles(mesh_element, mesh.loop_triangles)
 
@@ -264,10 +264,10 @@ class Export3MF(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
             metadata = Metadata()
             metadata.retrieve(blender_object.data)
             if "3mf:partnumber" in metadata:
-                mesh_object_element.attrib["{{{ns}}}partnumber".format(ns=threemf_default_namespace)] = metadata["3mf:partnumber"].value
+                mesh_object_element.attrib[f"{{{threemf_default_namespace}}}partnumber"] = metadata["3mf:partnumber"].value
                 del metadata["3mf:partnumber"]
             if metadata:
-                metadatagroup_element = xml.etree.ElementTree.SubElement(object_element, "{{{ns}}}metadatagroup".format(ns=threemf_default_namespace))
+                metadatagroup_element = xml.etree.ElementTree.SubElement(object_element, f"{{{threemf_default_namespace}}}metadatagroup")
                 self.write_metadata(metadatagroup_element, metadata)
 
         return new_resource_id, mesh_transformation
@@ -279,12 +279,12 @@ class Export3MF(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
         :param metadata: The collection of metadata to write to that node.
         """
         for metadata_entry in metadata.values():
-            metadata_node = xml.etree.ElementTree.SubElement(node, "{{{ns}}}metadata".format(ns=threemf_default_namespace))
-            metadata_node.attrib["{{{ns}}}name".format(ns=threemf_default_namespace)] = metadata_entry.name
+            metadata_node = xml.etree.ElementTree.SubElement(node, f"{{{threemf_default_namespace}}}metadata")
+            metadata_node.attrib[f"{{{threemf_default_namespace}}}name"] = metadata_entry.name
             if metadata_entry.preserve:
-                metadata_node.attrib["{{{ns}}}preserve".format(ns=threemf_default_namespace)] = "1"
+                metadata_node.attrib[f"{{{threemf_default_namespace}}}preserve"] = "1"
             if metadata_entry.datatype:
-                metadata_node.attrib["{{{ns}}}type".format(ns=threemf_default_namespace)] = metadata_entry.datatype
+                metadata_node.attrib[f"{{{threemf_default_namespace}}}type"] = metadata_entry.datatype
             metadata_node.text = metadata_entry.value
 
     def format_transformation(self, transformation):
@@ -306,13 +306,13 @@ class Export3MF(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
         :param mesh_element: The <mesh> element of the 3MF document.
         :param vertices: A list of Blender vertices to add.
         """
-        vertices_element = xml.etree.ElementTree.SubElement(mesh_element, "{{{ns}}}vertices".format(ns=threemf_default_namespace))
+        vertices_element = xml.etree.ElementTree.SubElement(mesh_element, f"{{{threemf_default_namespace}}}vertices")
 
         # Precompute some names for better performance.
-        vertex_name = "{{{ns}}}vertex".format(ns=threemf_default_namespace)
-        x_name = "{{{ns}}}x".format(ns=threemf_default_namespace)
-        y_name = "{{{ns}}}y".format(ns=threemf_default_namespace)
-        z_name = "{{{ns}}}z".format(ns=threemf_default_namespace)
+        vertex_name = f"{{{threemf_default_namespace}}}vertex"
+        x_name = f"{{{threemf_default_namespace}}}x"
+        y_name = f"{{{threemf_default_namespace}}}y"
+        z_name = f"{{{threemf_default_namespace}}}z"
 
         for vertex in vertices:  # Create the <vertex> elements.
             vertex_element = xml.etree.ElementTree.SubElement(vertices_element, vertex_name)
@@ -329,13 +329,13 @@ class Export3MF(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
         :param triangles: A list of triangles. Each list is a list of indices to
         the list of vertices.
         """
-        triangles_element = xml.etree.ElementTree.SubElement(mesh_element, "{{{ns}}}triangles".format(ns=threemf_default_namespace))
+        triangles_element = xml.etree.ElementTree.SubElement(mesh_element, f"{{{threemf_default_namespace}}}triangles")
 
         # Precompute some names for better performance.
-        triangle_name = "{{{ns}}}triangle".format(ns=threemf_default_namespace)
-        v1_name = "{{{ns}}}v1".format(ns=threemf_default_namespace)
-        v2_name = "{{{ns}}}v2".format(ns=threemf_default_namespace)
-        v3_name = "{{{ns}}}v3".format(ns=threemf_default_namespace)
+        triangle_name = f"{{{threemf_default_namespace}}}triangle"
+        v1_name = f"{{{threemf_default_namespace}}}v1"
+        v2_name = f"{{{threemf_default_namespace}}}v2"
+        v3_name = f"{{{threemf_default_namespace}}}v3"
 
         for triangle in triangles:
             triangle_element = xml.etree.ElementTree.SubElement(triangles_element, triangle_name)
