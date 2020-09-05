@@ -158,7 +158,7 @@ class Annotations:
                         "annotation": 'content_type',
                         "mime_type": annotation.mime_type
                     })
-                elif type(annotation) == ConflictingContentType:
+                elif annotation == ConflictingContentType:
                     serialised_annotations.append({
                         "annotation": 'content_type_conflict'
                     })
