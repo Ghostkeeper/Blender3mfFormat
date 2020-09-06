@@ -29,9 +29,7 @@ from io_mesh_3mf.constants import (
     threemf_content_types_location,
     threemf_content_types_xml,
     threemf_default_namespace,
-    threemf_namespaces,
-    threemf_rels_location,
-    threemf_rels_xml
+    threemf_namespaces
 )
 from io_mesh_3mf.metadata import MetadataEntry
 
@@ -61,8 +59,7 @@ class TestExport3MF(unittest.TestCase):
             os.close(file_handle)
             archive = self.exporter.create_archive(file_path)
 
-            self.assertSetEqual(set(archive.namelist()), {threemf_rels_location, threemf_content_types_location}, "There may only be these two files.")
-            self.assertEqual(archive.read(threemf_rels_location), threemf_rels_xml.encode('UTF-8'), "Correct content for rels file.")
+            self.assertSetEqual(set(archive.namelist()), {"_rels/.rels", threemf_content_types_location}, "There may only be these two files.")
             self.assertEqual(archive.read(threemf_content_types_location), threemf_content_types_xml.encode('UTF-8'), "Correct content for content types file.")
         finally:
             if file_path is not None:

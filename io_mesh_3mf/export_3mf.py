@@ -22,9 +22,7 @@ from .constants import (
     threemf_content_types_location,
     threemf_content_types_xml,
     threemf_default_namespace,
-    threemf_default_unit,
-    threemf_rels_location,
-    threemf_rels_xml
+    threemf_default_unit
 )
 from .metadata import Metadata  # To store metadata from the Blender scene into the 3MF file.
 from .unit_conversions import blender_to_metre, threemf_to_metre
