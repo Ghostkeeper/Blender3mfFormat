@@ -415,3 +415,25 @@ class TestAnnotations(unittest.TestCase):
             "target": {io_mesh_3mf.annotations.Relationship(namespace="nsp", source="src")}
         }
         self.assertDictEqual(self.annotations.annotations, ground_truth)
+
+    def test_retrieve_content_type(self):
+        """
+        Tests retrieving a content type annotation.
+        """
+        mock = unittest.mock.MagicMock()
+        bpy.data.texts = {
+            io_mesh_3mf.annotations.ANNOTATION_FILE: mock
+        }
+        mock.as_string.return_value = json.dumps({
+            "target": [{
+                "annotation": 'content_type',
+                "mime_type": "mim"
+            }]
+        })
+
+        self.annotations.retrieve()
+
+        ground_truth = {
+            "target": {io_mesh_3mf.annotations.ContentType(mime_type="mim")}
+        }
+        self.assertDictEqual(self.annotations.annotations, ground_truth)
