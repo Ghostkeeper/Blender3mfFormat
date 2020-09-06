@@ -357,28 +357,38 @@ class TestAnnotations(unittest.TestCase):
     def test_retrieve_invalid(self):
         """
         Tests retrieving annotations where the JSON is not structured as we
-        expect.
+        expect, or where data is missing.
         """
+
+        broken_structures = [  # Various structures that are broken in some way.
+            {"dictionary of annotations, not a list": {"a": "b"}},
+            {"annotation is string": ["to be a dict, or not to be a dict"]},
+            {"annotation is number": [42]},
+            {"annotation is boolean": [True]},
+            {"annotation is None": [None]},
+            {"missing annotation type": [{}]},
+            {"relationship missing namespace": [{
+                "annotation": "relationship",
+                "source": "src"
+            }]},
+            {"relationship missing source": [{
+                "annotation": "relationship",
+                "namespace": "nsp"
+            }]},
+            {"content type missing MIME type": [{
+                "annotation": "content_type"
+            }]},
+            {"unknown annotation type": [{
+                "annotation": "something the add-on doesn't recognise"
+            }]}
+        ]
         mock = unittest.mock.MagicMock()
         bpy.data.texts = {
             io_mesh_3mf.annotations.ANNOTATION_FILE: mock
         }
 
-        # Dictionary of annotations rather than a list.
-        mock.as_string.return_value = json.dumps({
-            "target": {"a": "b"}
-        })
-        self.annotations.retrieve()
-        self.assertDictEqual(self.annotations.annotations, {})
-
-        # Annotations are not dictionaries.
-        mock.as_string.return_value = json.dumps({
-            "target": [
-                "to be a dict, or not to be a dict",
-                42,
-                True,
-                None
-            ]
-        })
-        self.annotations.retrieve()
-        self.assertDictEqual(self.annotations.annotations, {})
+        for broken_structure in broken_structures:
+            with self.subTest(structure=broken_structure):
+                mock.as_string.return_value = json.dumps(broken_structure)
+                self.annotations.retrieve()
+                self.assertDictEqual(self.annotations.annotations, {})
