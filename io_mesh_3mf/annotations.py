@@ -202,8 +202,8 @@ class Annotations:
                         logging.warning(f"Unknown annotation type {annotation['annotation']} encountered.")
                         continue
             except TypeError:  # Raised when `annotations` is not iterable.
-                logging.warning(f"Annotation for target {target} is not properly structured.")
-                continue
+                logging.warning(f"Annotation for target \"{target}\" is not properly structured.")
             except KeyError as e:  # Raised when missing the 'annotation' key or a required key belonging to that annotation.
-                logging.warning(f"Annotation for target {target} missing key: {str(e)}")
-                continue
+                logging.warning(f"Annotation for target \"{target}\" missing key: {str(e)}")
+            if not self.annotations[target]:  # Nothing was added in the end.
+                del self.annotations[target]  # Don't store the empty target either then.
