@@ -17,6 +17,7 @@ import xml.etree.ElementTree  # To parse the relationships files.
 from .constants import (
     rels_default_namespace, # Namespace for writing relationships files.
     rels_namespaces,  # Namespaces for reading relationships files.
+    threemf_3dmodel_location,  # Target of default relationship.
     threemf_3dmodel_rel,  # Known relationship.
     threemf_rels_mimetype,  # Known content types.
     threemf_model_mimetype
@@ -150,7 +151,7 @@ class Annotations:
         current_id = 0  # Have an incrementing ID number to make all relationship IDs unique across the whole archive.
 
         # First sort all relationships by their source, so that we know which relationship goes into which file.
-        rels_by_source = {}
+        rels_by_source = {"/": set()}  # We always want to create a .rels file for the archive root, with our default relationships.
         for target, annotations in self.annotations.items():
             for annotation in annotations:
                 if type(annotation) is not Relationship:
@@ -169,6 +170,16 @@ class Annotations:
                     f"{{{rels_default_namespace}}}Type": namespace
                 })
                 current_id += 1
+
+            # Write relationships for files that we create.
+            if source == "/":
+                xml.etree.ElementTree.SubElement(root, f"{{{rels_default_namespace}}}Relationship", attrib={
+                    f"{{{rels_default_namespace}}}Id": "rel" + str(current_id),
+                    f"{{{rels_default_namespace}}}Target": "/" + threemf_3dmodel_location,
+                    f"{{{rels_default_namespace}}}Type": threemf_3dmodel_rel
+                })
+                current_id += 1
+
             document = xml.etree.ElementTree.ElementTree(root)
 
             # Write that XML document to a file.
