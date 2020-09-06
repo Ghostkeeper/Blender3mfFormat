@@ -199,7 +199,7 @@ class Annotations:
                     elif annotation['annotation'] == 'content_type_conflict':
                         self.annotations[target].add(ConflictingContentType)
                     else:
-                        logging.warning(f"Unknown annotation type {annotation['annotation']} encountered.")
+                        logging.warning(f"Unknown annotation type \"{annotation['annotation']}\" encountered.")
                         continue
             except TypeError:  # Raised when `annotations` is not iterable.
                 logging.warning(f"Annotation for target \"{target}\" is not properly structured.")

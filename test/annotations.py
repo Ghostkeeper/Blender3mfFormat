@@ -368,15 +368,15 @@ class TestAnnotations(unittest.TestCase):
             {"annotation is None": [None]},
             {"missing annotation type": [{}]},
             {"relationship missing namespace": [{
-                "annotation": "relationship",
+                "annotation": 'relationship',
                 "source": "src"
             }]},
             {"relationship missing source": [{
-                "annotation": "relationship",
+                "annotation": 'relationship',
                 "namespace": "nsp"
             }]},
             {"content type missing MIME type": [{
-                "annotation": "content_type"
+                "annotation": 'content_type'
             }]},
             {"unknown annotation type": [{
                 "annotation": "something the add-on doesn't recognise"
@@ -392,3 +392,26 @@ class TestAnnotations(unittest.TestCase):
                 mock.as_string.return_value = json.dumps(broken_structure)
                 self.annotations.retrieve()
                 self.assertDictEqual(self.annotations.annotations, {})
+
+    def test_retrieve_relationship(self):
+        """
+        Tests retrieving a relationship annotation.
+        """
+        mock = unittest.mock.MagicMock()
+        bpy.data.texts = {
+            io_mesh_3mf.annotations.ANNOTATION_FILE: mock
+        }
+        mock.as_string.return_value = json.dumps({
+            "target": [{
+                "annotation": 'relationship',
+                "namespace": "nsp",
+                "source": "src"
+            }]
+        })
+
+        self.annotations.retrieve()
+
+        ground_truth = {
+            "target": {io_mesh_3mf.annotations.Relationship(namespace="nsp", source="src")}
+        }
+        self.assertDictEqual(self.annotations.annotations, ground_truth)
