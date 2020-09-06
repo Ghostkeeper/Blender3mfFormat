@@ -437,3 +437,22 @@ class TestAnnotations(unittest.TestCase):
             "target": {io_mesh_3mf.annotations.ContentType(mime_type="mim")}
         }
         self.assertDictEqual(self.annotations.annotations, ground_truth)
+
+    def test_retrieve_conflicting_content_type(self):
+        """
+        Tests retrieving an annotation marking the content type as conflicting.
+        """
+        mock = unittest.mock.MagicMock()
+        bpy.data.texts = {
+            io_mesh_3mf.annotations.ANNOTATION_FILE: mock
+        }
+        mock.as_string.return_value = json.dumps({
+            "target": [{"annotation": 'content_type_conflict'}]
+        })
+
+        self.annotations.retrieve()
+
+        ground_truth = {
+            "target": {io_mesh_3mf.annotations.ConflictingContentType}
+        }
+        self.assertDictEqual(self.annotations.annotations, ground_truth)
