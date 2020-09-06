@@ -6,6 +6,8 @@ This is a Blender add-on that allows importing and exporting 3MF files.
 
 Installation
 ----
+This add-on requires Blender 2.80 or newer.
+
 To install this add-on, currently you need to manually copy the source code into Blender's add-ons folder. Here is how you do that:
 1. Download the source code from the [latest release](https://github.com/Ghostkeeper/Blender3mfFormat/releases/latest). You can find it under "Assets", or use the Clone or Download button for the latest source version.
 2. Extract the `io_mesh_3mf` folder in the zip archive to Blender's add-ons folder. The location of that folder varies depending on your operating system:
