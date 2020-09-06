@@ -82,6 +82,7 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
         scene_metadata.retrieve(bpy.context.scene)  # If there was already metadata in the scene, combine that with this file.
         del scene_metadata["Title"]  # Don't load the title from the old scene. If there is a title in the imported 3MF, use that. Else, we'll not override the scene title and it gets retained.
         annotations = Annotations()
+        annotations.retrieve()  # If there were already annotations in the scene, combine that with this file.
 
         # Preparation of the input parameters.
         paths = [os.path.join(self.directory, name.name) for name in self.files]

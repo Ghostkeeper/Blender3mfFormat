@@ -169,3 +169,41 @@ class Annotations:
             bpy.data.texts.remove(bpy.data.texts[ANNOTATION_FILE])
         text_file = bpy.data.texts.new(ANNOTATION_FILE)
         text_file.write(json.dumps(document))
+
+    def retrieve(self):
+        """
+        Retrieves any existing annotations from the Blender scene.
+
+        This looks for a serialised annotation file in the Blender data. If it
+        exists, it parses that file and retrieves the data from it, restoring
+        the state of the annotations collection that stored that file.
+        """
+        self.annotations.clear()  # If there's nothing stored in the current scene, this clears the state of the annotations.
+
+        if ANNOTATION_FILE not in bpy.data.texts:
+            return  # Nothing to read. Done!
+        try:
+            annotation_data = json.loads(bpy.data.texts[ANNOTATION_FILE].as_string())
+        except json.JSONDecodeError:
+            logging.warning("Annotation file exists, but is not properly formatted.")
+            return  # File was meddled with?
+
+        for target, annotations in annotation_data.items():
+            self.annotations[target] = set()
+            try:
+                for annotation in annotations:
+                    if annotation['annotation'] == 'relationship':
+                        self.annotations[target].add(Relationship(namespace=annotation['namespace'], source=annotation['source']))
+                    elif annotation['annotation'] == 'content_type':
+                        self.annotations[target].add(ContentType(mime_type=annotation['mime_type']))
+                    elif annotation['annotation'] == 'content_type_conflict':
+                        self.annotations[target].add(ConflictingContentType)
+                    else:
+                        logging.warning(f"Unknown annotation type {annotation['annotation']} encountered.")
+                        continue
+            except TypeError:  # Raised when `annotations` is not iterable.
+                logging.warning(f"Annotation for target {target} is not properly structured.")
+                continue
+            except KeyError as e:  # Raised when missing the 'annotation' key or a required key belonging to that annotation.
+                logging.warning(f"Annotation for target {target} missing key: {str(e)}")
+                continue
