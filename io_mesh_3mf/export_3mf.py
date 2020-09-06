@@ -16,6 +16,7 @@ import mathutils  # For the transformation matrices.
 import xml.etree.ElementTree  # To write XML documents with the 3D model data.
 import zipfile  # To write zip archives, the shell of the 3MF file.
 
+from .annotations import Annotations  # To store file annotations
 from .constants import (
     threemf_3dmodel_location,
     threemf_content_types_location,
@@ -25,8 +26,8 @@ from .constants import (
     threemf_rels_location,
     threemf_rels_xml
 )
-from .unit_conversions import blender_to_metre, threemf_to_metre
 from .metadata import Metadata  # To store metadata from the Blender scene into the 3MF file.
+from .unit_conversions import blender_to_metre, threemf_to_metre
 
 log = logging.getLogger(__name__)
 
@@ -120,8 +121,11 @@ class Export3MF(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
 
             with archive.open(threemf_content_types_location, 'w') as content_types:
                 content_types.write(threemf_content_types_xml.encode('UTF-8'))
-            with archive.open(threemf_rels_location, 'w') as rels:
-                rels.write(threemf_rels_xml.encode('UTF-8'))
+
+            # Store the file annotations we got from imported 3MF files, and store them in the archive.
+            annotations = Annotations()
+            annotations.retrieve()
+            annotations.write_rels(archive)
         except EnvironmentError as e:
             log.error(f"Unable to write 3MF archive to {filepath}: {e}")
             return None

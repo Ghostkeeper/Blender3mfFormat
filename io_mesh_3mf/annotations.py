@@ -15,8 +15,9 @@ import urllib.parse  # To parse relative target paths in relationships.
 import xml.etree.ElementTree  # To parse the relationships files.
 
 from .constants import (
-    rels_namespaces,  # Namespace for relationships files.
-    threemf_rels_mimetype,
+    rels_default_namespace, # Namespace for writing relationships files.
+    rels_namespaces,  # Namespaces for reading relationships files.
+    threemf_rels_mimetype,  # Known content types.
     threemf_model_mimetype
 )
 
@@ -133,6 +134,44 @@ class Annotations:
                     self.annotations[filename].add(ConflictingContentType)
                 else:  # No content type yet, or the existing content type is the same (so adding it again won't have any effect).
                     self.annotations[filename].add(ContentType(content_type))
+
+    def write_rels(self, archive):
+        """
+        Write the relationship annotations in this collections to an archive as
+        .rels files.
+
+        Multiple relationship files may be added to the archive, if
+        relationships came from multiple sources in the original archives.
+        :param archive: A zip archive to add the relationships to.
+        """
+        current_id = 0  # Have an incrementing ID number to make all relationship IDs unique across the whole archive.
+
+        # First sort all relationships by their source, so that we know which relationship goes into which file.
+        rels_by_source = {}
+        for target, annotations in self.annotations.items():
+            for annotation in annotations:
+                if type(annotation) is not Relationship:
+                    continue
+                if annotation.source not in rels_by_source:
+                    rels_by_source[annotation.source] = set()
+                rels_by_source[annotation.source].add((target, annotation.namespace))
+
+        for source, annotations in rels_by_source.items():
+            # Create an XML document containing all relationships for this source.
+            root = xml.etree.ElementTree.Element(f"{{{rels_default_namespace}}}Relationships")
+            for target, namespace in annotations:
+                xml.etree.ElementTree.SubElement(root, f"{{{rels_default_namespace}}}Relationship", attrib={
+                    f"{{{rels_default_namespace}}}Id": "rel" + str(current_id),
+                    f"{{{rels_default_namespace}}}Target": "/" + target,
+                    f"{{{rels_default_namespace}}}Type": namespace
+                })
+                current_id += 1
+            document = xml.etree.ElementTree.ElementTree(root)
+
+            # Write that XML document to a file.
+            rels_file = source + "_rels/.rels"  # _rels folder in the "source" folder.
+            with archive.open(rels_file, 'w') as f:
+                document.write(f, xml_declaration=True, encoding='UTF-8', default_namespace=rels_default_namespace)
 
     def store(self):
         """
