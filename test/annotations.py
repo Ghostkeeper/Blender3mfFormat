@@ -41,7 +41,7 @@ class TestAnnotations(unittest.TestCase):
         Creates some fixtures to use for the tests.
         """
         self.annotations = io_mesh_3mf.annotations.Annotations()
-        bpy.data.texts.new().write.reset_mock()  # We're going to be counting calls to this function in multiple tests.
+        bpy.data.texts = unittest.mock.MagicMock()  # We're going to be messing with this mock, so it needs to be reset for each test.
 
     def xml_to_filestream(self, root, path):
         """
@@ -310,3 +310,20 @@ class TestAnnotations(unittest.TestCase):
             ]
         }
         bpy.data.texts.new().write.assert_called_once_with(json.dumps(ground_truth))  # There must be a marker in the JSON dump to indicate the content type conflict.
+
+    def test_retrieve_empty(self):
+        """
+        Test retrieving annotations from an empty annotation file.
+
+        Well, the file is not completely empty since it's correctly formatted
+        JSON. But it contains no annotations.
+        """
+        contents = json.dumps({})
+        mock = unittest.mock.MagicMock()
+        mock.as_string.return_value = contents
+        bpy.data.texts = {
+            io_mesh_3mf.annotations.ANNOTATION_FILE: mock
+        }
+
+        self.annotations.retrieve()
+        self.assertDictEqual(self.annotations.annotations, {})
