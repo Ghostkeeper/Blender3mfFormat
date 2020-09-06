@@ -17,6 +17,7 @@ import xml.etree.ElementTree  # To parse the relationships files.
 from .constants import (
     rels_default_namespace, # Namespace for writing relationships files.
     rels_namespaces,  # Namespaces for reading relationships files.
+    threemf_3dmodel_rel,  # Known relationship.
     threemf_rels_mimetype,  # Known content types.
     threemf_model_mimetype
 )
@@ -89,6 +90,8 @@ class Annotations:
             except KeyError as e:
                 logging.warning(f"Relationship missing attribute: {str(e)}")
                 continue  # Skip this relationship.
+            if namespace == threemf_3dmodel_rel:  # Don't store relationships that we will write ourselves.
+                continue
 
             target = urllib.parse.urljoin(base_path, target)  # Evaluate any relative URIs based on the path to this .rels file in the archive.
             if target != "" and target[0] == "/":

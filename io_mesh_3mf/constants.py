@@ -17,6 +17,7 @@ threemf_namespaces = {  # Namespaces used for the 3MF file.
     "3mf": threemf_default_namespace
 }
 threemf_3dmodel_location = "3D/3dmodel.model"  # Conventional location for the 3D model data.
+threemf_3dmodel_rel = "http://schemas.microsoft.com/3dmanufacturing/2013/01/3dmodel"  # Relationship type of main 3D model.
 threemf_default_unit = 'millimeter'  # If the unit is missing, it will be this.
 
 threemf_content_types_location = "[Content_Types].xml"  # Location of the content types definition.
