@@ -353,3 +353,32 @@ class TestAnnotations(unittest.TestCase):
         mock.as_string.return_value = "]}.you meanie *.,"
         self.annotations.retrieve()
         self.assertDictEqual(self.annotations.annotations, {})
+
+    def test_retrieve_invalid(self):
+        """
+        Tests retrieving annotations where the JSON is not structured as we
+        expect.
+        """
+        mock = unittest.mock.MagicMock()
+        bpy.data.texts = {
+            io_mesh_3mf.annotations.ANNOTATION_FILE: mock
+        }
+
+        # Dictionary of annotations rather than a list.
+        mock.as_string.return_value = json.dumps({
+            "target": {"a": "b"}
+        })
+        self.annotations.retrieve()
+        self.assertDictEqual(self.annotations.annotations, {})
+
+        # Annotations are not dictionaries.
+        mock.as_string.return_value = json.dumps({
+            "target": [
+                "to be a dict, or not to be a dict",
+                42,
+                True,
+                None
+            ]
+        })
+        self.annotations.retrieve()
+        self.assertDictEqual(self.annotations.annotations, {})
