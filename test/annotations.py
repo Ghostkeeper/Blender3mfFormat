@@ -327,3 +327,29 @@ class TestAnnotations(unittest.TestCase):
 
         self.annotations.retrieve()
         self.assertDictEqual(self.annotations.annotations, {})
+
+    def test_retrieve_malformed(self):
+        """
+        Test retrieving annotations from malformed JSON documents.
+
+        We shouldn't return any data then, and it shouldn't crash.
+        """
+        mock = unittest.mock.MagicMock()
+        bpy.data.texts = {
+            io_mesh_3mf.annotations.ANNOTATION_FILE: mock
+        }
+
+        # Completely empty file.
+        mock.as_string.return_value = ""
+        self.annotations.retrieve()
+        self.assertDictEqual(self.annotations.annotations, {})
+
+        # Broken syntax.
+        mock.as_string.return_value = "{bla"
+        self.annotations.retrieve()
+        self.assertDictEqual(self.annotations.annotations, {})
+
+        # Syntax broken in a different way.
+        mock.as_string.return_value = "]}.you meanie *.,"
+        self.annotations.retrieve()
+        self.assertDictEqual(self.annotations.annotations, {})
