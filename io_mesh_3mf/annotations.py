@@ -15,7 +15,7 @@ import urllib.parse  # To parse relative target paths in relationships.
 import xml.etree.ElementTree  # To parse the relationships files.
 
 from .constants import (
-    rels_default_namespace, # Namespace for writing relationships files.
+    rels_default_namespace,  # Namespace for writing relationships files.
     rels_namespaces,  # Namespaces for reading relationships files.
     threemf_3dmodel_location,  # Target of default relationship.
     threemf_3dmodel_rel,  # Known relationship.
