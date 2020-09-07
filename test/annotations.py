@@ -318,6 +318,28 @@ class TestAnnotations(unittest.TestCase):
             else:
                 self.fail(f"We didn't add this relationship: {str(relationship)}")
 
+    def test_write_rels_different_source(self):
+        """
+        Test writing a relationship with a different source directory.
+        """
+        archive = unittest.mock.MagicMock()
+        # Simulate two files, one for the _rels/.rels in the root and one for the rels in a different source directory.
+        root_file = io.BytesIO()
+        root_file.close = lambda: None  # Don't close this please.
+        custom_file = io.BytesIO()
+        custom_file.close = lambda: None
+        archive.open = lambda fname, *args, **kwargs: custom_file if fname == "3D/_rels/.rels" else root_file  # Return the correct file handle depending on which file is opened.
+
+        self.annotations.annotations["file.txt"] = {io_mesh_3mf.annotations.Relationship(namespace="nsp", source="3D/")}
+        self.annotations.write_rels(archive)
+
+        custom_file.seek(0)
+        root = xml.etree.ElementTree.ElementTree(file=custom_file).getroot()
+        relationships = root.findall("rel:Relationship", namespaces=rels_namespaces)
+        self.assertEqual(len(relationships), 1, "Only the custom relationship got saved to this file.")
+        self.assertEqual(relationships[0].attrib["Target"], "/file.txt", "The target of the relationship is absolute.")
+        self.assertEqual(relationships[0].attrib["Type"], "nsp", "This is the namespace we added.")
+
     def test_store_empty(self):
         """
         Tests storing an empty collection of annotations.
