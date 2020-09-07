@@ -161,6 +161,8 @@ class Annotations:
                 rels_by_source[annotation.source].add((target, annotation.namespace))
 
         for source, annotations in rels_by_source.items():
+            if source == "/":  # Writing to the archive root. Don't want to start zipfile paths with a slash.
+                source = ""
             # Create an XML document containing all relationships for this source.
             root = xml.etree.ElementTree.Element(f"{{{rels_default_namespace}}}Relationships")
             for target, namespace in annotations:
@@ -172,7 +174,7 @@ class Annotations:
                 current_id += 1
 
             # Write relationships for files that we create.
-            if source == "/":
+            if source == "":
                 xml.etree.ElementTree.SubElement(root, f"{{{rels_default_namespace}}}Relationship", attrib={
                     f"{{{rels_default_namespace}}}Id": "rel" + str(current_id),
                     f"{{{rels_default_namespace}}}Target": "/" + threemf_3dmodel_location,
