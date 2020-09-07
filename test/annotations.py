@@ -270,9 +270,29 @@ class TestAnnotations(unittest.TestCase):
         root = xml.etree.ElementTree.ElementTree(file=file).getroot()
         relationships = root.findall("rel:Relationship", namespaces=rels_namespaces)
         self.assertEqual(len(relationships), 1, "There must be exactly one relationship: The relationship to indicate the main 3D model.")
-        self.assertEqual(relationships[0].attrib["Target"], "/" + threemf_3dmodel_location)
-        self.assertEqual(relationships[0].attrib["Type"], threemf_3dmodel_rel)
+        self.assertEqual(relationships[0].attrib["Target"], "/" + threemf_3dmodel_location, "The relationship must be about the default 3D model location.")
+        self.assertEqual(relationships[0].attrib["Type"], threemf_3dmodel_rel, "The relationship must indicate that this is the default 3D model location.")
         # Don't test the Id attribute. It may be arbitrary.
+
+    def test_write_rels_different_annotations(self):
+        """
+        Test writing relationships when there are only different annotations
+        stored.
+
+        Other annotations should be ignored during this function.
+        """
+        archive = unittest.mock.MagicMock()
+        file = io.BytesIO()
+        file.close = lambda: None  # Don't close this please.
+        archive.open.return_value = file
+
+        self.annotations.annotations["file.txt"] = {io_mesh_3mf.annotations.ContentType(mime_type="mim")}  # Add an annotation that is not a Relationship.
+        self.annotations.write_rels(archive)
+
+        file.seek(0)
+        root = xml.etree.ElementTree.ElementTree(file=file).getroot()
+        relationships = root.findall("rel:Relationship", namespaces=rels_namespaces)
+        self.assertEqual(len(relationships), 1, "There must still only be the default 3D model relationship. No Content Type relationship or anything.")
 
     def test_store_empty(self):
         """
