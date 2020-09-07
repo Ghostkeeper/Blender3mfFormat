@@ -25,7 +25,10 @@ bpy_extras.io_utils.ExportHelper = MockExportHelper
 import io_mesh_3mf.annotations  # Now finally we can import the unit under test.
 from io_mesh_3mf.constants import (
     rels_default_namespace,
+    rels_namespaces,
     rels_thumbnail,
+    threemf_3dmodel_location,
+    threemf_3dmodel_rel,
     threemf_model_mimetype,
     threemf_rels_mimetype
 )
@@ -251,6 +254,25 @@ class TestAnnotations(unittest.TestCase):
         self.annotations.add_content_types(files_by_content_type)
 
         self.assertDictEqual(self.annotations.annotations, expected_annotations, "Adding a content type again should still let it be in conflict.")
+
+    def test_write_rels_empty(self):
+        """
+        Test writing relationships when there are no relationship annotations.
+        """
+        archive = unittest.mock.MagicMock()
+        file = io.BytesIO()
+        file.close = lambda: None  # Don't close this please.
+        archive.open.return_value = file
+
+        self.annotations.write_rels(archive)
+
+        file.seek(0)
+        root = xml.etree.ElementTree.ElementTree(file=file).getroot()
+        relationships = root.findall("rel:Relationship", namespaces=rels_namespaces)
+        self.assertEqual(len(relationships), 1, "There must be exactly one relationship: The relationship to indicate the main 3D model.")
+        self.assertEqual(relationships[0].attrib["Target"], "/" + threemf_3dmodel_location)
+        self.assertEqual(relationships[0].attrib["Type"], threemf_3dmodel_rel)
+        # Don't test the Id attribute. It may be arbitrary.
 
     def test_store_empty(self):
         """
