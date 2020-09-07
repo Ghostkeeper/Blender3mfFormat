@@ -294,6 +294,30 @@ class TestAnnotations(unittest.TestCase):
         relationships = root.findall("rel:Relationship", namespaces=rels_namespaces)
         self.assertEqual(len(relationships), 1, "There must still only be the default 3D model relationship. No Content Type relationship or anything.")
 
+    def test_write_rels_relationship(self):
+        """
+        Test writing a non-default relationship.
+        """
+        archive = unittest.mock.MagicMock()
+        file = io.BytesIO()
+        file.close = lambda: None  # Don't close this please.
+        archive.open.return_value = file
+
+        self.annotations.annotations["file.txt"] = {io_mesh_3mf.annotations.Relationship(namespace="nsp", source="/")}  # Add a relationship to write. Source is the root.
+        self.annotations.write_rels(archive)
+
+        file.seek(0)
+        root = xml.etree.ElementTree.ElementTree(file=file).getroot()
+        relationships = root.findall("rel:Relationship", namespaces=rels_namespaces)
+        self.assertEqual(len(relationships), 2, "The default 3D model relationship is present, as well as 1 additional custom relationship.")
+        for relationship in relationships:
+            if relationship.attrib["Target"] == "/" + threemf_3dmodel_location:
+                continue  # We already tested this one in a different test.
+            elif relationship.attrib["Target"] == "/file.txt":
+                self.assertEqual(relationship.attrib["Type"], "nsp", "This is the customised relationship we added.")
+            else:
+                self.fail(f"We didn't add this relationship: {str(relationship)}")
+
     def test_store_empty(self):
         """
         Tests storing an empty collection of annotations.
