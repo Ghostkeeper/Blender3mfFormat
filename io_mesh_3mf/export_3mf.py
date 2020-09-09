@@ -20,7 +20,6 @@ from .annotations import Annotations  # To store file annotations
 from .constants import (
     threemf_3dmodel_location,
     threemf_content_types_location,
-    threemf_content_types_xml,
     threemf_default_namespace,
     threemf_default_unit
 )
@@ -117,13 +116,11 @@ class Export3MF(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
         try:
             archive = zipfile.ZipFile(filepath, 'w')
 
-            with archive.open(threemf_content_types_location, 'w') as content_types:
-                content_types.write(threemf_content_types_xml.encode('UTF-8'))
-
             # Store the file annotations we got from imported 3MF files, and store them in the archive.
             annotations = Annotations()
             annotations.retrieve()
             annotations.write_rels(archive)
+            annotations.write_content_types(archive)
         except EnvironmentError as e:
             log.error(f"Unable to write 3MF archive to {filepath}: {e}")
             return None

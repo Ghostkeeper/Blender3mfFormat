@@ -8,6 +8,7 @@
 
 import bpy  # To store the annotations long-term in the Blender context.
 import collections  # Namedtuple data structure for annotations.
+import collections  # For Counter to write optimised content types.
 import json  # To serialise the data for long-term storage in the Blender scene.
 import logging  # Reporting parsing errors.
 import os.path  # To parse target paths in relationships.
@@ -15,8 +16,10 @@ import urllib.parse  # To parse relative target paths in relationships.
 import xml.etree.ElementTree  # To parse the relationships files.
 
 from .constants import (
+    content_types_default_namespace,  # Namespace for writing content types files.
     rels_default_namespace,  # Namespace for writing relationships files.
     rels_namespaces,  # Namespaces for reading relationships files.
+    threemf_content_types_location,  # Location of content types file.
     threemf_3dmodel_location,  # Target of default relationship.
     threemf_3dmodel_rel,  # Known relationship.
     threemf_rels_mimetype,  # Known content types.
@@ -188,6 +191,62 @@ class Annotations:
             rels_file = source + "_rels/.rels"  # _rels folder in the "source" folder.
             with archive.open(rels_file, 'w') as f:
                 document.write(f, xml_declaration=True, encoding='UTF-8', default_namespace=rels_default_namespace)
+
+    def write_content_types(self, archive):
+        """
+        Write a [Content_Types].xml file to a 3MF archive, containing all of the
+        content types that we have assigned.
+        :param archive: A zip archive to add the content types to.
+        """
+        # First sort all of the content types by their extension, so that we can find out what the most common content type is for each extension.
+        content_types_by_extension = {}
+        for target, annotations in self.annotations.items():
+            for annotation in annotations:
+                if type(annotation) is not ContentType:
+                    continue
+                extension = os.path.splitext(target)[1]
+                if extension not in content_types_by_extension:
+                    content_types_by_extension[extension] = []
+                content_types_by_extension[extension].append(annotation.mime_type)
+
+        # Then find out which is the most common content type to assign to that extension.
+        most_common = {}
+        for extension, mime_types in content_types_by_extension.items():
+            counter = collections.Counter(mime_types)
+            most_common[extension] = counter.most_common(1)[0][0]
+
+        # Add the content types for files that this add-on creates by itself.
+        most_common[".rels"] = threemf_rels_mimetype
+        most_common[".model"] = threemf_model_mimetype
+
+        # Write an XML file that contains the extension rules for the most common cases, and specific overrides for the outliers.
+        root = xml.etree.ElementTree.Element(f"{{{content_types_default_namespace}}}Types")
+
+        # First add all of the extension-based rules.
+        for extension, mime_type in most_common.items():
+            if not extension:  # Skip files without extension.
+                continue
+            xml.etree.ElementTree.SubElement(root, f"{{{content_types_default_namespace}}}Default", attrib={
+                f"{{{content_types_default_namespace}}}Extension": extension[1:],  # Don't include the period.
+                f"{{{content_types_default_namespace}}}ContentType": mime_type
+            })
+
+        # Then write the overrides for files that don't have the same content type as most of their exceptions.
+        for target, annotations in self.annotations.items():
+            for annotation in annotations:
+                if type(annotation) is not ContentType:
+                    continue
+                extension = os.path.splitext(target)[1]
+                if not extension or annotation.mime_type != most_common[extension]:  # This is an exceptional case that should be stored as an override.
+                    xml.etree.ElementTree.SubElement(root, f"{{{content_types_default_namespace}}}Override", attrib={
+                        f"{{{content_types_default_namespace}}}PartName": target,
+                        f"{{{content_types_default_namespace}}}ContentType": annotation.mime_type
+                    })
+
+        # Output all that to the [Content_Types].xml file.
+        document = xml.etree.ElementTree.ElementTree(root)
+        with archive.open(threemf_content_types_location, 'w') as f:
+            document.write(f, xml_declaration=True, encoding='UTF-8', default_namespace=content_types_default_namespace)
 
     def store(self):
         """

@@ -21,16 +21,13 @@ threemf_3dmodel_rel = "http://schemas.microsoft.com/3dmanufacturing/2013/01/3dmo
 threemf_default_unit = 'millimeter'  # If the unit is missing, it will be this.
 
 threemf_content_types_location = "[Content_Types].xml"  # Location of the content types definition.
-threemf_content_types_xml = """<?xml version="1.0" encoding="UTF-8"?>
-<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
-    <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml" />
-    <Default Extension="model" ContentType="application/vnd.ms-package.3dmanufacturing-3dmodel+xml" />
-</Types>"""  # Contents of the [Content_Types].xml file.
 
 threemf_rels_mimetype = "application/vnd.openxmlformats-package.relationships+xml"  # MIME type of .rels files.
 threemf_model_mimetype = "application/vnd.ms-package.3dmanufacturing-3dmodel+xml"  # MIME type of .model files.
 
 threemf_supported_extensions = set()  # Set of namespaces for 3MF extensions that we support.
+
+content_types_default_namespace = "http://schemas.openxmlformats.org/package/2006/content-types"
 
 rels_default_namespace = "http://schemas.openxmlformats.org/package/2006/relationships"
 rels_namespaces = {  # Namespaces used for the rels file.
