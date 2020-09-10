@@ -6,6 +6,7 @@
 
 # <pep8 compliant>
 
+import base64  # To decode files that must be preserved.
 import bpy  # The Blender API.
 import bpy.props  # To define metadata properties for the operator.
 import bpy.types  # This class is an operator in Blender, and to find meshes in the scene.
@@ -18,8 +19,8 @@ import zipfile  # To write zip archives, the shell of the 3MF file.
 
 from .annotations import Annotations  # To store file annotations
 from .constants import (
+    conflicting_mustpreserve_contents,
     threemf_3dmodel_location,
-    threemf_content_types_location,
     threemf_default_namespace,
     threemf_default_unit
 )
@@ -121,11 +122,31 @@ class Export3MF(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
             annotations.retrieve()
             annotations.write_rels(archive)
             annotations.write_content_types(archive)
+            self.must_preserve(archive)
         except EnvironmentError as e:
             log.error(f"Unable to write 3MF archive to {filepath}: {e}")
             return None
 
         return archive
+
+    def must_preserve(self, archive):
+        """
+        Write files that must be preserved to the archive.
+
+        These files were stored in the Blender scene in a hidden location.
+        :param archive: The archive to write files to.
+        """
+        for textfile in bpy.data.texts:
+            filename = textfile.name
+            if not filename.startswith(".3mf_preserved/"):
+                continue  # Unrelated file. Not ours to read.
+            contents = textfile.as_string()
+            if contents == conflicting_mustpreserve_contents:
+                continue  # This file was in conflict. Don't preserve any copy of it then.
+            contents = base64.b85decode(contents.encode("UTF-8"))
+            filename = filename[len(".3mf_preserved"):]
+            with archive.open(filename, 'w') as f:
+                f.write(contents)
 
     def unit_scale(self, context):
         """
