@@ -21,6 +21,7 @@ import zipfile  # To read the 3MF files which are secretly zip archives.
 
 from .annotations import Annotations, Relationship  # To store and serialise file annotations.
 from .constants import (  # Constants associated with the 3MF file format.
+    conflicting_mustpreserve_contents,
     threemf_content_types_location,
     threemf_default_unit,
     threemf_model_mimetype,
@@ -264,10 +265,21 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
         for files in files_by_content_type.values():
             for file in files:
                 if file.name in preserved_files:
-                    handle = bpy.data.texts.new(".3mf_preserved/" + file.name)
-                    # Copy into the Blender context.
-                    # Encode as base 85 so that the file can be saved in Blender's Text objects.
-                    handle.write(base64.b85encode(file.read()).decode('LATIN-1'))
+                    filename = ".3mf_preserved/" + file.name
+                    if filename in bpy.data.texts:
+                        if bpy.data.texts[filename].as_string() == conflicting_mustpreserve_contents:
+                            continue  # This file was previously already in conflict. The new file will always be in conflict with one of the previous files.
+                    file_contents = base64.b85encode(file.read()).decode('UTF-8')  # Encode as Base85 so that the file can be saved in Blender's Text objects.
+                    if filename in bpy.data.texts:
+                        if bpy.data.texts[filename].as_string() == file_contents:  # File contents are EXACTLY the same, so the file is not in conflict.
+                            continue  # But we also don't need to re-add the same file then.
+                        else:  # Same file exists with different contents, so they are in conflict.
+                            bpy.data.texts[filename].clear()
+                            bpy.data.texts[filename].write(conflicting_mustpreserve_contents)
+                            continue
+                    else:  # File doesn't exist yet.
+                        handle = bpy.data.texts.new(filename)
+                        handle.write(file_contents)
 
     def is_supported(self, required_extensions):
         """

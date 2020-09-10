@@ -37,3 +37,5 @@ rels_namespaces = {  # Namespaces used for the rels files.
     "rel": rels_default_namespace
 }
 rels_thumbnail = "http://schemas.openxmlformats.org/package/2006/relationships/metadata/thumbnail"  # Relationship required for thumbnail files.
+
+conflicting_mustpreserve_contents = "<Conflicting MustPreserve file!>"  # File contents to use when files must be preserved but there's a file with different content in a previous archive.
