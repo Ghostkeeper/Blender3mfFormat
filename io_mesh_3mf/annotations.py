@@ -238,7 +238,7 @@ class Annotations:
                 extension = os.path.splitext(target)[1]
                 if not extension or annotation.mime_type != most_common[extension]:  # This is an exceptional case that should be stored as an override.
                     xml.etree.ElementTree.SubElement(root, f"{{{content_types_default_namespace}}}Override", attrib={
-                        f"{{{content_types_default_namespace}}}PartName": target,
+                        f"{{{content_types_default_namespace}}}PartName": "/" + target,
                         f"{{{content_types_default_namespace}}}ContentType": annotation.mime_type
                     })
 
