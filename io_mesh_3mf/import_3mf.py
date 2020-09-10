@@ -463,8 +463,6 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
         :return: A sequence of Blender Objects that need to be placed in the
         scene. Each mesh gets transformed appropriately.
         """
-        transform = mathutils.Matrix.Scale(scale_unit, 4)
-
         for build_item in root.iterfind("./3mf:build/3mf:item", threemf_namespaces):
             try:
                 objectid = build_item.attrib["objectid"]
@@ -479,6 +477,7 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
             if "partnumber" in build_item.attrib:
                 metadata["3mf:partnumber"] = MetadataEntry(name="3mf:partnumber", preserve=True, datatype="xs:string", value=build_item.attrib["partnumber"])
 
+            transform = mathutils.Matrix.Scale(scale_unit, 4)
             transform @= self.parse_transformation(build_item.attrib.get("transform", ""))
 
             self.build_object(resource_object, transform, metadata, [objectid])
