@@ -379,7 +379,7 @@ class TestAnnotations(unittest.TestCase):
         archive.open.return_value = file
 
         mock_file = io.BytesIO()
-        mock_file.name = "/path/to/file.txt"
+        mock_file.name = "path/to/file.txt"
         self.annotations.add_content_types({
             "some MIME type": {mock_file}
         })
@@ -403,7 +403,7 @@ class TestAnnotations(unittest.TestCase):
 
         for i in range(4):  # Create 4 files with the same extension and the same MIME type.
             mock_file = io.BytesIO()
-            mock_file.name = f"/path/to/file{i}.txt"
+            mock_file.name = f"path/to/file{i}.txt"
             self.annotations.add_content_types({
                 "some MIME type": {mock_file}
             })
@@ -415,6 +415,41 @@ class TestAnnotations(unittest.TestCase):
         self.assertEqual(len(my_default), 1, "There was a Default tag made for the .txt extension.")
         self.assertEqual(my_default[0].attrib["ContentType"], "some MIME type", "The MIME type for all files was the same: This one.")
         self.assertEqual(len(root.findall("ct:Override", namespaces=content_types_namespaces)), 0, "There were no overrides since all .txt files have the same MIME type.")
+
+    def test_write_content_types_different_mime(self):
+        """
+        Test writing content types when there are multiple annotated files with
+        different content types.
+        """
+        archive = unittest.mock.MagicMock()
+        file = io.BytesIO()  # Simulate the [Content_Types].xml file.
+        file.close = lambda: None  # Don't close this please.
+        archive.open.return_value = file
+
+        # Create a file with a unique MIME type, which will become an override since it's less common.
+        mock_file = io.BytesIO()
+        mock_file.name = "path/to/unique_file.txt"
+        self.annotations.add_content_types({
+            "unique": {mock_file}
+        })
+        # Create 2 files with the same extension and MIME type, which will be the default MIME type since it's more common.
+        for i in range(2):
+            mock_file = io.BytesIO()
+            mock_file.name = f"path/to/file{i}.txt"
+            self.annotations.add_content_types({
+                "samey": {mock_file}
+            })
+        self.annotations.write_content_types(archive)
+
+        file.seek(0)
+        root = xml.etree.ElementTree.ElementTree(file=file).getroot()
+        my_default = root.findall("ct:Default[@Extension='txt']", namespaces=content_types_namespaces)  # Find the default type for the samey MIME type.
+        self.assertEqual(len(my_default), 1, "There was a Default tag made for the .txt extension.")
+        self.assertEqual(my_default[0].attrib["ContentType"], "samey", "The 'samey' MIME type was chosen as the most common one, so that one is the default.")
+        unique_override = root.findall("ct:Override", namespaces=content_types_namespaces)
+        self.assertEqual(len(unique_override), 1, "There was one override for the file with a unique MIME type.")
+        self.assertEqual(unique_override[0].attrib["PartName"], "/path/to/unique_file.txt", "The override points to the file with a unique MIME type.")
+        self.assertEqual(unique_override[0].attrib["ContentType"], "unique", "The override specifies the unique MIME type which is different from the most common one.")
 
     def test_store_empty(self):
         """
