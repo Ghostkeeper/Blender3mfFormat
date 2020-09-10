@@ -391,6 +391,31 @@ class TestAnnotations(unittest.TestCase):
         self.assertEqual(len(my_default), 1, "Since there is only 1 file with a .txt extension, that content type should be selected as the default.")
         self.assertEqual(my_default[0].attrib["ContentType"], "some MIME type", "This was the content type that we added for that file.")
 
+    def test_write_content_types_same_mime(self):
+        """
+        Test writing content types when there are multiple annotated files with
+        the same content type.
+        """
+        archive = unittest.mock.MagicMock()
+        file = io.BytesIO()  # Simulate the [Content_Types].xml file.
+        file.close = lambda: None  # Don't close this please.
+        archive.open.return_value = file
+
+        for i in range(4):  # Create 4 files with the same extension and the same MIME type.
+            mock_file = io.BytesIO()
+            mock_file.name = f"/path/to/file{i}.txt"
+            self.annotations.add_content_types({
+                "some MIME type": {mock_file}
+            })
+        self.annotations.write_content_types(archive)
+
+        file.seek(0)
+        root = xml.etree.ElementTree.ElementTree(file=file).getroot()
+        my_default = root.findall("ct:Default[@Extension='txt']", namespaces=content_types_namespaces)  # Find the Default type that our custom content type should've caused.
+        self.assertEqual(len(my_default), 1, "There was a Default tag made for the .txt extension.")
+        self.assertEqual(my_default[0].attrib["ContentType"], "some MIME type", "The MIME type for all files was the same: This one.")
+        self.assertEqual(len(root.findall("ct:Override", namespaces=content_types_namespaces)), 0, "There were no overrides since all .txt files have the same MIME type.")
+
     def test_store_empty(self):
         """
         Tests storing an empty collection of annotations.
