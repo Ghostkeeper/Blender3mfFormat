@@ -27,7 +27,6 @@ bpy_extras.io_utils.ExportHelper = MockExportHelper
 import io_mesh_3mf.export_3mf  # Now we may safely import the unit under test.
 from io_mesh_3mf.constants import (
     threemf_content_types_location,
-    threemf_content_types_xml,
     threemf_default_namespace,
     threemf_namespaces
 )
@@ -60,7 +59,6 @@ class TestExport3MF(unittest.TestCase):
             archive = self.exporter.create_archive(file_path)
 
             self.assertSetEqual(set(archive.namelist()), {"_rels/.rels", threemf_content_types_location}, "There may only be these two files.")
-            self.assertEqual(archive.read(threemf_content_types_location), threemf_content_types_xml.encode('UTF-8'), "Correct content for content types file.")
         finally:
             if file_path is not None:
                 os.remove(file_path)
