@@ -6,23 +6,21 @@
 
 # <pep8 compliant>
 
+import base64  # To encode MustPreserve files in the Blender scene.
 import bpy  # The Blender API.
 import bpy.props  # To define metadata properties for the operator.
 import bpy.types  # This class is an operator in Blender.
 import bpy_extras.io_utils  # Helper functions to import meshes more easily.
 import logging  # To debug and log progress.
 import collections  # For namedtuple.
-import itertools  # Handy for iterating more elegantly.
 import mathutils  # For the transformation matrices.
 import os.path  # To take file paths relative to the selected directory.
 import re  # To find files in the archive based on the content types.
-import urllib.parse  # To resolve URIs to relationships.
 import xml.etree.ElementTree  # To parse the 3dmodel.model file.
 import zipfile  # To read the 3MF files which are secretly zip archives.
 
-from .annotations import Annotations  # To store and serialise file annotations.
+from .annotations import Annotations, Relationship  # To store and serialise file annotations.
 from .constants import (  # Constants associated with the 3MF file format.
-    rels_namespaces,
     threemf_content_types_location,
     threemf_default_unit,
     threemf_model_mimetype,
@@ -101,6 +99,7 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
             for rels_file in files_by_content_type.get(threemf_rels_mimetype, []):
                 annotations.add_rels(rels_file)
             annotations.add_content_types(files_by_content_type)
+            self.must_preserve(files_by_content_type, annotations)  # Preserve files that are labelled as 'must preserve'.
 
             # Read the model data.
             for model_file in files_by_content_type.get(threemf_model_mimetype, []):
@@ -235,6 +234,40 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
                 result[file_path] = ""
 
         return result
+
+    def must_preserve(self, files_by_content_type, annotations):
+        """
+        Preserves files that are marked with the 'MustPreserve' relationship.
+
+        These files are saved in the Blender context as text files in a hidden
+        folder. If the preserved files are in conflict with previously loaded
+        3MF archives (same file path, different content) then they will not be
+        preserved.
+
+        Archived files are stored in Base85 encoding to allow storing arbitrary
+        files, even binary files. This sadly means that the file size will
+        increase by about 25%, and that the files are not human-readable any
+        more when opened in Blender, even if they were originally
+        human-readable.
+        :param files_by_content_type: The files in this 3MF archive, by content
+        type. They must be provided by content type because that is how the
+        ``read_archive`` function stores them, which is not ideal. But this
+        function will sort that out.
+        :param annotations: Collection of annotations gathered so far.
+        """
+        preserved_files = set()  # Find all files which must be preserved according to the annotations.
+        for target, its_annotations in annotations.annotations.items():
+            for annotation in its_annotations:
+                if type(annotation) == Relationship and annotation.namespace == "http://schemas.openxmlformats.org/package/2006/relationships/mustpreserve":
+                    preserved_files.add(target)
+
+        for files in files_by_content_type.values():
+            for file in files:
+                if file.name in preserved_files:
+                    handle = bpy.data.texts.new(".3mf_preserved/" + file.name)
+                    # Copy into the Blender context.
+                    # Encode as base 85 so that the file can be saved in Blender's Text objects.
+                    handle.write(base64.b85encode(file.read()).decode('LATIN-1'))
 
     def is_supported(self, required_extensions):
         """
