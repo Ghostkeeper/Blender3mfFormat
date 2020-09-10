@@ -368,6 +368,29 @@ class TestAnnotations(unittest.TestCase):
         self.assertEqual(len(model_tags), 1, "There is one content type specification for .model files.")
         self.assertEqual(model_tags[0].attrib["ContentType"], threemf_model_mimetype, "The MIME type of the .model file must be filled in correctly.")
 
+    def test_write_content_types_single(self):
+        """
+        Test writing content types when there is a single annotated file in the
+        archive.
+        """
+        archive = unittest.mock.MagicMock()
+        file = io.BytesIO()  # Simulate the [Content_Types].xml file.
+        file.close = lambda: None  # Don't close this please.
+        archive.open.return_value = file
+
+        mock_file = io.BytesIO()
+        mock_file.name = "/path/to/file.txt"
+        self.annotations.add_content_types({
+            "some MIME type": {mock_file}
+        })
+        self.annotations.write_content_types(archive)
+
+        file.seek(0)
+        root = xml.etree.ElementTree.ElementTree(file=file).getroot()
+        my_default = root.findall("ct:Default[@Extension='txt']", namespaces=content_types_namespaces)  # Find the Default tag that our custom content type should've caused.
+        self.assertEqual(len(my_default), 1, "Since there is only 1 file with a .txt extension, that content type should be selected as the default.")
+        self.assertEqual(my_default[0].attrib["ContentType"], "some MIME type", "This was the content type that we added for that file.")
+
     def test_store_empty(self):
         """
         Tests storing an empty collection of annotations.
