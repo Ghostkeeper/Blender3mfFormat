@@ -7,8 +7,7 @@
 # <pep8 compliant>
 
 import bpy  # To store the annotations long-term in the Blender context.
-import collections  # Namedtuple data structure for annotations.
-import collections  # For Counter to write optimised content types.
+import collections  # Namedtuple data structure for annotations, and Counter to write optimised content types.
 import json  # To serialise the data for long-term storage in the Blender scene.
 import logging  # Reporting parsing errors.
 import os.path  # To parse target paths in relationships.
