@@ -144,7 +144,7 @@ class Export3MF(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
             if contents == conflicting_mustpreserve_contents:
                 continue  # This file was in conflict. Don't preserve any copy of it then.
             contents = base64.b85decode(contents.encode("UTF-8"))
-            filename = filename[len(".3mf_preserved"):]
+            filename = filename[len(".3mf_preserved/"):]
             with archive.open(filename, 'w') as f:
                 f.write(contents)
 
