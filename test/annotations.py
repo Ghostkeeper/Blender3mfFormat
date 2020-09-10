@@ -24,6 +24,8 @@ bpy_extras.io_utils.ImportHelper = MockImportHelper
 bpy_extras.io_utils.ExportHelper = MockExportHelper
 import io_mesh_3mf.annotations  # Now finally we can import the unit under test.
 from io_mesh_3mf.constants import (
+    content_types_default_namespace,
+    content_types_namespaces,
     rels_default_namespace,
     rels_namespaces,
     rels_thumbnail,
@@ -339,6 +341,32 @@ class TestAnnotations(unittest.TestCase):
         self.assertEqual(len(relationships), 1, "Only the custom relationship got saved to this file.")
         self.assertEqual(relationships[0].attrib["Target"], "/file.txt", "The target of the relationship is absolute.")
         self.assertEqual(relationships[0].attrib["Type"], "nsp", "This is the namespace we added.")
+
+    def test_write_content_types_empty(self):
+        """
+        Tests writing a content types file where there are no special content
+        types.
+
+        The addon-supported content types still need to be written.
+        """
+        archive = unittest.mock.MagicMock()
+        file = io.BytesIO()  # Simulate the [Content_Types].xml file.
+        file.close = lambda: None  # Don't close this please.
+        archive.open.return_value = file
+
+        self.annotations.write_content_types(archive)
+
+        file.seek(0)
+        root = xml.etree.ElementTree.ElementTree(file=file).getroot()
+        defaults = root.findall("ct:Default", namespaces=content_types_namespaces)
+        self.assertEqual(len(defaults), 2, "There are two content types defined by the add-on itself, which are always present.")
+        # Python doesn't support XPath expressions that match on multiple attributes, so we'll have to resort to two checks here.
+        rels_tags = root.findall(f"ct:Default[@Extension='rels']", namespaces=content_types_namespaces)
+        self.assertEqual(len(rels_tags), 1, "There is one content type specification for .rels files.")
+        self.assertEqual(rels_tags[0].attrib["ContentType"], threemf_rels_mimetype, "The MIME type of the .rels file must be filled in correctly.")
+        model_tags = root.findall(f"ct:Default[@Extension='model']", namespaces=content_types_namespaces)
+        self.assertEqual(len(model_tags), 1, "There is one content type specification for .model files.")
+        self.assertEqual(model_tags[0].attrib["ContentType"], threemf_model_mimetype, "The MIME type of the .model file must be filled in correctly.")
 
     def test_store_empty(self):
         """
