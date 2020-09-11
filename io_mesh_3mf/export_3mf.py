@@ -317,7 +317,12 @@ class Export3MF(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
         :return: A serialisation of the transformation matrix.
         """
         pieces = (row[:3] for row in transformation.transposed())  # Don't convert the 4th column.
-        return ("{:g} " * 11 + "{:g}").format(*itertools.chain.from_iterable(pieces))
+        result = ""
+        for cell in itertools.chain.from_iterable(pieces):
+            if result != "":  # First loop, don't put a space in.
+                result += " "
+            result += self.format_number(cell, 12)  # Always output transformation matrices with maximum precision. Never use scientific notation!
+        return result
 
     def write_vertices(self, mesh_element, vertices):
         """
