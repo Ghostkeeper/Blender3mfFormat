@@ -19,7 +19,7 @@ import re  # To find files in the archive based on the content types.
 import xml.etree.ElementTree  # To parse the 3dmodel.model file.
 import zipfile  # To read the 3MF files which are secretly zip archives.
 
-from .annotations import Annotations, Relationship  # To store and serialise file annotations.
+from .annotations import Annotations, ContentType, Relationship  # To use annotations to decide on what to import.
 from .constants import (  # Constants associated with the 3MF file format.
     conflicting_mustpreserve_contents,
     threemf_content_types_location,
@@ -238,7 +238,8 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
 
     def must_preserve(self, files_by_content_type, annotations):
         """
-        Preserves files that are marked with the 'MustPreserve' relationship.
+        Preserves files that are marked with the 'MustPreserve' relationship and
+        PrintTickets.
 
         These files are saved in the Blender context as text files in a hidden
         folder. If the preserved files are in conflict with previously loaded
@@ -259,8 +260,15 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
         preserved_files = set()  # Find all files which must be preserved according to the annotations.
         for target, its_annotations in annotations.annotations.items():
             for annotation in its_annotations:
-                if type(annotation) == Relationship and annotation.namespace == "http://schemas.openxmlformats.org/package/2006/relationships/mustpreserve":
-                    preserved_files.add(target)
+                if type(annotation) == Relationship:
+                    if annotation.namespace in {
+                        "http://schemas.openxmlformats.org/package/2006/relationships/mustpreserve",
+                        "http://schemas.microsoft.com/3dmanufacturing/2013/01/printticket"
+                    }:
+                        preserved_files.add(target)
+                elif type(annotation) == ContentType:
+                    if annotation.mime_type == "application/vnd.ms-printing.printticket+xml":
+                        preserved_files.add(target)
 
         for files in files_by_content_type.values():
             for file in files:
