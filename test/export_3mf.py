@@ -581,13 +581,13 @@ class TestExport3MF(unittest.TestCase):
         Test various cases of formatting numbers.
         """
         tests = [
-            # Number  Precision  Result
-            (3.14159, 2,         "3.14"),
-            (3.14159, 0,         "3"),
-            (30.12,   1,         "30.1"),
-            (3.14159, 10,        "3.14159"),
-            (0,       0,         "0"),
-            (0.1,     0,         "0")
+            # (Number, precision, result)
+            (3.14159, 2, "3.14"),
+            (3.14159, 0, "3"),
+            (30.12, 1, "30.1"),
+            (3.14159, 10, "3.14159"),
+            (0, 0, "0"),
+            (0.1, 0, "0")
         ]
         for number, precision, result in tests:
             with self.subTest(number=number, precision=precision, result=result):
