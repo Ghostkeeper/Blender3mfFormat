@@ -43,9 +43,10 @@ class Export3MF(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
 
     # Options for the user.
     filter_glob: bpy.props.StringProperty(default="*.3mf", options={'HIDDEN'})
-    use_selection: bpy.props.BoolProperty(name="Selection Only", description="Export selected objects only", default=False)
+    use_selection: bpy.props.BoolProperty(name="Selection Only", description="Export selected objects only.", default=False)
     global_scale: bpy.props.FloatProperty(name="Scale", default=1.0, soft_min=0.001, soft_max=1000.0, min=1e-6, max=1e6)
-    use_mesh_modifiers: bpy.props.BoolProperty(name="Apply Modifiers", description="Apply the modifiers before saving", default=True)
+    use_mesh_modifiers: bpy.props.BoolProperty(name="Apply Modifiers", description="Apply the modifiers before saving.", default=True)
+    coordinate_precision: bpy.props.IntProperty(name="Coordinate Precision", description="The number of decimal digits to use in coordinates in the file.", default=4, min=0, max=12)
 
     def __init__(self):
         """
@@ -336,9 +337,9 @@ class Export3MF(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
 
         for vertex in vertices:  # Create the <vertex> elements.
             vertex_element = xml.etree.ElementTree.SubElement(vertices_element, vertex_name)
-            vertex_element.attrib[x_name] = "{:g}".format(vertex.co[0])
-            vertex_element.attrib[y_name] = "{:g}".format(vertex.co[1])
-            vertex_element.attrib[z_name] = "{:g}".format(vertex.co[2])
+            vertex_element.attrib[x_name] = self.format_number(vertex.co[0], self.coordinate_precision)
+            vertex_element.attrib[y_name] = self.format_number(vertex.co[1], self.coordinate_precision)
+            vertex_element.attrib[z_name] = self.format_number(vertex.co[2], self.coordinate_precision)
 
     def write_triangles(self, mesh_element, triangles):
         """
@@ -362,3 +363,17 @@ class Export3MF(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
             triangle_element.attrib[v1_name] = str(triangle.vertices[0])
             triangle_element.attrib[v2_name] = str(triangle.vertices[1])
             triangle_element.attrib[v3_name] = str(triangle.vertices[2])
+
+    def format_number(self, number, decimals):
+        """
+        Properly formats a floating point number to a certain precision.
+
+        This format will never use scientific notation (no 3.14e-5 nonsense) and
+        will have a fixed limit to the number of decimals. It will not have a
+        limit to the length of the integer part. Any trailing zeros are
+        stripped.
+        :param number: A floating point number to format.
+        :param decimals: The maximum number of places after the radix to write.
+        :return: A string representing that number.
+        """
+        return ("{:." + str(decimals) + "f}").format(number).rstrip("0").rstrip(".")
