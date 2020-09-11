@@ -321,7 +321,7 @@ class Export3MF(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
         for cell in itertools.chain.from_iterable(pieces):
             if result != "":  # First loop, don't put a space in.
                 result += " "
-            result += self.format_number(cell, 12)  # Always output transformation matrices with maximum precision. Never use scientific notation!
+            result += self.format_number(cell, 6)  # Never use scientific notation!
         return result
 
     def write_vertices(self, mesh_element, vertices):
