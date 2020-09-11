@@ -116,7 +116,7 @@ class Export3MF(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
         :return: A zip archive that other functions can add things to.
         """
         try:
-            archive = zipfile.ZipFile(filepath, 'w')
+            archive = zipfile.ZipFile(filepath, 'w', compression=zipfile.ZIP_DEFLATED)
 
             # Store the file annotations we got from imported 3MF files, and store them in the archive.
             annotations = Annotations()
