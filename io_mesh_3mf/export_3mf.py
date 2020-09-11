@@ -381,4 +381,7 @@ class Export3MF(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
         :param decimals: The maximum number of places after the radix to write.
         :return: A string representing that number.
         """
-        return ("{:." + str(decimals) + "f}").format(number).rstrip("0").rstrip(".")
+        formatted = ("{:." + str(decimals) + "f}").format(number).rstrip("0").rstrip(".")
+        if formatted == "":
+            return "0"
+        return formatted
