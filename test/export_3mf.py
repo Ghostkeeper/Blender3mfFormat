@@ -44,6 +44,7 @@ class TestExport3MF(unittest.TestCase):
         """
         self.exporter = io_mesh_3mf.export_3mf.Export3MF()  # An exporter class.
         self.exporter.use_mesh_modifiers = False
+        self.exporter.coordinate_precision = 4
 
     def test_create_archive(self):
         """
@@ -574,3 +575,20 @@ class TestExport3MF(unittest.TestCase):
         self.assertEqual(triangle_elements[2].attrib[f"{{{threemf_default_namespace}}}v1"], "4")
         self.assertEqual(triangle_elements[2].attrib[f"{{{threemf_default_namespace}}}v2"], "2")
         self.assertEqual(triangle_elements[2].attrib[f"{{{threemf_default_namespace}}}v3"], "0")
+
+    def test_format_number(self):
+        """
+        Test various cases of formatting numbers.
+        """
+        tests = [
+            # Number  Precision  Result
+            (3.14159, 2,         "3.14"),
+            (3.14159, 0,         "3"),
+            (30.12,   1,         "30.1"),
+            (3.14159, 10,        "3.14159"),
+            (0,       0,         "0"),
+            (0.1,     0,         "0")
+        ]
+        for number, precision, result in tests:
+            with self.subTest(number=number, precision=precision, result=result):
+                self.assertEqual(self.exporter.format_number(number, precision), result)
