@@ -383,7 +383,7 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
             index = 0
 
             for base_item in basematerials_item.iterfind("./3mf:base", threemf_namespaces):  # "Base" must be the stupidest name for a material resource. Oh well.
-                name = base_item.attrib.get("name", "")
+                name = base_item.attrib.get("name", "3MF Material")
                 colour = base_item.attrib.get("displaycolor")
                 if colour is not None:
                     # Parse the colour. It's a hexidecimal number indicating RGB or RGBA.
@@ -396,9 +396,9 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
                         b3 = ((colour_int & 0xFF0000) >> 16) / 255
                         b4 = ((colour_int & 0xFF000000) >> 24) / 255
                         if len(colour) == 6:  # RGB format.
-                            colour = [b3, b2, b1, 1.0]  # b1, b2 and b3 are B, G, R respectively. b4 is always 0.
+                            colour = (b3, b2, b1, 1.0)  # b1, b2 and b3 are B, G, R respectively. b4 is always 0.
                         else:  # RGBA format, or invalid.
-                            colour = [b4, b3, b2, b1]  # b1, b2, b3 and b4 are A, B, G, R respectively.
+                            colour = (b4, b3, b2, b1)  # b1, b2, b3 and b4 are A, B, G, R respectively.
                     except ValueError:
                         log.warning(f"Invalid colour for material {name} of resource {material_id}: {colour}")
 
@@ -438,7 +438,6 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
 
             vertices = self.read_vertices(object_node)
             triangles, materials = self.read_triangles(object_node, material, pid)
-            print(materials)
             components = self.read_components(object_node)
             metadata = Metadata()
             for metadata_node in object_node.iterfind("./3mf:metadatagroup", threemf_namespaces):
@@ -656,6 +655,25 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
             mesh.from_pydata(resource_object.vertices, [], resource_object.triangles)
             mesh.update()
             resource_object.metadata.store(mesh)
+
+            materials_to_index = {}  # Mapping resource materials to indices in the list of materials for this specific mesh.
+            for triangle_materials in resource_object.materials:
+                for vertex_material in triangle_materials:
+                    if vertex_material is None:
+                        continue
+
+                    # Add the material to Blender if it doesn't exist yet. Otherwise create a new material in Blender.
+                    if vertex_material not in self.resource_to_material:
+                        material = bpy.data.materials.new(vertex_material.name)
+                        material.diffuse_color = vertex_material.colour
+                        self.resource_to_material[vertex_material] = material
+                    else:
+                        material = self.resource_to_material[vertex_material]
+
+                    # Add the material to this mesh if it doesn't have it yet. Otherwise re-use previous index.
+                    if vertex_material not in materials_to_index:
+                        mesh.materials.append(material)
+                        materials_to_index[vertex_material] = len(mesh.materials.items())
 
         # Create an object.
         blender_object = bpy.data.objects.new("3MF Object", mesh)
