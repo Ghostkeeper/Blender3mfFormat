@@ -660,8 +660,12 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
 
                 # Add the material to this mesh if it doesn't have it yet. Otherwise re-use previous index.
                 if triangle_material not in materials_to_index:
+                    new_index = len(mesh.materials.items())
+                    if new_index > 32767:
+                        log.warning("Blender doesn't support more than 32768 different materials per mesh.")
+                        continue
                     mesh.materials.append(material)
-                    materials_to_index[triangle_material] = len(mesh.materials.items()) - 1
+                    materials_to_index[triangle_material] = new_index
 
                 # Assign the material to the correct triangle.
                 mesh.polygons[triangle_index].material_index = materials_to_index[triangle_material]
