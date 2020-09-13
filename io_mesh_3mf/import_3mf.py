@@ -34,7 +34,7 @@ from .unit_conversions import blender_to_metre, threemf_to_metre  # To convert t
 
 log = logging.getLogger(__name__)
 
-ResourceObject = collections.namedtuple("ResourceObject", ["vertices", "triangles", "components", "metadata"])
+ResourceObject = collections.namedtuple("ResourceObject", ["vertices", "triangles", "materials", "components", "metadata"])
 Component = collections.namedtuple("Component", ["resource_object", "transformation"])
 ResourceMaterial = collections.namedtuple("ResourceMaterial", ["name", "colour"])
 
@@ -120,8 +120,8 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
                 self.resource_objects = {}
                 self.resource_materials = {}
                 scene_metadata = self.read_metadata(root, scene_metadata)
-                self.read_objects(root)
                 self.read_materials(root)
+                self.read_objects(root)
                 self.build_items(root, scale_unit)
 
         scene_metadata.store(bpy.context.scene)
@@ -377,8 +377,23 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
                 log.warning("Object resource without ID!")
                 continue  # ID is required, otherwise the build can't refer to it.
 
+            pid = object_node.attrib.get("pid")  # Material ID.
+            pindex = object_node.attrib.get("pindex")  # Index within a collection of materials.
+            material = None
+            if pid is not None and pindex is not None:
+                try:
+                    index = int(pindex)
+                    material = self.resource_materials[pid][index]
+                except KeyError:
+                    log.warning(f"Object with ID {objectid} refers to material collection {pid} which doesn't exist.")
+                except IndexError:
+                    log.warning(f"Object with ID {objectid} specifies material index {pindex}, which is out of range.")
+                except ValueError:
+                    log.warning(f"Object with ID {objectid} specifies material index {pindex}, which is not integer.")
+
             vertices = self.read_vertices(object_node)
-            triangles = self.read_triangles(object_node)
+            triangles, materials = self.read_triangles(object_node, material, pid)
+            print(materials)
             components = self.read_components(object_node)
             metadata = Metadata()
             for metadata_node in object_node.iterfind("./3mf:metadatagroup", threemf_namespaces):
@@ -387,7 +402,7 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
                 # Blender has no way to ensure that custom properties get preserved if a mesh is split up, but for most operations this is retained properly.
                 metadata["3mf:partnumber"] = MetadataEntry(name="3mf:partnumber", preserve=True, datatype="xs:string", value=object_node.attrib["partnumber"])
 
-            self.resource_objects[objectid] = ResourceObject(vertices=vertices, triangles=triangles, components=components, metadata=metadata)
+            self.resource_objects[objectid] = ResourceObject(vertices=vertices, triangles=triangles, materials=materials, components=components, metadata=metadata)
 
     def read_vertices(self, object_node):
         """
@@ -421,17 +436,28 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
             result.append((x, y, z))
         return result
 
-    def read_triangles(self, object_node):
+    def read_triangles(self, object_node, default_material, material_pid):
         """
         Reads out the triangles from an XML node of an object.
 
         These triangles always consist of 3 vertices each. Each vertex is an
-        index to the list of vertices read previously.
+        index to the list of vertices read previously. The triangle also
+        contains an associated material, or None if the triangle gets no
+        material.
         :param object_node: An <object> element from the 3dmodel.model file.
-        :return: List of triangles in that object. Each triangle is a tuple of 3
-        integers for the first, second and third vertex of the triangle.
+        :param default_material: If the triangle specifies no material, it
+        should get this material. May be `None` if the model specifies no
+        material.
+        :param material_pid: Triangles that specify a material index will get
+        their material from this material group.
+        :return: Two lists of equal length. The first lists the vertices of each
+        triangle, which are 3-tuples of integers referring to the first, second
+        and third vertex of the triangle. The second list contains 3-tuples with
+        the material resources for the first, second and third vertex. Materials
+        may also be None if the vertices have no materials.
         """
-        result = []
+        vertices = []
+        materials = []
         for triangle in object_node.iterfind("./3mf:mesh/3mf:triangles/3mf:triangle", threemf_namespaces):
             attrib = triangle.attrib
             try:
@@ -441,14 +467,36 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
                 if v1 < 0 or v2 < 0 or v3 < 0:  # Negative indices are not allowed.
                     log.warning("Triangle containing negative index to vertex list.")
                     continue
-                result.append((v1, v2, v3))
+
+                pid = attrib.get("pid", material_pid)
+                p1 = attrib.get("p1")
+                p2 = attrib.get("p2")
+                p3 = attrib.get("p3")
+                if p1 is None:
+                    m1 = default_material
+                else:
+                    m1 = self.resource_materials[pid][int(p1)]
+                if p2 is None:
+                    m2 = m1
+                else:
+                    m2 = self.resource_materials[pid][int(p2)]
+                if p3 is None:
+                    m3 = m1
+                else:
+                    m3 = self.resource_materials[pid][int(p3)]
+
+                vertices.append((v1, v2, v3))
+                materials.append((m1, m2, m3))
+            except IndexError as e:
+                log.warning(f"Material index {e} is out of range.")
+                continue
             except KeyError as e:  # Vertex is missing.
                 log.warning(f"Vertex {e} missing.")
                 continue
-            except ValueError as e:  # Vertex is not an integer.
-                log.warning(f"Vertex reference is not an integer: {e}")
+            except ValueError as e:  # Vertex or material index is not an integer.
+                log.warning(f"Vertex or material reference is not an integer: {e}")
                 continue  # No fallback this time. Leave out the entire triangle.
-        return result
+        return vertices, materials
 
     def read_components(self, object_node):
         """
