@@ -496,9 +496,8 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
         their material from this material group.
         :return: Two lists of equal length. The first lists the vertices of each
         triangle, which are 3-tuples of integers referring to the first, second
-        and third vertex of the triangle. The second list contains 3-tuples with
-        the material resources for the first, second and third vertex. Materials
-        may also be None if the vertices have no materials.
+        and third vertex of the triangle. The second list contains a material
+        for each triangle, or `None` if the triangle doesn't get a material.
         """
         vertices = []
         materials = []
@@ -514,23 +513,13 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
 
                 pid = attrib.get("pid", material_pid)
                 p1 = attrib.get("p1")
-                p2 = attrib.get("p2")
-                p3 = attrib.get("p3")
                 if p1 is None:
-                    m1 = default_material
+                    material = default_material
                 else:
-                    m1 = self.resource_materials[pid][int(p1)]
-                if p2 is None:
-                    m2 = m1
-                else:
-                    m2 = self.resource_materials[pid][int(p2)]
-                if p3 is None:
-                    m3 = m1
-                else:
-                    m3 = self.resource_materials[pid][int(p3)]
+                    material = self.resource_materials[pid][int(p1)]
 
                 vertices.append((v1, v2, v3))
-                materials.append((m1, m2, m3))
+                materials.append(material)
             except KeyError as e:  # Vertex or material is missing.
                 log.warning(f"Vertex or material {e} missing.")  # Sorry, it's hard to give an exception more specific than this.
                 continue
@@ -657,23 +646,22 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
             resource_object.metadata.store(mesh)
 
             materials_to_index = {}  # Mapping resource materials to indices in the list of materials for this specific mesh.
-            for triangle_materials in resource_object.materials:
-                for vertex_material in triangle_materials:
-                    if vertex_material is None:
-                        continue
+            for triangle_material in resource_object.materials:
+                if triangle_material is None:
+                    continue
 
-                    # Add the material to Blender if it doesn't exist yet. Otherwise create a new material in Blender.
-                    if vertex_material not in self.resource_to_material:
-                        material = bpy.data.materials.new(vertex_material.name)
-                        material.diffuse_color = vertex_material.colour
-                        self.resource_to_material[vertex_material] = material
-                    else:
-                        material = self.resource_to_material[vertex_material]
+                # Add the material to Blender if it doesn't exist yet. Otherwise create a new material in Blender.
+                if triangle_material not in self.resource_to_material:
+                    material = bpy.data.materials.new(triangle_material.name)
+                    material.diffuse_color = triangle_material.colour
+                    self.resource_to_material[triangle_material] = material
+                else:
+                    material = self.resource_to_material[triangle_material]
 
-                    # Add the material to this mesh if it doesn't have it yet. Otherwise re-use previous index.
-                    if vertex_material not in materials_to_index:
-                        mesh.materials.append(material)
-                        materials_to_index[vertex_material] = len(mesh.materials.items())
+                # Add the material to this mesh if it doesn't have it yet. Otherwise re-use previous index.
+                if triangle_material not in materials_to_index:
+                    mesh.materials.append(material)
+                    materials_to_index[triangle_material] = len(mesh.materials.items())
 
         # Create an object.
         blender_object = bpy.data.objects.new("3MF Object", mesh)
