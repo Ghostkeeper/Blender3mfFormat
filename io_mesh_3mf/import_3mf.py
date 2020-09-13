@@ -385,9 +385,7 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
                     index = int(pindex)
                     material = self.resource_materials[pid][index]
                 except KeyError:
-                    log.warning(f"Object with ID {objectid} refers to material collection {pid} which doesn't exist.")
-                except IndexError:
-                    log.warning(f"Object with ID {objectid} specifies material index {pindex}, which is out of range.")
+                    log.warning(f"Object with ID {objectid} refers to material collection {pid} with index {pindex} which doesn't exist.")
                 except ValueError:
                     log.warning(f"Object with ID {objectid} specifies material index {pindex}, which is not integer.")
 
@@ -487,11 +485,8 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
 
                 vertices.append((v1, v2, v3))
                 materials.append((m1, m2, m3))
-            except IndexError as e:
-                log.warning(f"Material index {e} is out of range.")
-                continue
-            except KeyError as e:  # Vertex is missing.
-                log.warning(f"Vertex {e} missing.")
+            except KeyError as e:  # Vertex or material is missing.
+                log.warning(f"Vertex or material {e} missing.")  # Sorry, it's hard to give an exception more specific than this.
                 continue
             except ValueError as e:  # Vertex or material index is not an integer.
                 log.warning(f"Vertex or material reference is not an integer: {e}")
@@ -503,7 +498,7 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
         Reads out the components from an XML node of an object.
 
         These components refer to other resource objects, with a transformation
-        applied. They will eventually appear in the scene as subobjects.
+        applied. They will eventually appear in the scene as sub-objects.
         :param object_node: An <object> element from the 3dmodel.model file.
         :return: List of components in this object node.
         """
