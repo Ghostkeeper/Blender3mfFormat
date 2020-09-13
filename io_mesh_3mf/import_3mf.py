@@ -36,6 +36,7 @@ log = logging.getLogger(__name__)
 
 ResourceObject = collections.namedtuple("ResourceObject", ["vertices", "triangles", "components", "metadata"])
 Component = collections.namedtuple("Component", ["resource_object", "transformation"])
+ResourceMaterial = collections.namedtuple("ResourceMaterial", ["name", "colour"])
 
 
 class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
@@ -62,6 +63,7 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
         """
         super().__init__()
         self.resource_objects = {}
+        self.resource_materials = {}
         self.num_loaded = 0
 
     def execute(self, context):
@@ -76,6 +78,7 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
         """
         # Reset state.
         self.resource_objects = {}
+        self.resource_materials = {}  # Dictionary mapping resource IDs to dictionaries mapping indexes to ResourceMaterial objects.
         self.num_loaded = 0
         scene_metadata = Metadata()
         scene_metadata.retrieve(bpy.context.scene)  # If there was already metadata in the scene, combine that with this file.
@@ -115,8 +118,10 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
 
                 scale_unit = self.unit_scale(context, root)
                 self.resource_objects = {}
+                self.resource_materials = {}
                 scene_metadata = self.read_metadata(root, scene_metadata)
                 self.read_objects(root)
+                self.read_materials(root)
                 self.build_items(root, scale_unit)
 
         scene_metadata.store(bpy.context.scene)
@@ -505,6 +510,52 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
                 continue
             result[row][col] = component_float
         return result
+
+    def read_materials(self, root):
+        """
+        Read out all of the material resources from the 3MF document.
+
+        The materials will be stored in `self.resource_materials` until it gets
+        used to build the items.
+        :param root: The root of an XML document that may contain materials.
+        """
+        for basematerials_item in root.iterfind("./3mf:resources/3mf:basematerials", threemf_namespaces):
+            try:
+                material_id = basematerials_item.attrib["id"]
+            except KeyError:
+                log.warning("Encountered a basematerials item without resource ID.")
+                continue  # Need to have an ID, or no item can reference to the materials. Skip this one.
+            if material_id in self.resource_materials:
+                log.warning(f"Duplicate material ID: {material_id}")
+                continue
+
+            self.resource_materials[material_id] = {}  # Use a dictionary mapping indices to resources, because some indices may be skipped due to being invalid.
+            index = 0
+
+            for base_item in basematerials_item.iterfind("./3mf:base", threemf_namespaces):  # "Base" must be the stupidest name for a material resource. Oh well.
+                name = base_item.attrib.get("name", "")
+                colour = base_item.attrib.get("displaycolor")
+                if colour is not None:
+                    # Parse the colour. It's a hexidecimal number indicating RGB or RGBA.
+                    colour = colour.lstrip("#")  # Should start with a #. We'll be lenient if it's not.
+                    try:
+                        colour_int = int(colour, 16)
+                        # Separate out up to four bytes from this int, from right to left.
+                        b1 = (colour_int & 0xFF) / 255
+                        b2 = ((colour_int & 0xFF00) >> 8) / 255
+                        b3 = ((colour_int & 0xFF0000) >> 16) / 255
+                        b4 = ((colour_int & 0xFF000000) >> 24) / 255
+                        if len(colour) == 6:  # RGB format.
+                            colour = [b3, b2, b1, 1.0]  # b1, b2 and b3 are B, G, R respectively. b4 is always 0.
+                        else:  # RGBA format, or invalid.
+                            colour = [b4, b3, b2, b1]  # b1, b2, b3 and b4 are A, B, G, R respectively.
+                    except ValueError:
+                        log.warning(f"Invalid colour for material {name} of resource {material_id}: {colour}")
+
+                # Input is valid. Create a resource.
+                self.resource_materials[material_id][index] = ResourceMaterial(name=name, colour=colour)
+                index += 1
+        print(self.resource_materials)
 
     def build_items(self, root, scale_unit):
         """
