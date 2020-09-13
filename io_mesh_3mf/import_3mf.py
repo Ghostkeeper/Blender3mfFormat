@@ -646,7 +646,7 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
             resource_object.metadata.store(mesh)
 
             materials_to_index = {}  # Mapping resource materials to indices in the list of materials for this specific mesh.
-            for triangle_material in resource_object.materials:
+            for triangle_index, triangle_material in enumerate(resource_object.materials):
                 if triangle_material is None:
                     continue
 
@@ -662,6 +662,9 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
                 if triangle_material not in materials_to_index:
                     mesh.materials.append(material)
                     materials_to_index[triangle_material] = len(mesh.materials.items())
+
+                # Assign the material to the correct triangle.
+                mesh.polygons[triangle_index].material_index = materials_to_index[triangle_material]
 
         # Create an object.
         blender_object = bpy.data.objects.new("3MF Object", mesh)
