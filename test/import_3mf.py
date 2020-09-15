@@ -59,6 +59,7 @@ class TestImport3MF(unittest.TestCase):
         self.single_triangle = io_mesh_3mf.import_3mf.ResourceObject(  # A model with just a single triangle.
             vertices=[(0.0, 0.0, 0.0), (5.0, 0.0, 1.0), (0.0, 5.0, 1.0)],
             triangles=[(0, 1, 2)],
+            materials=[None],
             components=[],
             metadata=Metadata()
         )
@@ -1032,6 +1033,7 @@ class TestImport3MF(unittest.TestCase):
         with_component = io_mesh_3mf.import_3mf.ResourceObject(  # A model with an extra component.
             vertices=[(0.0, 0.0, 0.0), (10.0, 0.0, 2.0), (0.0, 10.0, 2.0)],
             triangles=[(0, 1, 2)],
+            materials=[None],
             components=[io_mesh_3mf.import_3mf.Component(
                 resource_object="1",
                 transformation=mathutils.Matrix.Identity(4)
@@ -1065,6 +1067,7 @@ class TestImport3MF(unittest.TestCase):
         resource_object = io_mesh_3mf.import_3mf.ResourceObject(  # A model with itself as component.
             vertices=[(0.0, 0.0, 0.0), (10.0, 0.0, 2.0), (0.0, 10.0, 2.0)],
             triangles=[(0, 1, 2)],
+            materials=[None],
             components=[io_mesh_3mf.import_3mf.Component(
                 resource_object="1",
                 transformation=mathutils.Matrix.Identity(4)
@@ -1089,6 +1092,7 @@ class TestImport3MF(unittest.TestCase):
         resource_object = io_mesh_3mf.import_3mf.ResourceObject(  # A model with itself as component.
             vertices=[(0.0, 0.0, 0.0), (10.0, 0.0, 2.0), (0.0, 10.0, 2.0)],
             triangles=[(0, 1, 2)],
+            materials=[None],
             components=[io_mesh_3mf.import_3mf.Component(
                 resource_object="2",  # This object ID doesn't exist!
                 transformation=mathutils.Matrix.Identity(4)
@@ -1115,6 +1119,7 @@ class TestImport3MF(unittest.TestCase):
         with_transformed_component = io_mesh_3mf.import_3mf.ResourceObject(  # A model with a component that got transformed.
             vertices=[(0.0, 0.0, 0.0), (10.0, 0.0, 2.0), (0.0, 10.0, 2.0)],
             triangles=[(0, 1, 2)],
+            materials=[None],
             components=[io_mesh_3mf.import_3mf.Component(
                 resource_object="1",
                 transformation=mathutils.Matrix.Scale(2.0, 4)
