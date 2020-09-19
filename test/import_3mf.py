@@ -603,6 +603,16 @@ class TestImport3MF(unittest.TestCase):
         self.assertIn("original_entry", result, "The old metadata entry is also still preserved.")
         self.assertEqual(result["original_entry"], "original_value", "The old metadata value is preserved.")
 
+    def test_read_materials_missing(self):
+        """
+        Tests reading materials from a file that has no <basematerials> entry.
+        """
+        root = xml.etree.ElementTree.Element(f"{{{threemf_default_namespace}}}model")
+
+        self.importer.read_materials(root)
+
+        self.assertDictEqual(self.importer.resource_materials, {}, "There was no <basematerials> tag, so there should not be any materials.")
+
     def test_read_vertices_missing(self):
         """
         Tests reading an object where the <vertices> element is missing.
