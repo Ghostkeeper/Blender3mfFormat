@@ -613,6 +613,18 @@ class TestImport3MF(unittest.TestCase):
 
         self.assertDictEqual(self.importer.resource_materials, {}, "There was no <basematerials> tag, so there should not be any materials.")
 
+    def test_read_materials_empty(self):
+        """
+        Tests reading materials from a file that has an empty <basematerials>
+        tag.
+        """
+        root = xml.etree.ElementTree.Element(f"{{{threemf_default_namespace}}}model")
+        xml.etree.ElementTree.SubElement(root, f"{{{threemf_default_namespace}}}basematerials")
+
+        self.importer.read_materials(root)
+
+        self.assertDictEqual(self.importer.resource_materials, {}, "The <basematerials> tag was empty, so there should not be any materials.")
+
     def test_read_vertices_missing(self):
         """
         Tests reading an object where the <vertices> element is missing.
