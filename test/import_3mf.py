@@ -848,7 +848,7 @@ class TestImport3MF(unittest.TestCase):
         object_node = xml.etree.ElementTree.Element(f"{{{threemf_default_namespace}}}object")
         xml.etree.ElementTree.SubElement(object_node, f"{{{threemf_default_namespace}}}mesh")
 
-        triangles, _ = self.importer.read_triangles(object_node, None, 0)
+        triangles, _ = self.importer.read_triangles(object_node, None, "")
         self.assertListEqual(triangles, [], "There is no <triangles> element, so the resulting triangle list is empty.")
 
     def test_read_triangles_empty(self):
@@ -859,7 +859,7 @@ class TestImport3MF(unittest.TestCase):
         mesh_node = xml.etree.ElementTree.SubElement(object_node, f"{{{threemf_default_namespace}}}mesh")
         xml.etree.ElementTree.SubElement(mesh_node, f"{{{threemf_default_namespace}}}triangles")
 
-        triangles, _ = self.importer.read_triangles(object_node, None, 0)
+        triangles, _ = self.importer.read_triangles(object_node, None, "")
         self.assertListEqual(triangles, [], "There are no triangles in the <triangles> element, so the resulting triangle list is empty.")
 
     def test_read_triangles_multiple(self):
@@ -879,7 +879,7 @@ class TestImport3MF(unittest.TestCase):
             triangle_node.attrib["v2"] = str(triangle[1])
             triangle_node.attrib["v3"] = str(triangle[2])
 
-        reconstructed_triangles, _ = self.importer.read_triangles(object_node, None, 0)
+        reconstructed_triangles, _ = self.importer.read_triangles(object_node, None, "")
         self.assertListEqual(reconstructed_triangles, triangles, "The outcome must be the same triangles as what we put in.")
 
     def test_read_triangles_missing_vertex(self):
@@ -896,7 +896,7 @@ class TestImport3MF(unittest.TestCase):
         triangle_node.attrib["v2"] = "2"
         # Leave out v3. It's missing then.
 
-        triangles, _ = self.importer.read_triangles(object_node, None, 0)
+        triangles, _ = self.importer.read_triangles(object_node, None, "")
         self.assertListEqual(triangles, [], "The only triangle was invalid, so the output should have no triangles.")
 
     def test_read_triangles_broken_vertex(self):
@@ -921,7 +921,7 @@ class TestImport3MF(unittest.TestCase):
         invalid_index_triangle_node.attrib["v2"] = "6"
         invalid_index_triangle_node.attrib["v3"] = "doodie"  # Doesn't parse as integer! Should make the triangle go missing.
 
-        triangles, _ = self.importer.read_triangles(object_node, None, 0)
+        triangles, _ = self.importer.read_triangles(object_node, None, "")
         self.assertListEqual(triangles, [], "All triangles are invalid, so the output should have no triangles.")
 
     def test_read_triangles_default_material(self):
@@ -941,9 +941,35 @@ class TestImport3MF(unittest.TestCase):
         default_material = io_mesh_3mf.import_3mf.ResourceMaterial(name="PLA", colour=None)
         self.importer.resource_materials["material-set"] = {1: default_material}
 
-        _, materials = self.importer.read_triangles(object_node, default_material, 1)
+        _, materials = self.importer.read_triangles(object_node, default_material, "")
 
         self.assertListEqual(materials, [default_material], "Since the triangle doesn't specify any material or index, it should use the default material.")
+
+    def test_read_triangles_default_pindex(self):
+        """
+        Tests reading a triangle of an object that specifies a material, but no
+        pindex.
+
+        It should fall back to the default material of the object then.
+        """
+        object_node = xml.etree.ElementTree.Element(f"{{{threemf_default_namespace}}}object")
+        mesh_node = xml.etree.ElementTree.SubElement(object_node, f"{{{threemf_default_namespace}}}mesh")
+        triangles_node = xml.etree.ElementTree.SubElement(mesh_node, f"{{{threemf_default_namespace}}}triangles")
+        xml.etree.ElementTree.SubElement(triangles_node, f"{{{threemf_default_namespace}}}triangle", attrib={
+            "v1": "1",
+            "v2": "2",
+            "v3": "3",
+            "pid": "material-set"
+        })
+        default_material = io_mesh_3mf.import_3mf.ResourceMaterial(name="PLA", colour=None)
+        self.importer.resource_materials["material-set"] = {
+            0: io_mesh_3mf.import_3mf.ResourceMaterial(name="Other material", colour=None),  # It should NOT default to this one.
+            1: default_material
+        }
+
+        _, materials = self.importer.read_triangles(object_node, default_material, "")
+
+        self.assertListEqual(materials, [default_material], "It specifies a PID but not an index, so it should still use the default material (even if that material is not in the specified group.")
 
     def test_read_components_missing(self):
         """
