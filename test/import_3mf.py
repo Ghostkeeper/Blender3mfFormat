@@ -646,6 +646,26 @@ class TestImport3MF(unittest.TestCase):
         }
         self.assertDictEqual(self.importer.resource_materials, ground_truth, "There is one material, with a default name and no colour.")
 
+    def test_read_materials_multiple(self):
+        """
+        Test reading multiple materials from the same <basematerials> tag.
+        """
+        root = xml.etree.ElementTree.Element(f"{{{threemf_default_namespace}}}model")
+        resources = xml.etree.ElementTree.SubElement(root, f"{{{threemf_default_namespace}}}resources")
+        basematerials = xml.etree.ElementTree.SubElement(resources, f"{{{threemf_default_namespace}}}basematerials", attrib={"id": "material-set"})
+        xml.etree.ElementTree.SubElement(basematerials, f"{{{threemf_default_namespace}}}base", attrib={"name": "PLA"})
+        xml.etree.ElementTree.SubElement(basematerials, f"{{{threemf_default_namespace}}}base", attrib={"name": "BLA"})
+
+        self.importer.read_materials(root)
+
+        ground_truth = {
+            "material-set": {
+                0: io_mesh_3mf.import_3mf.ResourceMaterial(name="PLA", colour=None),
+                1: io_mesh_3mf.import_3mf.ResourceMaterial(name="BLA", colour=None)
+            }
+        }
+        self.assertDictEqual(self.importer.resource_materials, ground_truth, "There are two materials, each with their own names.")
+
     def test_read_materials_missing_id(self):
         """
         Test reading materials from a <basematerials> tag that's missing an ID.
