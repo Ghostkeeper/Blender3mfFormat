@@ -924,6 +924,27 @@ class TestImport3MF(unittest.TestCase):
         triangles, _ = self.importer.read_triangles(object_node, None, 0)
         self.assertListEqual(triangles, [], "All triangles are invalid, so the output should have no triangles.")
 
+    def test_read_triangles_default_material(self):
+        """
+        Tests reading a triangle of an object with a default material.
+
+        The triangle doesn't set a material, but the object does.
+        """
+        object_node = xml.etree.ElementTree.Element(f"{{{threemf_default_namespace}}}object")
+        mesh_node = xml.etree.ElementTree.SubElement(object_node, f"{{{threemf_default_namespace}}}mesh")
+        triangles_node = xml.etree.ElementTree.SubElement(mesh_node, f"{{{threemf_default_namespace}}}triangles")
+        xml.etree.ElementTree.SubElement(triangles_node, f"{{{threemf_default_namespace}}}triangle", attrib={
+            "v1": "1",
+            "v2": "2",
+            "v3": "3"
+        })
+        default_material = io_mesh_3mf.import_3mf.ResourceMaterial(name="PLA", colour=None)
+        self.importer.resource_materials["material-set"] = {1: default_material}
+
+        _, materials = self.importer.read_triangles(object_node, default_material, 1)
+
+        self.assertListEqual(materials, [default_material], "Since the triangle doesn't specify any material or index, it should use the default material.")
+
     def test_read_components_missing(self):
         """
         Tests reading components when the <components> element is missing.
