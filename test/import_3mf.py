@@ -684,6 +684,36 @@ class TestImport3MF(unittest.TestCase):
         }
         self.assertDictEqual(self.importer.resource_materials, ground_truth, "There are two base material IDs, each with one material in it (starting each index from 0).")
 
+    def test_read_materials_duplicate_id(self):
+        """
+        Test reading materials from <basematerials> with the same ID.
+
+        One of them should get skipped then.
+        """
+        root = xml.etree.ElementTree.Element(f"{{{threemf_default_namespace}}}model")
+        resources = xml.etree.ElementTree.SubElement(root, f"{{{threemf_default_namespace}}}resources")
+        base1 = xml.etree.ElementTree.SubElement(resources, f"{{{threemf_default_namespace}}}basematerials", attrib={"id": "set1"})
+        xml.etree.ElementTree.SubElement(base1, f"{{{threemf_default_namespace}}}base", attrib={"name": "First material"})
+        base2 = xml.etree.ElementTree.SubElement(resources, f"{{{threemf_default_namespace}}}basematerials", attrib={"id": "set1"})  # The same ID as the other one!
+        xml.etree.ElementTree.SubElement(base2, f"{{{threemf_default_namespace}}}base", attrib={"name": "Second material"})
+
+        self.importer.read_materials(root)
+
+        # The result may be either one of the materials. Both are valid results.
+        ground_truth = [  # List of options which are allowed.
+            {
+                "set1": {
+                    0: io_mesh_3mf.import_3mf.ResourceMaterial(name="First material", colour=None)
+                }
+            },
+            {
+                "set1": {
+                    0: io_mesh_3mf.import_3mf.ResourceMaterial(name="Second material", colour=None)
+                }
+            }
+        ]
+        self.assertIn(self.importer.resource_materials, ground_truth, "Either one of the materials must be present, not both.")
+
     def test_read_vertices_missing(self):
         """
         Tests reading an object where the <vertices> element is missing.
