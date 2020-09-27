@@ -666,6 +666,42 @@ class TestImport3MF(unittest.TestCase):
         }
         self.assertDictEqual(self.importer.resource_materials, ground_truth, "There are two materials, each with their own names.")
 
+    def test_read_materials_colour(self):
+        """
+        Test reading the colour from a material.
+        """
+        colour_translation = {  # Ground truth for what each colour should translate to when reading from the 3MF document.
+            None: None,  # Missing colour.
+            "#4080C0": (0x40 / 255, 0x80 / 255, 0xC0 / 255, 1.0),  # Correct case.
+            "4080C0": (0x40 / 255, 0x80 / 255, 0xC0 / 255, 1.0),  # Strictly incorrect, but we'll allow it.
+            "#FFC08040": (1.0, 0xC0 / 255, 0x80 / 255, 0x40 / 255),  # Correct case with alpha.
+            "FFC08040": (1.0, 0xC0 / 255, 0x80 / 255, 0x40 / 255),  # Strictly incorrect, but we'll allow it. With alpha.
+            "ABCD": (0.0, 0.0, 0xAB / 255, 0xCD / 255),  # Not enough characters. Interpret as web colours.
+            "ABCDEFABCDEF": (0xEF / 255, 0xAB / 255, 0xCD / 255, 0xEF / 255),  # Too many characters. Interpret as web colours.
+            "ffc080": (0xFF / 255, 0xc0 / 255, 0x80 / 255, 1.0),  # Lowercase characters.
+            "": None,  # Doesn't parse.
+            "3MF3MF": None  # Doesn't parse, since M is out of range for a hexadecimal number.
+        }
+
+        for threemf_colour, blender_colour in colour_translation.items():
+            with self.subTest(threemf_colour=threemf_colour, blender_colour=blender_colour):
+                root = xml.etree.ElementTree.Element(f"{{{threemf_default_namespace}}}model")
+                resources = xml.etree.ElementTree.SubElement(root, f"{{{threemf_default_namespace}}}resources")
+                basematerials = xml.etree.ElementTree.SubElement(resources, f"{{{threemf_default_namespace}}}basematerials", attrib={"id": "material-set"})
+                xml.etree.ElementTree.SubElement(basematerials, f"{{{threemf_default_namespace}}}base", attrib={
+                    "displaycolor": threemf_colour
+                })
+
+                self.importer.resource_materials = {}
+                self.importer.read_materials(root)
+
+                ground_truth = {
+                    "material-set": {
+                        0: io_mesh_3mf.import_3mf.ResourceMaterial(name="3MF Material", colour=blender_colour)
+                    }
+                }
+                self.assertDictEqual(self.importer.resource_materials, ground_truth)
+
     def test_read_materials_missing_id(self):
         """
         Test reading materials from a <basematerials> tag that's missing an ID.
