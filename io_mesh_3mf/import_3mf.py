@@ -391,9 +391,9 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
                     try:
                         colour_int = int(colour, 16)
                         # Separate out up to four bytes from this int, from right to left.
-                        b1 = (colour_int & 0xFF) / 255
-                        b2 = ((colour_int & 0xFF00) >> 8) / 255
-                        b3 = ((colour_int & 0xFF0000) >> 16) / 255
+                        b1 = (colour_int & 0x000000FF) / 255
+                        b2 = ((colour_int & 0x0000FF00) >> 8) / 255
+                        b3 = ((colour_int & 0x00FF0000) >> 16) / 255
                         b4 = ((colour_int & 0xFF000000) >> 24) / 255
                         if len(colour) == 6:  # RGB format.
                             colour = (b3, b2, b1, 1.0)  # b1, b2 and b3 are B, G, R respectively. b4 is always 0.
