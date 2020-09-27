@@ -520,15 +520,22 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
                 if p1 is None:
                     material = default_material
                 else:
-                    material = self.resource_materials[pid][int(p1)]
+                    try:
+                        material = self.resource_materials[pid][int(p1)]
+                    except KeyError as e:
+                        log.warning(f"Material {e} is missing.")  # Sorry. It's hard to give an exception more specific than this.
+                        material = default_material
+                    except ValueError as e:
+                        log.warning(f"Material index is not an integer: {e}")
+                        material = default_material
 
                 vertices.append((v1, v2, v3))
                 materials.append(material)
-            except KeyError as e:  # Vertex or material is missing.
-                log.warning(f"Vertex or material {e} missing.")  # Sorry, it's hard to give an exception more specific than this.
+            except KeyError as e:
+                log.warning(f"Vertex {e} is missing.")
                 continue
-            except ValueError as e:  # Vertex or material index is not an integer.
-                log.warning(f"Vertex or material reference is not an integer: {e}")
+            except ValueError as e:
+                log.warning(f"Vertex reference is not an integer: {e}")
                 continue  # No fallback this time. Leave out the entire triangle.
         return vertices, materials
 
