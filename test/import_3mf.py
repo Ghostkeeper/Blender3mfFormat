@@ -619,7 +619,8 @@ class TestImport3MF(unittest.TestCase):
         tag.
         """
         root = xml.etree.ElementTree.Element(f"{{{threemf_default_namespace}}}model")
-        xml.etree.ElementTree.SubElement(root, f"{{{threemf_default_namespace}}}basematerials")
+        resources = xml.etree.ElementTree.SubElement(root, f"{{{threemf_default_namespace}}}resources")
+        xml.etree.ElementTree.SubElement(resources, f"{{{threemf_default_namespace}}}basematerials", attrib={"id": "material-set"})
 
         self.importer.read_materials(root)
 
