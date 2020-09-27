@@ -1025,6 +1025,30 @@ class TestImport3MF(unittest.TestCase):
 
         self.assertListEqual(materials, [correct_material], "The material PID is overridden so it should use a different group of materials now.")
 
+    def test_read_material_index_out_of_range(self):
+        """
+        Tests reading a triangle where the pindex is out of range for the group.
+
+        It should revert to the default material then.
+        """
+        object_node = xml.etree.ElementTree.Element(f"{{{threemf_default_namespace}}}object")
+        mesh_node = xml.etree.ElementTree.SubElement(object_node, f"{{{threemf_default_namespace}}}mesh")
+        triangles_node = xml.etree.ElementTree.SubElement(mesh_node, f"{{{threemf_default_namespace}}}triangles")
+        xml.etree.ElementTree.SubElement(triangles_node, f"{{{threemf_default_namespace}}}triangle", attrib={
+            "v1": "1",
+            "v2": "2",
+            "v3": "3",
+            "p1": "999"  # Way out of range for the material-set material group.
+        })
+        default_material = io_mesh_3mf.import_3mf.ResourceMaterial(name="PLA", colour=None)
+        self.importer.resource_materials["material-set"] = {
+            0: default_material
+        }
+
+        _, materials = self.importer.read_triangles(object_node, default_material, "material-set")  # Supply a default PID. It should use the indices from the triangles to reference to this PID.
+
+        self.assertListEqual(materials, [default_material], "The material index in p1 was way out of range for the 'material-set' group of materials, so it should use the default instead.")
+
     def test_read_components_missing(self):
         """
         Tests reading components when the <components> element is missing.
