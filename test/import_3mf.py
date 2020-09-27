@@ -848,7 +848,7 @@ class TestImport3MF(unittest.TestCase):
         object_node = xml.etree.ElementTree.Element(f"{{{threemf_default_namespace}}}object")
         xml.etree.ElementTree.SubElement(object_node, f"{{{threemf_default_namespace}}}mesh")
 
-        triangles, _ = self.importer.read_triangles(object_node, "", 0)
+        triangles, _ = self.importer.read_triangles(object_node, None, 0)
         self.assertListEqual(triangles, [], "There is no <triangles> element, so the resulting triangle list is empty.")
 
     def test_read_triangles_empty(self):
@@ -859,7 +859,7 @@ class TestImport3MF(unittest.TestCase):
         mesh_node = xml.etree.ElementTree.SubElement(object_node, f"{{{threemf_default_namespace}}}mesh")
         xml.etree.ElementTree.SubElement(mesh_node, f"{{{threemf_default_namespace}}}triangles")
 
-        triangles, _ = self.importer.read_triangles(object_node, "", 0)
+        triangles, _ = self.importer.read_triangles(object_node, None, 0)
         self.assertListEqual(triangles, [], "There are no triangles in the <triangles> element, so the resulting triangle list is empty.")
 
     def test_read_triangles_multiple(self):
@@ -879,7 +879,7 @@ class TestImport3MF(unittest.TestCase):
             triangle_node.attrib["v2"] = str(triangle[1])
             triangle_node.attrib["v3"] = str(triangle[2])
 
-        reconstructed_triangles, _ = self.importer.read_triangles(object_node, "", 0)
+        reconstructed_triangles, _ = self.importer.read_triangles(object_node, None, 0)
         self.assertListEqual(reconstructed_triangles, triangles, "The outcome must be the same triangles as what we put in.")
 
     def test_read_triangles_missing_vertex(self):
@@ -896,7 +896,7 @@ class TestImport3MF(unittest.TestCase):
         triangle_node.attrib["v2"] = "2"
         # Leave out v3. It's missing then.
 
-        triangles, _ = self.importer.read_triangles(object_node, "", 0)
+        triangles, _ = self.importer.read_triangles(object_node, None, 0)
         self.assertListEqual(triangles, [], "The only triangle was invalid, so the output should have no triangles.")
 
     def test_read_triangles_broken_vertex(self):
@@ -921,7 +921,7 @@ class TestImport3MF(unittest.TestCase):
         invalid_index_triangle_node.attrib["v2"] = "6"
         invalid_index_triangle_node.attrib["v3"] = "doodie"  # Doesn't parse as integer! Should make the triangle go missing.
 
-        triangles, _ = self.importer.read_triangles(object_node, "", 0)
+        triangles, _ = self.importer.read_triangles(object_node, None, 0)
         self.assertListEqual(triangles, [], "All triangles are invalid, so the output should have no triangles.")
 
     def test_read_components_missing(self):
