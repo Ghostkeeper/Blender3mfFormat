@@ -386,7 +386,7 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
                 name = base_item.attrib.get("name", "3MF Material")
                 colour = base_item.attrib.get("displaycolor")
                 if colour is not None:
-                    # Parse the colour. It's a hexidecimal number indicating RGB or RGBA.
+                    # Parse the colour. It's a hexadecimal number indicating RGB or RGBA.
                     colour = colour.lstrip("#")  # Should start with a #. We'll be lenient if it's not.
                     try:
                         colour_int = int(colour, 16)
@@ -405,6 +405,9 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
                 # Input is valid. Create a resource.
                 self.resource_materials[material_id][index] = ResourceMaterial(name=name, colour=colour)
                 index += 1
+
+            if len(self.resource_materials[material_id]) == 0:
+                del self.resource_materials[material_id]  # Don't leave empty material sets hanging.
 
     def read_objects(self, root):
         """
