@@ -401,6 +401,7 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
                             colour = (b4, b3, b2, b1)  # b1, b2, b3 and b4 are A, B, G, R respectively.
                     except ValueError:
                         log.warning(f"Invalid colour for material {name} of resource {material_id}: {colour}")
+                        colour = None  # Don't add a colour for this material.
 
                 # Input is valid. Create a resource.
                 self.resource_materials[material_id][index] = ResourceMaterial(name=name, colour=colour)
