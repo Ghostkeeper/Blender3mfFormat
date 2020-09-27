@@ -646,6 +646,19 @@ class TestImport3MF(unittest.TestCase):
         }
         self.assertDictEqual(self.importer.resource_materials, ground_truth, "There is one material, with a default name and no colour.")
 
+    def test_read_materials_missing_id(self):
+        """
+        Test reading materials from a <basematerials> tag that's missing an ID.
+        """
+        root = xml.etree.ElementTree.Element(f"{{{threemf_default_namespace}}}model")
+        resources = xml.etree.ElementTree.SubElement(root, f"{{{threemf_default_namespace}}}resources")
+        basematerials = xml.etree.ElementTree.SubElement(resources, f"{{{threemf_default_namespace}}}basematerials")  # No ID in attrib!
+        xml.etree.ElementTree.SubElement(basematerials, f"{{{threemf_default_namespace}}}base")
+
+        self.importer.read_materials(root)
+
+        self.assertDictEqual(self.importer.resource_materials, {}, "The material was not read successfully since the <basematerials> had no ID attribute.")
+
     def test_read_vertices_missing(self):
         """
         Tests reading an object where the <vertices> element is missing.
