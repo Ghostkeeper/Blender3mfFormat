@@ -996,6 +996,35 @@ class TestImport3MF(unittest.TestCase):
 
         self.assertListEqual(materials, [correct_material], "It specifies an index but not a PID, so it should use the PID from the object.")
 
+    def test_read_triangles_material_override(self):
+        """
+        Tests reading a triangle that overrides both the PID and the index.
+        """
+        object_node = xml.etree.ElementTree.Element(f"{{{threemf_default_namespace}}}object")
+        mesh_node = xml.etree.ElementTree.SubElement(object_node, f"{{{threemf_default_namespace}}}mesh")
+        triangles_node = xml.etree.ElementTree.SubElement(mesh_node, f"{{{threemf_default_namespace}}}triangles")
+        xml.etree.ElementTree.SubElement(triangles_node, f"{{{threemf_default_namespace}}}triangle", attrib={
+            "v1": "1",
+            "v2": "2",
+            "v3": "3",
+            "pid": "alternative",
+            "p1": "0"
+        })
+        default_material = io_mesh_3mf.import_3mf.ResourceMaterial(name="PLA", colour=None)
+        correct_material = io_mesh_3mf.import_3mf.ResourceMaterial(name="BLA", colour=None)
+        self.importer.resource_materials = {
+            "material-set": {
+                0: default_material,  # Supplied as the default, but it should NOT choose this one.
+            },
+            "alternative": {
+                0: correct_material
+            }
+        }
+
+        _, materials = self.importer.read_triangles(object_node, default_material, "material-set")  # Supply a default PID. It should use the indices from the triangles to reference to this PID.
+
+        self.assertListEqual(materials, [correct_material], "The material PID is overridden so it should use a different group of materials now.")
+
     def test_read_components_missing(self):
         """
         Tests reading components when the <components> element is missing.
