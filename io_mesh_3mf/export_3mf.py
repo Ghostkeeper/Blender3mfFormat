@@ -11,6 +11,7 @@ import bpy  # The Blender API.
 import bpy.props  # To define metadata properties for the operator.
 import bpy.types  # This class is an operator in Blender, and to find meshes in the scene.
 import bpy_extras.io_utils  # Helper functions to export meshes more easily.
+import bpy_extras.node_shader_utils  # Converting material colours to sRGB.
 import itertools
 import logging  # To debug and log progress.
 import mathutils  # For the transformation matrices.
@@ -206,14 +207,17 @@ class Export3MF(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
                 if material_name in name_to_index:  # Already have this material through another object.
                     continue
 
-                colour = material.diffuse_color
+                # Wrap this material into a principled render node, to convert its colour to sRGB.
+                principled = bpy_extras.node_shader_utils.PrincipledBSDFWrapper(material, is_readonly=True)
+                colour = principled.base_color
                 red = min(255, round(colour[0] * 255))
                 green = min(255, round(colour[1] * 255))
                 blue = min(255, round(colour[2] * 255))
-                if colour[3] >= 1.0:  # Completely opaque. Leave out the alpha component.
+                alpha = principled.alpha
+                if alpha >= 1.0:  # Completely opaque. Leave out the alpha component.
                     colour_hex = "#%0.2X%0.2X%0.2X" % (red, green, blue)
                 else:
-                    alpha = min(255, round(colour[3] * 255))
+                    alpha = min(255, round(alpha * 255))
                     colour_hex = "#%0.2X%0.2X%0.2X%0.2X" % (red, green, blue, alpha)
 
                 if basematerials_element is None:
