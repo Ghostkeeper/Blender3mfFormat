@@ -344,6 +344,7 @@ class Export3MF(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
 
             # Find the most common material for this mesh, for maximum compression.
             material_indices = [triangle.material_index for triangle in mesh.loop_triangles]
+            most_common_material_list_index = 0  # If there are no triangles, we provide 0 as index, but it'll not get read by write_triangles either then.
             if material_indices:
                 counter = collections.Counter(material_indices)
                 most_common_material_object_index = counter.most_common(1)[0][0]  # Is an index from the MeshLoopTriangle, referring to the list of materials attached to the Blender object.
@@ -353,7 +354,7 @@ class Export3MF(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
                 object_element.attrib[f"{{{threemf_default_namespace}}}pindex"] = str(most_common_material_list_index)
 
             self.write_vertices(mesh_element, mesh.vertices)
-            self.write_triangles(mesh_element, mesh.loop_triangles)
+            self.write_triangles(mesh_element, mesh.loop_triangles, most_common_material_list_index, blender_object.material_slots)
 
             # If the object has metadata, write that to a metadata object.
             metadata = Metadata()
@@ -420,7 +421,7 @@ class Export3MF(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
             vertex_element.attrib[y_name] = self.format_number(vertex.co[1], self.coordinate_precision)
             vertex_element.attrib[z_name] = self.format_number(vertex.co[2], self.coordinate_precision)
 
-    def write_triangles(self, mesh_element, triangles):
+    def write_triangles(self, mesh_element, triangles, object_material_list_index, material_slots):
         """
         Writes a list of triangles into the specified mesh element.
 
@@ -428,6 +429,12 @@ class Export3MF(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
         :param mesh_element: The <mesh> element of the 3MF document.
         :param triangles: A list of triangles. Each list is a list of indices to
         the list of vertices.
+        :param object_material_list_index: The index of the material that the
+        object was written with to which these triangles belong. If the triangle
+        has a different index, we need to write the index with the triangle.
+        :param material_slots: List of materials belonging to the object for
+        which we write triangles. These are necessary to interpret the material
+        indices stored in the MeshLoopTriangles.
         """
         triangles_element = xml.etree.ElementTree.SubElement(mesh_element, f"{{{threemf_default_namespace}}}triangles")
 
@@ -436,12 +443,17 @@ class Export3MF(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
         v1_name = f"{{{threemf_default_namespace}}}v1"
         v2_name = f"{{{threemf_default_namespace}}}v2"
         v3_name = f"{{{threemf_default_namespace}}}v3"
+        p1_name = f"{{{threemf_default_namespace}}}p1"
 
         for triangle in triangles:
             triangle_element = xml.etree.ElementTree.SubElement(triangles_element, triangle_name)
             triangle_element.attrib[v1_name] = str(triangle.vertices[0])
             triangle_element.attrib[v2_name] = str(triangle.vertices[1])
             triangle_element.attrib[v3_name] = str(triangle.vertices[2])
+
+            material_index = self.material_name_to_index[material_slots[triangle.material_index].material.name]  # Convert to index in our global list.
+            if material_index != object_material_list_index:  # Not equal to the index that our parent object was written with, so we must override it here.
+                triangle_element.attrib[p1_name] = str(material_index)
 
     def format_number(self, number, decimals):
         """
