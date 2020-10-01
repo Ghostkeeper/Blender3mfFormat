@@ -193,6 +193,41 @@ class TestExport3MF(unittest.TestCase):
         self.assertEqual(base_element.attrib[f"{{{threemf_default_namespace}}}name"], "Navel lint")
         self.assertDictEqual(result, {"Navel lint": 0})
 
+    def test_write_material_colour(self):
+        """
+        Tests writing material colours.
+
+        This tests various colours
+        """
+        ground_truth = {
+            (0.1, 0.2, 0.3, 0.4): "#1A334C66",  # Basic colour values and rounding.
+            (1.0, 1.0, 1.0, 0.5): "#FFFFFF80",  # Maximum colour values.
+            (0.0, 0.0, 0.0, 0.0): "#00000000",  # Minimum colour values.
+            (0.1, 0.2, 0.3, 0.0): "#1A334C00",  # Colours even though the material is completely transparent.
+            (0.5, 0.5, 0.5, 0.5): "#80808080",  # Rounding.
+            (0.5, 0.5, 0.5, 1.0): "#808080",  # Alpha is 100%, so it's omitted.
+            (0.1, 0.2, 0.3, 1.0): "#1A334C",  # Basic colour values with 100% alpha.
+            (2.0, 3.0, 4.0, 1.0): "#FFFFFF",  # Clipped to 100% value.
+            (3.0, 4.0, 5.0, 6.0): "#FFFFFF"  # Even alpha is clipped to 100% value, and then omitted.
+            # The function doesn't need to deal with colour values below 0, since Blender doesn't support those.
+        }
+
+        for input, output in ground_truth.items():
+            with self.subTest(input=input, output=output):
+                resources_element = xml.etree.ElementTree.Element(f"{{{threemf_default_namespace}}}resources")
+                material_slot = unittest.mock.MagicMock()
+                material_slot.material.name = "Programmable wood"
+                material_slot.material.diffuse_color = input
+                blender_object = unittest.mock.MagicMock()
+                blender_object.material_slots = [material_slot]
+
+                self.exporter.write_materials(resources_element, [blender_object])
+
+                base_elements = list(resources_element.iterfind("3mf:basematerials/3mf:base", threemf_namespaces))
+                self.assertEqual(len(base_elements), 1, "There must be a <base> tag, since there is a material on this object.")
+                base_element = base_elements[0]
+                self.assertEqual(base_element.attrib[f"{{{threemf_default_namespace}}}displaycolor"], output)
+
     def test_write_objects_none(self):
         """
         Tests writing objects when there are no objects in the scene.
