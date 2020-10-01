@@ -90,7 +90,9 @@ class Export3MF(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
         scene_metadata.retrieve(bpy.context.scene)
         self.write_metadata(root, scene_metadata)
 
-        self.write_objects(root, blender_objects, global_scale)
+        resources_element = xml.etree.ElementTree.SubElement(root, f"{{{threemf_default_namespace}}}resources")
+        self.write_materials(resources_element, blender_objects)
+        self.write_objects(root, resources_element, blender_objects, global_scale)
 
         document = xml.etree.ElementTree.ElementTree(root)
         with archive.open(threemf_3dmodel_location, 'w') as f:
@@ -171,7 +173,58 @@ class Export3MF(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
 
         return scale
 
-    def write_objects(self, root, blender_objects, global_scale):
+    def write_materials(self, resources_element, blender_objects):
+        """
+        Write the materials on the specified blender objects to a 3MF document.
+
+        We'll write all materials to one single <basematerials> tag in the
+        resources.
+
+        Aside from writing the materials to the document, this function also
+        returns a mapping from the names of the materials in Blender (which must
+        be unique) to the index in the <basematerials> material group. Using
+        that mapping, the objects and triangles can write down an index
+        referring to the list of <base> tags.
+
+        Since the <base> material can only hold a colour, we'll write the
+        diffuse colour of the material to the file.
+        :param resources_element: A <resources> node from a 3MF document.
+        :param blender_objects: A list of Blender objects that may have
+        materials which we need to write to the document.
+        :return: A mapping from material name to the index
+        """
+        name_to_index = {}  # The output list, mapping from material name to indexes in the <basematerials> tag.
+        next_index = 0
+        basematerials_element = None  # Create an element lazily. We don't want to create an element if there are no materials to write.
+
+        for blender_object in blender_objects:
+            for material_slot in blender_object.material_slots:
+                material = material_slot.material
+
+                material_name = material.name
+                if material_name in name_to_index:  # Already have this material through another object.
+                    continue
+
+                colour = material.diffuse_color
+                red = min(255, round(colour[0] * 255))
+                green = min(255, round(colour[1] * 255))
+                blue = min(255, round(colour[2] * 255))
+                if colour[3] >= 1.0:  # Completely opaque. Leave out the alpha component.
+                    colour_hex = "#%0.2X%0.2X%0.2X" % (red, green, blue)
+                else:
+                    alpha = min(255, round(colour[3] * 255))
+                    colour_hex = "#%0.2X%0.2X%0.2X%0.2X" % (red, green, blue, alpha)
+
+                if basematerials_element is None:
+                    basematerials_element = xml.etree.ElementTree.SubElement(resources_element, f"{{{threemf_default_namespace}}}basematerials")
+                xml.etree.ElementTree.SubElement(basematerials_element, f"{{{threemf_default_namespace}}}base", attrib={
+                    f"{{{threemf_default_namespace}}}name": material_name,
+                    f"{{{threemf_default_namespace}}}displaycolor": colour_hex
+                })
+                name_to_index[material_name] = next_index
+                next_index += 1
+
+    def write_objects(self, root, resources_element, blender_objects, global_scale):
         """
         Writes a group of objects into the 3MF archive.
         :param root: An XML root element to write the objects into.
@@ -182,7 +235,6 @@ class Export3MF(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
         """
         transformation = mathutils.Matrix.Scale(global_scale, 4)
 
-        resources_element = xml.etree.ElementTree.SubElement(root, f"{{{threemf_default_namespace}}}resources")
         build_element = xml.etree.ElementTree.SubElement(root, f"{{{threemf_default_namespace}}}build")
         for blender_object in blender_objects:
             if blender_object.parent is not None:
