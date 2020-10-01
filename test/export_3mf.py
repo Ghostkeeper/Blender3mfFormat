@@ -48,6 +48,9 @@ class TestExport3MF(unittest.TestCase):
         self.exporter.use_mesh_modifiers = False
         self.exporter.coordinate_precision = 4
 
+        self.mock_triangle_loop = unittest.mock.MagicMock()
+        self.mock_triangle_loop.material_index = 0
+
     def test_create_archive(self):
         """
         Tests creating an empty archive.
@@ -490,12 +493,16 @@ class TestExport3MF(unittest.TestCase):
         """
         resources_element = xml.etree.ElementTree.Element(f"{{{threemf_default_namespace}}}resources")
         blender_object = unittest.mock.MagicMock()
+        mock_material = unittest.mock.MagicMock()
+        mock_material.name = "Mock Material"
+        blender_object.material_slots = [unittest.mock.MagicMock(material=mock_material)]
+        self.exporter.material_name_to_index["Mock Material"] = 0
         self.exporter.write_vertices = unittest.mock.MagicMock()  # Mock these two subroutines. We'll only verify that they get called with the correct parameters.
         self.exporter.write_triangles = unittest.mock.MagicMock()
 
         # Prepare a mock for the mesh.
         original_vertices = [(1, 2, 3), (4, 5, 6)]
-        original_triangles = [(0, 1, 0), (1, 0, 1)]
+        original_triangles = [self.mock_triangle_loop, self.mock_triangle_loop]
         blender_object.to_mesh().vertices = original_vertices
         blender_object.to_mesh().loop_triangles = original_triangles
 
@@ -505,7 +512,7 @@ class TestExport3MF(unittest.TestCase):
         self.assertEqual(len(mesh_elements), 1, "There is exactly one object with one mesh in it.")
         mesh_element = mesh_elements[0]
         self.exporter.write_vertices.assert_called_once_with(mesh_element, original_vertices)
-        self.exporter.write_triangles.assert_called_once_with(mesh_element, original_triangles)
+        self.exporter.write_triangles.assert_called_once_with(mesh_element, original_triangles, 0, blender_object.material_slots)
 
     def test_write_object_resource_children(self):
         """
@@ -543,6 +550,10 @@ class TestExport3MF(unittest.TestCase):
         resources_element = xml.etree.ElementTree.Element(f"{{{threemf_default_namespace}}}resources")
         blender_object = unittest.mock.MagicMock()
         blender_object.matrix_world = mathutils.Matrix.Identity(4)
+        mock_material = unittest.mock.MagicMock()
+        mock_material.name = "Mock Material"
+        blender_object.material_slots = [unittest.mock.MagicMock(material=mock_material)]
+        self.exporter.material_name_to_index["Mock Material"] = 0
 
         # Give the object a child.
         child = unittest.mock.MagicMock()
@@ -553,7 +564,7 @@ class TestExport3MF(unittest.TestCase):
 
         # Give the object a (pretend-)mesh.
         original_vertices = [(1, 2, 3), (4, 5, 6)]
-        original_triangles = [(0, 1, 0), (1, 0, 1)]
+        original_triangles = [self.mock_triangle_loop, self.mock_triangle_loop]
         blender_object.to_mesh().vertices = original_vertices
         blender_object.to_mesh().loop_triangles = original_triangles
 
@@ -570,7 +581,7 @@ class TestExport3MF(unittest.TestCase):
         self.assertEqual(len(mesh_elements), 1, "There is only one object with a mesh in it. The other one has no mesh data, so no mesh should be created.")
         mesh_element = mesh_elements[0]
         self.exporter.write_vertices.assert_called_once_with(mesh_element, original_vertices)  # Only one of the objects had a mesh, so it should get called only once.
-        self.exporter.write_triangles.assert_called_once_with(mesh_element, original_triangles)
+        self.exporter.write_triangles.assert_called_once_with(mesh_element, original_triangles, 0, blender_object.material_slots)
 
     def test_write_object_resource_metadata(self):
         """
@@ -582,10 +593,14 @@ class TestExport3MF(unittest.TestCase):
         resources_element = xml.etree.ElementTree.Element(f"{{{threemf_default_namespace}}}resources")
         blender_object = unittest.mock.MagicMock()
         blender_object.matrix_world = mathutils.Matrix.Identity(4)
+        mock_material = unittest.mock.MagicMock()
+        mock_material.name = "Mock Material"
+        blender_object.material_slots = [unittest.mock.MagicMock(material=mock_material)]
+        self.exporter.material_name_to_index["Mock Material"] = 0
 
         # Give the object a (pretend-)mesh.
         original_vertices = [(1, 2, 3), (4, 5, 6)]
-        original_triangles = [(0, 1, 0), (1, 0, 1)]
+        original_triangles = [self.mock_triangle_loop, self.mock_triangle_loop]
         blender_object.to_mesh().vertices = original_vertices
         blender_object.to_mesh().loop_triangles = original_triangles
 
@@ -676,7 +691,7 @@ class TestExport3MF(unittest.TestCase):
         mesh_element = xml.etree.ElementTree.Element(f"{{{threemf_default_namespace}}}mesh")
         triangles = []
 
-        self.exporter.write_triangles(mesh_element, triangles)
+        self.exporter.write_triangles(mesh_element, triangles, 0, [])
 
         self.assertListEqual(mesh_element.findall("3mf:triangles/3mf:triangle", namespaces=threemf_namespaces), [], "There may not be any triangles in the file, because there were no triangles to write.")
 
@@ -685,12 +700,16 @@ class TestExport3MF(unittest.TestCase):
         Tests writing several triangles to the 3MF document.
         """
         mesh_element = xml.etree.ElementTree.Element(f"{{{threemf_default_namespace}}}mesh")
-        triangle1 = unittest.mock.MagicMock(vertices=[0, 1, 2])
-        triangle2 = unittest.mock.MagicMock(vertices=[3, 4, 5])
-        triangle3 = unittest.mock.MagicMock(vertices=[4, 2, 0])
+        triangle1 = unittest.mock.MagicMock(vertices=[0, 1, 2], material_index=0)
+        triangle2 = unittest.mock.MagicMock(vertices=[3, 4, 5], material_index=0)
+        triangle3 = unittest.mock.MagicMock(vertices=[4, 2, 0], material_index=0)
         triangles = [triangle1, triangle2, triangle3]
+        self.exporter.material_name_to_index["BLA"] = 0
+        material_mock = unittest.mock.MagicMock()
+        material_mock.name = "BLA"
+        material_slots = [unittest.mock.MagicMock(material=material_mock)]
 
-        self.exporter.write_triangles(mesh_element, triangles)
+        self.exporter.write_triangles(mesh_element, triangles, 0, material_slots)
 
         triangle_elements = mesh_element.findall("3mf:triangles/3mf:triangle", namespaces=threemf_namespaces)
         self.assertEqual(len(triangle_elements), 3, "There were 3 triangles to write.")
