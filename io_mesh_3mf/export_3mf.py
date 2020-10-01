@@ -12,6 +12,7 @@ import bpy.props  # To define metadata properties for the operator.
 import bpy.types  # This class is an operator in Blender, and to find meshes in the scene.
 import bpy_extras.io_utils  # Helper functions to export meshes more easily.
 import bpy_extras.node_shader_utils  # Converting material colours to sRGB.
+import collections  # Counter, to find the most common material of an object.
 import itertools
 import logging  # To debug and log progress.
 import mathutils  # For the transformation matrices.
@@ -340,6 +341,17 @@ class Export3MF(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
             else:  # No components, then we can write directly into this object resource.
                 mesh_object_element = object_element
             mesh_element = xml.etree.ElementTree.SubElement(mesh_object_element, f"{{{threemf_default_namespace}}}mesh")
+
+            # Find the most common material for this mesh, for maximum compression.
+            material_indices = [triangle.material_index for triangle in mesh.loop_triangles]
+            if material_indices:
+                counter = collections.Counter(material_indices)
+                most_common_material_object_index = counter.most_common(1)[0][0]  # Is an index from the MeshLoopTriangle, referring to the list of materials attached to the Blender object.
+                most_common_material = blender_object.material_slots[most_common_material_object_index].material
+                most_common_material_list_index = self.material_name_to_index[most_common_material.name]  # Is an index referring to our own list of materials that we put in the resources.
+                object_element.attrib[f"{{{threemf_default_namespace}}}pid"] = "material0"  # We always only write one group of materials. So this is always the same.
+                object_element.attrib[f"{{{threemf_default_namespace}}}pindex"] = str(most_common_material_list_index)
+
             self.write_vertices(mesh_element, mesh.vertices)
             self.write_triangles(mesh_element, mesh.loop_triangles)
 
