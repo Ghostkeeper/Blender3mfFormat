@@ -55,6 +55,7 @@ class Export3MF(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
         super().__init__()
         self.next_resource_id = 1  # Which resource ID to generate for the next object.
         self.num_written = 0  # How many objects we've written to the file.
+        self.material_name_to_index = {}  # For each material in Blender, which index in this document's material group it gets.
 
     def execute(self, context):
         """
@@ -91,7 +92,7 @@ class Export3MF(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
         self.write_metadata(root, scene_metadata)
 
         resources_element = xml.etree.ElementTree.SubElement(root, f"{{{threemf_default_namespace}}}resources")
-        self.write_materials(resources_element, blender_objects)
+        self.material_name_to_index = self.write_materials(resources_element, blender_objects)
         self.write_objects(root, resources_element, blender_objects, global_scale)
 
         document = xml.etree.ElementTree.ElementTree(root)
@@ -223,6 +224,8 @@ class Export3MF(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
                 })
                 name_to_index[material_name] = next_index
                 next_index += 1
+
+        return name_to_index
 
     def write_objects(self, root, resources_element, blender_objects, global_scale):
         """
