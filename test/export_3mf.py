@@ -144,6 +144,19 @@ class TestExport3MF(unittest.TestCase):
                 context.scene.unit_settings.length_unit = blender_unit
                 self.assertAlmostEqual(self.exporter.unit_scale(context), correct_conversions[blender_unit])
 
+    def test_write_materials_empty(self):
+        """
+        Tests writing the materials for an empty list of objects.
+
+        Try to not crash, please.
+        """
+        resources_element = xml.etree.ElementTree.Element(f"{{{threemf_default_namespace}}}resources")
+
+        result = self.exporter.write_materials(resources_element, [])
+
+        self.assertListEqual(list(resources_element.iterfind("3mf:basematerials", threemf_namespaces)), [], "There were no objects to write, so there are no materials, and it should not write a material group.")
+        self.assertDictEqual(result, {}, "There are no materials, so nothing gets an index assigned.")
+
     def test_write_objects_none(self):
         """
         Tests writing objects when there are no objects in the scene.
