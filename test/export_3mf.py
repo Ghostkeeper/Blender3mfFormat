@@ -189,6 +189,7 @@ class TestExport3MF(unittest.TestCase):
         self.assertEqual(len(base_elements), 1, "There must be a <base> tag, since there is a material on this object.")
         base_element = base_elements[0]
         self.assertEqual(base_element.attrib[f"{{{threemf_default_namespace}}}name"], "Navel lint")
+        self.assertDictEqual(result, {"Navel lint": 0})
 
     def test_write_objects_none(self):
         """
