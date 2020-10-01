@@ -221,7 +221,9 @@ class Export3MF(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
                     colour_hex = "#%0.2X%0.2X%0.2X%0.2X" % (red, green, blue, alpha)
 
                 if basematerials_element is None:
-                    basematerials_element = xml.etree.ElementTree.SubElement(resources_element, f"{{{threemf_default_namespace}}}basematerials")
+                    basematerials_element = xml.etree.ElementTree.SubElement(resources_element, f"{{{threemf_default_namespace}}}basematerials", attrib={
+                        "id": "material0"
+                    })
                 xml.etree.ElementTree.SubElement(basematerials_element, f"{{{threemf_default_namespace}}}base", attrib={
                     f"{{{threemf_default_namespace}}}name": material_name,
                     f"{{{threemf_default_namespace}}}displaycolor": colour_hex
