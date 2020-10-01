@@ -21,6 +21,7 @@ sys.modules["bpy.types"] = unittest.mock.MagicMock()
 sys.modules["bpy.utils"] = unittest.mock.MagicMock()
 sys.modules["bpy_extras"] = unittest.mock.MagicMock()
 sys.modules["bpy_extras.io_utils"] = unittest.mock.MagicMock()
+sys.modules["bpy_extras.node_shader_utils"] = unittest.mock.MagicMock()
 sys.modules["idprop"] = unittest.mock.MagicMock()
 sys.modules["idprop.types"] = unittest.mock.MagicMock()
 

@@ -11,6 +11,7 @@ import bpy  # The Blender API.
 import bpy.props  # To define metadata properties for the operator.
 import bpy.types  # This class is an operator in Blender.
 import bpy_extras.io_utils  # Helper functions to import meshes more easily.
+import bpy_extras.node_shader_utils  # Getting correct colour spaces for materials.
 import logging  # To debug and log progress.
 import collections  # For namedtuple.
 import mathutils  # For the transformation matrices.
@@ -664,7 +665,10 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
                 # Add the material to Blender if it doesn't exist yet. Otherwise create a new material in Blender.
                 if triangle_material not in self.resource_to_material:
                     material = bpy.data.materials.new(triangle_material.name)
-                    material.diffuse_color = triangle_material.colour
+                    material.use_nodes = True
+                    principled = bpy_extras.node_shader_utils.PrincipledBSDFWrapper(material, is_readonly=False)
+                    principled.base_color = triangle_material.colour[:3]
+                    principled.alpha = triangle_material.colour[3]
                     self.resource_to_material[triangle_material] = material
                 else:
                     material = self.resource_to_material[triangle_material]
