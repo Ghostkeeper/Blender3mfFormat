@@ -228,6 +228,7 @@ class Export3MF(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
         """
         Writes a group of objects into the 3MF archive.
         :param root: An XML root element to write the objects into.
+        :param resources_element: An XML element to write resources into.
         :param blender_objects: A list of Blender objects that need to be
         written to that XML element.
         :param global_scale: A scaling factor to apply to all objects to convert
