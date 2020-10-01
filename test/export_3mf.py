@@ -228,6 +228,25 @@ class TestExport3MF(unittest.TestCase):
                 base_element = base_elements[0]
                 self.assertEqual(base_element.attrib[f"{{{threemf_default_namespace}}}displaycolor"], output)
 
+    def test_write_material_duplicate(self):
+        """
+        Test writing multiple objects that share the same material.
+        """
+        resources_element = xml.etree.ElementTree.Element(f"{{{threemf_default_namespace}}}resources")
+        material_slot = unittest.mock.MagicMock()
+        material_slot.material.name = "Putty"
+        material_slot.material.diffuse_color = (0.2, 0.4, 0.6, 1.0)
+        object1 = unittest.mock.MagicMock()
+        object1.material_slots = [material_slot]
+        object2 = unittest.mock.MagicMock()
+        object2.material_slots = [material_slot]  # Same material as object 1.
+
+        result = self.exporter.write_materials(resources_element, [object1, object2])
+
+        base_elements = list(resources_element.iterfind("3mf:basematerials/3mf:base", threemf_namespaces))
+        self.assertEqual(len(base_elements), 1, "Both objects used the same material, so there should only be 1 material written.")
+        self.assertDictEqual(result, {"Putty": 0})
+
     def test_write_objects_none(self):
         """
         Tests writing objects when there are no objects in the scene.
