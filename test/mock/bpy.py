@@ -25,3 +25,25 @@ class MockImportHelper:
 
 class MockExportHelper:
     pass
+
+class MockPrincipledBSDFWrapper:
+    """
+    Transparent wrapper for materials, replacing Blender's
+    PrincipledBSDFWrapper but then doesn't alter the colour space at all.
+    """
+    def __init__(self, material, is_readonly=False):
+        self.material = material
+
+    def __getattr__(self, item):
+        if item == "base_color":
+            return self.material.diffuse_color[:3]
+        if item == "alpha":
+            return self.material.diffuse_color[3]
+        return super().__getattribute__(item)
+
+    def __setattr__(self, item, value):
+        if item == "base_color":
+            self.material.diffuse_color[:3] = value
+        if item == "alpha":
+            self.material.diffuse_color[3] = value
+        super().__setattr__(item, value)

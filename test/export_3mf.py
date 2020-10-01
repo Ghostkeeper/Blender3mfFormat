@@ -13,7 +13,7 @@ import unittest  # To run the tests.
 import unittest.mock  # To mock away the Blender API.
 import xml.etree.ElementTree  # To construct empty documents for the functions to build elements in.
 
-from .mock.bpy import MockOperator, MockExportHelper, MockImportHelper
+from .mock.bpy import MockOperator, MockExportHelper, MockImportHelper, MockPrincipledBSDFWrapper
 
 # The import and export classes inherit from classes from the Blender API. These classes would be MagicMocks as well.
 # However their metaclasses are then also MagicMocks, but different instances of MagicMock.
@@ -21,9 +21,11 @@ from .mock.bpy import MockOperator, MockExportHelper, MockImportHelper
 # So here we need to specify that the classes that they inherit from are NOT MagicMock but just an ordinary mock object.
 import bpy.types
 import bpy_extras.io_utils
+import bpy_extras.node_shader_utils
 bpy.types.Operator = MockOperator
 bpy_extras.io_utils.ImportHelper = MockImportHelper
 bpy_extras.io_utils.ExportHelper = MockExportHelper
+bpy_extras.node_shader_utils.PrincipledBSDFWrapper = MockPrincipledBSDFWrapper
 import io_mesh_3mf.export_3mf  # Now we may safely import the unit under test.
 from io_mesh_3mf.constants import (
     threemf_content_types_location,
