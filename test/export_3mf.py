@@ -247,6 +247,33 @@ class TestExport3MF(unittest.TestCase):
         self.assertEqual(len(base_elements), 1, "Both objects used the same material, so there should only be 1 material written.")
         self.assertDictEqual(result, {"Putty": 0})
 
+    def test_write_material_multiple(self):
+        """
+        Test writing an object with multiple materials and multiple objects with
+        different materials.
+        """
+        resources_element = xml.etree.ElementTree.Element(f"{{{threemf_default_namespace}}}resources")
+        material1_slot = unittest.mock.MagicMock()
+        material1_slot.material.name = "Aerogel"
+        material1_slot.material.diffuse_color = (0.1, 0.2, 0.3, 0.4)
+        material2_slot = unittest.mock.MagicMock()
+        material2_slot.material.name = "Hydrogel"
+        material2_slot.material.diffuse_color = (0.2, 0.3, 0.4, 0.5)
+        object1 = unittest.mock.MagicMock()
+        object1.material_slots = [material1_slot, material2_slot]
+        object2 = unittest.mock.MagicMock()
+        object2.material_slots = [material2_slot]  # Same material as what's included in object 1.
+
+        result = self.exporter.write_materials(resources_element, [object1, object2])
+
+        base_elements = list(resources_element.iterfind("3mf:basematerials/3mf:base", threemf_namespaces))
+        self.assertEqual(len(base_elements), 2, "There are two materials being used, in 3 slots across different objects. But two unique materials.")
+        self.assertEqual(len(result), 2, "Since there are two materials, there must also be two mapped indices.")
+
+        # Make sure that the indices are correct.
+        for material_name, material_index in result.items():
+            self.assertEqual(base_elements[material_index].attrib[f"{{{threemf_default_namespace}}}name"], material_name, f"At index {material_index} in the order of the tags we should store material {material_name}, according to our mapping.")
+
     def test_write_objects_none(self):
         """
         Tests writing objects when there are no objects in the scene.
