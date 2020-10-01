@@ -172,6 +172,24 @@ class TestExport3MF(unittest.TestCase):
         self.assertListEqual(list(resources_element.iterfind("3mf:basematerials", threemf_namespaces)), [], "None of the objects have materials, so we should not even create an (empty) basematerials tag.")
         self.assertDictEqual(result, {}, "There are no materials, so nothing gets an index assigned.")
 
+    def test_write_material_name(self):
+        """
+        Tests writing the name of a material.
+        """
+        resources_element = xml.etree.ElementTree.Element(f"{{{threemf_default_namespace}}}resources")
+        material_slot = unittest.mock.MagicMock()
+        material_slot.material.name = "Navel lint"
+        material_slot.material.diffuse_color = (0.8, 0.8, 0.8, 0.8)
+        blender_object = unittest.mock.MagicMock()
+        blender_object.material_slots = [material_slot]
+
+        result = self.exporter.write_materials(resources_element, [blender_object])
+
+        base_elements = list(resources_element.iterfind("3mf:basematerials/3mf:base", threemf_namespaces))
+        self.assertEqual(len(base_elements), 1, "There must be a <base> tag, since there is a material on this object.")
+        base_element = base_elements[0]
+        self.assertEqual(base_element.attrib[f"{{{threemf_default_namespace}}}name"], "Navel lint")
+
     def test_write_objects_none(self):
         """
         Tests writing objects when there are no objects in the scene.
