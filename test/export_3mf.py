@@ -149,8 +149,9 @@ class TestExport3MF(unittest.TestCase):
         Tests writing objects when there are no objects in the scene.
         """
         root = xml.etree.ElementTree.Element(f"{{{threemf_default_namespace}}}model")
+        resources_element = xml.etree.ElementTree.SubElement(root, f"{{{threemf_default_namespace}}}resources")
         self.exporter.write_object_resource = unittest.mock.MagicMock()  # Record how this gets called.
-        self.exporter.write_objects(root, [], global_scale=1.0)  # Empty list of Blender objects.
+        self.exporter.write_objects(root, resources_element, [], global_scale=1.0)  # Empty list of Blender objects.
 
         self.assertListEqual(list(root.iterfind("3mf:resources/3mf:object", threemf_namespaces)), [], "There may be no objects in the document, since there were no Blender objects to write.")
         self.assertListEqual(list(root.iterfind("3mf:build/3mf:item", threemf_namespaces)), [], "There may be no build items in the document, since there were no Blender objects to write.")
@@ -161,6 +162,7 @@ class TestExport3MF(unittest.TestCase):
         Tests writing a single object into the XML document.
         """
         root = xml.etree.ElementTree.Element(f"{{{threemf_default_namespace}}}model")
+        resources_element = xml.etree.ElementTree.SubElement(root, f"{{{threemf_default_namespace}}}resources")
         self.exporter.write_object_resource = unittest.mock.MagicMock(return_value=(1, mathutils.Matrix.Identity(4)))  # Record how this gets called.
 
         # Construct an object to add.
@@ -168,13 +170,10 @@ class TestExport3MF(unittest.TestCase):
         the_object.parent = None
         the_object.type = 'MESH'
 
-        self.exporter.write_objects(root, [the_object], global_scale=1.0)
+        self.exporter.write_objects(root, resources_element, [the_object], global_scale=1.0)
 
         # Test that we've written the resource object.
-        resources_elements = list(root.iterfind("3mf:resources", threemf_namespaces))
-        self.assertEqual(len(resources_elements), 1, "There is always only one <resources> element.")
-        resources_element = resources_elements[0]
-        self.exporter.write_object_resource.assert_called_once_with(resources_element, the_object)  # The object resource must be saved.
+        self.exporter.write_object_resource.assert_called_once_with(resources_element, the_object)
 
         # Test that we've created an item.
         item_elements = list(root.iterfind("3mf:build/3mf:item", threemf_namespaces))
@@ -188,6 +187,7 @@ class TestExport3MF(unittest.TestCase):
         Tests writing one object contained inside another.
         """
         root = xml.etree.ElementTree.Element(f"{{{threemf_default_namespace}}}model")
+        resources_element = xml.etree.ElementTree.SubElement(root, f"{{{threemf_default_namespace}}}resources")
         self.exporter.write_object_resource = unittest.mock.MagicMock(return_value=(1, mathutils.Matrix.Identity(4)))  # Record how this gets called.
 
         # Construct two objects to add, one the parent of the other.
@@ -198,12 +198,9 @@ class TestExport3MF(unittest.TestCase):
         child_obj.parent = parent_obj
         child_obj.type = 'MESH'
 
-        self.exporter.write_objects(root, [parent_obj, child_obj], global_scale=1.0)
+        self.exporter.write_objects(root, resources_element, [parent_obj, child_obj], global_scale=1.0)
 
         # We may only have written one resource object, for the parent.
-        resources_elements = list(root.iterfind("3mf:resources", threemf_namespaces))
-        self.assertEqual(len(resources_elements), 1, "There is always only one <resources> element.")
-        resources_element = resources_elements[0]
         self.exporter.write_object_resource.assert_called_once_with(resources_element, parent_obj)  # We may only save the parent in the file. This takes care of children recursively.
 
         # We may only make one build item, for the parent.
@@ -215,6 +212,7 @@ class TestExport3MF(unittest.TestCase):
         Tests that Blender objects with different types get ignored.
         """
         root = xml.etree.ElementTree.Element(f"{{{threemf_default_namespace}}}model")
+        resources_element = xml.etree.ElementTree.SubElement(root, f"{{{threemf_default_namespace}}}resources")
         self.exporter.write_object_resource = unittest.mock.MagicMock(return_value=(1, mathutils.Matrix.Identity(4)))  # Record whether this gets called.
 
         # Construct an object with the wrong object type to add.
@@ -222,7 +220,7 @@ class TestExport3MF(unittest.TestCase):
         the_object.parent = None
         the_object.type = 'LIGHT'  # Lights don't get saved.
 
-        self.exporter.write_objects(root, [the_object], global_scale=1.0)
+        self.exporter.write_objects(root, resources_element, [the_object], global_scale=1.0)
 
         self.exporter.write_object_resource.assert_not_called()  # We may not call this for the "LIGHT" object.
         item_elements = list(root.iterfind("3mf:build/3mf:item", threemf_namespaces))
@@ -233,6 +231,7 @@ class TestExport3MF(unittest.TestCase):
         Tests writing two objects.
         """
         root = xml.etree.ElementTree.Element(f"{{{threemf_default_namespace}}}model")
+        resources_element = xml.etree.ElementTree.SubElement(root, f"{{{threemf_default_namespace}}}resources")
         self.exporter.write_object_resource = unittest.mock.MagicMock(side_effect=[
             (1, mathutils.Matrix.Identity(4)),
             (2, mathutils.Matrix.Identity(4))
@@ -246,12 +245,9 @@ class TestExport3MF(unittest.TestCase):
         object2.parent = None
         object2.type = 'MESH'
 
-        self.exporter.write_objects(root, [object1, object2], global_scale=1.0)
+        self.exporter.write_objects(root, resources_element, [object1, object2], global_scale=1.0)
 
         # We must have written the resource objects of both.
-        resources_elements = list(root.iterfind("3mf:resources", threemf_namespaces))
-        self.assertEqual(len(resources_elements), 1, "There is always only one <resources> element.")
-        resources_element = resources_elements[0]
         self.exporter.write_object_resource.assert_any_call(resources_element, object1)  # Both object must have had their object resources written.
         self.exporter.write_object_resource.assert_any_call(resources_element, object2)  # The order doesn't matter.
 
@@ -267,6 +263,7 @@ class TestExport3MF(unittest.TestCase):
         object itself.
         """
         root = xml.etree.ElementTree.Element(f"{{{threemf_default_namespace}}}model")
+        resources_element = xml.etree.ElementTree.SubElement(root, f"{{{threemf_default_namespace}}}resources")
         self.exporter.format_transformation = lambda x: str(x)  # The transformation formatter is not being tested here.
 
         object_transformation = mathutils.Matrix.Translation(mathutils.Vector([10, 20, 30]))  # The object itself is moved.
@@ -278,7 +275,7 @@ class TestExport3MF(unittest.TestCase):
         the_object.parent = None
         the_object.type = 'MESH'
 
-        self.exporter.write_objects(root, [the_object], global_scale=global_scale)
+        self.exporter.write_objects(root, resources_element, [the_object], global_scale=global_scale)
 
         # The build item must have the correct transformation then.
         expected_transformation = mathutils.Matrix.Scale(global_scale, 4) @ object_transformation
@@ -292,6 +289,7 @@ class TestExport3MF(unittest.TestCase):
         Tests writing build items with metadata.
         """
         root = xml.etree.ElementTree.Element(f"{{{threemf_default_namespace}}}model")
+        resources_element = xml.etree.ElementTree.SubElement(root, f"{{{threemf_default_namespace}}}resources")
         self.exporter.write_object_resource = unittest.mock.MagicMock(return_value=(1, mathutils.Matrix.Identity(4)))  # Not interested in testing this code here.
 
         # Construct an object with metadata to write.
@@ -301,7 +299,7 @@ class TestExport3MF(unittest.TestCase):
         the_object.name = "Acoustic Kitty"
         the_object["Description"] = MetadataEntry(name="Description", preserve=False, datatype="mostly fur", value="A CIA project to spy on the Soviet embassies.")
 
-        self.exporter.write_objects(root, [the_object], global_scale=1.0)
+        self.exporter.write_objects(root, resources_element, [the_object], global_scale=1.0)
 
         # Test that we've created an item with the correct metadata.
         metadatagroup_elements = list(root.iterfind("3mf:build/3mf:item/3mf:metadatagroup", threemf_namespaces))
