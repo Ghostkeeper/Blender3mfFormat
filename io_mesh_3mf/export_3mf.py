@@ -222,7 +222,7 @@ class Export3MF(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
 
                 if basematerials_element is None:
                     basematerials_element = xml.etree.ElementTree.SubElement(resources_element, f"{{{threemf_default_namespace}}}basematerials", attrib={
-                        "id": "material0"
+                        f"{{{threemf_default_namespace}}}id": "material0"
                     })
                 xml.etree.ElementTree.SubElement(basematerials_element, f"{{{threemf_default_namespace}}}base", attrib={
                     f"{{{threemf_default_namespace}}}name": material_name,
