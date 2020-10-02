@@ -26,6 +26,7 @@ class MockImportHelper:
 class MockExportHelper:
     pass
 
+
 class MockPrincipledBSDFWrapper:
     """
     Transparent wrapper for materials, replacing Blender's
