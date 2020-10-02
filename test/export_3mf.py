@@ -626,6 +626,37 @@ class TestExport3MF(unittest.TestCase):
             else:
                 self.assertFalse("We only had 'Title' and 'Description' metadata, not {name}".format(name=metadata_element.attrib["name"]))
 
+    def test_write_object_resource_common_material(self):
+        """
+        Tests writing the most common material as the default material for the
+        object.
+        """
+        self.exporter.write_vertices = unittest.mock.MagicMock()  # Mock these two subroutines for this test. Don't want to actually go and fill this with data.
+        self.exporter.write_triangles = unittest.mock.MagicMock()
+
+        resources_element = xml.etree.ElementTree.Element(f"{{{threemf_default_namespace}}}resources")
+        blender_object = unittest.mock.MagicMock()
+        blender_object.matrix_world = mathutils.Matrix.Identity(4)
+        blender_object.children = []
+        mock_material = unittest.mock.MagicMock()
+        mock_material.name = "Mock Material"
+        blender_object.material_slots = [unittest.mock.MagicMock(material=mock_material)]
+        self.exporter.material_name_to_index["Mock Material"] = 0
+
+        # Give the object a (pretend-)mesh.
+        original_vertices = [(1, 2, 3), (4, 5, 6)]
+        original_triangles = [self.mock_triangle_loop, self.mock_triangle_loop]
+        blender_object.to_mesh().vertices = original_vertices
+        blender_object.to_mesh().loop_triangles = original_triangles
+
+        _, _ = self.exporter.write_object_resource(resources_element, blender_object)
+
+        object_elements = resources_element.findall("3mf:object", namespaces=threemf_namespaces)
+        self.assertEqual(len(object_elements), 1, "We have written only one object.")
+        object_element = object_elements[0]
+        self.assertEqual(object_element.attrib[f"{{{threemf_default_namespace}}}pid"], "material0", "The material ID is hard-coded to 'material0'")
+        self.assertEqual(object_element.attrib[f"{{{threemf_default_namespace}}}pindex"], "0", "There is only one material, and it's the most common one: index 0.")
+
     def test_format_transformation_identity(self):
         """
         Tests formatting the identity matrix.
