@@ -40,7 +40,7 @@ class Export3MF(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
     # Metadata.
     bl_idname = "export_mesh.3mf"
     bl_label = "Export 3MF"
-    bl_description = "Save 3MF mesh data"
+    bl_description = "Save the current scene to 3MF"
     filename_ext = ".3mf"
 
     # Options for the user.
