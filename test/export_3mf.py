@@ -657,6 +657,47 @@ class TestExport3MF(unittest.TestCase):
         self.assertEqual(object_element.attrib[f"{{{threemf_default_namespace}}}pid"], "material0", "The material ID is hard-coded to 'material0'")
         self.assertEqual(object_element.attrib[f"{{{threemf_default_namespace}}}pindex"], "0", "There is only one material, and it's the most common one: index 0.")
 
+    def test_write_object_resource_multiple_materials(self):
+        """
+        Tests writing an object that has multiple materials, with triangles
+        overriding the material index.
+        """
+        self.exporter.write_vertices = unittest.mock.MagicMock()  # Mock these two subroutines for this test. Don't want to actually go and fill this with data.
+
+        resources_element = xml.etree.ElementTree.Element(f"{{{threemf_default_namespace}}}resources")
+        blender_object = unittest.mock.MagicMock()
+        blender_object.matrix_world = mathutils.Matrix.Identity(4)
+        blender_object.children = []
+        material1 = unittest.mock.MagicMock()
+        material1.name = "PLA"
+        material2 = unittest.mock.MagicMock()
+        material2.name = "PLB"
+        blender_object.material_slots = [unittest.mock.MagicMock(material=material1), unittest.mock.MagicMock(material=material2)]
+        self.exporter.material_name_to_index["PLA"] = 0
+        self.exporter.material_name_to_index["PLB"] = 1
+
+        # Give the object a (pretend-)mesh.
+        original_vertices = [(1, 2, 3), (4, 5, 6)]
+        original_triangles = [
+            unittest.mock.MagicMock(material_index=1),  # Index 1 is the most common one.
+            unittest.mock.MagicMock(material_index=0),
+            unittest.mock.MagicMock(material_index=1)
+        ]
+        blender_object.to_mesh().vertices = original_vertices
+        blender_object.to_mesh().loop_triangles = original_triangles
+
+        _, _ = self.exporter.write_object_resource(resources_element, blender_object)
+
+        object_elements = resources_element.findall("3mf:object", namespaces=threemf_namespaces)
+        self.assertEqual(len(object_elements), 1, "We have written only one object.")
+        object_element = object_elements[0]
+        self.assertEqual(object_element.attrib[f"{{{threemf_default_namespace}}}pid"], "material0", "The material ID is hard-coded to 'material0'")
+        self.assertEqual(object_element.attrib[f"{{{threemf_default_namespace}}}pindex"], "1", "Material with index 1 was the most common one for this object.")
+        triangles = resources_element.findall("3mf:object/3mf:mesh/3mf:triangles/3mf:triangle", namespaces=threemf_namespaces)
+        self.assertNotIn(f"{{{threemf_default_namespace}}}p1", triangles[0].attrib, "The first triangle had the index of the most common material, so it shouldn't override the material index.")
+        self.assertNotIn(f"{{{threemf_default_namespace}}}p1", triangles[2].attrib, "The third triangle had the index of the most common material, so it shouldn't override the material index.")
+        self.assertEqual(triangles[1].attrib[f"{{{threemf_default_namespace}}}p1"], "0", "This triangle had material index 0, which is not the most common material, so it must override the material index to 0.")
+
     def test_format_transformation_identity(self):
         """
         Tests formatting the identity matrix.
