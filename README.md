@@ -22,9 +22,18 @@ To install this add-on, currently you need to manually copy the source code into
 
 Usage
 ----
-When this add-on is installed, a new entry will appear under the File -> Import menu called "3D Manufacturing Format". When you click that, you'll be able to select 3MF files to import into your Blender scene.
+When this add-on is installed, a new entry will appear under the File -> Import menu called "3D Manufacturing Format". When you click that, you'll be able to select 3MF files to import into your Blender scene. A new entry will also appear under the File -> Export menu with the same name. This allows you to export your scene to a 3MF file.
 
-A new entry will also appear under the File -> Export menu with the same name. This allows you to export your scene to a 3MF file.
+![Screenshot](screenshot.png)
+
+The following options are available when importing 3MF files:
+* Scale: A scaling factor to apply to the scene after importing. All of the mesh data loaded from the 3MF files will get scaled by this factor from the origin of the coordinate system. They are not scaled individually from the centre of each mesh, but all from the coordinate origin.
+
+The following options are available when exporting to 3MF:
+* Selection only: Only export the objects that are selected. Other objects will not be included in the 3MF file.
+* Scale: A scaling factor to apply to the models in the 3MF file. The models are scaled by this factor from the coordinate origin.
+* Apply modifiers: Apply the modifiers to the mesh data before exporting. This embeds these modifiers permanently in the file. If this is disabled, the unmodified meshes will be saved to the 3MF file instead.
+* Precision: Number of decimals to use for coordinates in the 3MF file. Greater precision will result in a larger file size.
 
 Release Plan
 ----
