@@ -111,7 +111,11 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
 
             # Read the model data.
             for model_file in files_by_content_type.get(threemf_model_mimetype, []):
-                document = xml.etree.ElementTree.ElementTree(file=model_file)
+                try:
+                    document = xml.etree.ElementTree.ElementTree(file=model_file)
+                except xml.etree.ElementTree.ParseError as e:
+                    log.error(f"3MF document in {path} is malformed: {str(e)}")
+                    continue
                 if document is None:
                     # This file is corrupt or we can't read it. There is no error code to communicate this to blender though.
                     continue  # Leave the scene empty / skip this file.
