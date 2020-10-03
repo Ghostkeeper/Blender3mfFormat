@@ -8,6 +8,7 @@
 
 import base64  # To encode MustPreserve files in the Blender scene.
 import bpy  # The Blender API.
+import bpy.ops  # To adjust the camera to fit models.
 import bpy.props  # To define metadata properties for the operator.
 import bpy.types  # This class is an operator in Blender.
 import bpy_extras.io_utils  # Helper functions to import meshes more easily.
@@ -129,6 +130,14 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
 
         scene_metadata.store(bpy.context.scene)
         annotations.store()
+
+        # Zoom the camera to view the imported objects.
+        for area in bpy.context.screen.areas:
+            if area.type == 'VIEW_3D':
+                for region in area.regions:
+                    if region.type == 'WINDOW':
+                        override = {'area': area, 'region': region, 'edit_object': bpy.context.edit_object}
+                        bpy.ops.view3d.view_selected(override)
 
         log.info(f"Imported {self.num_loaded} objects from 3MF files.")
 

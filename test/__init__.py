@@ -16,6 +16,7 @@ import unittest.mock  # To mock away the Blender API.
 
 # Mock all of the Blender API packages.
 sys.modules["bpy"] = unittest.mock.MagicMock()
+sys.modules["bpy.ops"] = unittest.mock.MagicMock()
 sys.modules["bpy.props"] = unittest.mock.MagicMock()
 sys.modules["bpy.types"] = unittest.mock.MagicMock()
 sys.modules["bpy.utils"] = unittest.mock.MagicMock()
