@@ -420,9 +420,6 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
         :param root: The root node of a 3dmodel.model XML file.
         """
         for object_node in root.iterfind("./3mf:resources/3mf:object", threemf_namespaces):
-            object_type = object_node.attrib.get("type", "model")
-            if object_type in {"support", "solidsupport"}:
-                continue  # We ignore support objects.
             try:
                 objectid = object_node.attrib["id"]
             except KeyError:
@@ -450,6 +447,7 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
             if "partnumber" in object_node.attrib:
                 # Blender has no way to ensure that custom properties get preserved if a mesh is split up, but for most operations this is retained properly.
                 metadata["3mf:partnumber"] = MetadataEntry(name="3mf:partnumber", preserve=True, datatype="xs:string", value=object_node.attrib["partnumber"])
+            metadata["3mf:object_type"] = MetadataEntry(name="3mf:object_type", preserve=True, datatype="xs:string", value=object_node.attrib.get("type", "model"))
 
             self.resource_objects[objectid] = ResourceObject(vertices=vertices, triangles=triangles, materials=materials, components=components, metadata=metadata)
 

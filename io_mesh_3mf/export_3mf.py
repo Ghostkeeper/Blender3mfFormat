@@ -292,8 +292,15 @@ class Export3MF(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
         new_resource_id = self.next_resource_id
         self.next_resource_id += 1
         object_element = xml.etree.ElementTree.SubElement(resources_element, f"{{{threemf_default_namespace}}}object")
-        object_element.attrib[f"{{{threemf_default_namespace}}}type"] = "model"
         object_element.attrib[f"{{{threemf_default_namespace}}}id"] = str(new_resource_id)
+
+        metadata = Metadata()
+        metadata.retrieve(blender_object.data)
+        if "3mf:object_type" in metadata:
+            object_type = metadata["3mf:object_type"].value
+            if object_type != "model":  # Only write if not the default.
+                object_element.attrib[f"{{{threemf_default_namespace}}}type"] = object_type
+            del metadata["3mf:object_type"]
 
         if blender_object.mode == 'EDIT':
             blender_object.update_from_editmode()  # Apply recent changes made to the model.
@@ -333,7 +340,6 @@ class Export3MF(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
                 mesh_id = self.next_resource_id
                 self.next_resource_id += 1
                 mesh_object_element = xml.etree.ElementTree.SubElement(resources_element, f"{{{threemf_default_namespace}}}object")
-                mesh_object_element.attrib[f"{{{threemf_default_namespace}}}type"] = "model"
                 mesh_object_element.attrib[f"{{{threemf_default_namespace}}}id"] = str(mesh_id)
                 component_element = xml.etree.ElementTree.SubElement(components_element, f"{{{threemf_default_namespace}}}component")
                 self.num_written += 1
@@ -357,11 +363,14 @@ class Export3MF(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
             self.write_triangles(mesh_element, mesh.loop_triangles, most_common_material_list_index, blender_object.material_slots)
 
             # If the object has metadata, write that to a metadata object.
-            metadata = Metadata()
-            metadata.retrieve(blender_object.data)
             if "3mf:partnumber" in metadata:
                 mesh_object_element.attrib[f"{{{threemf_default_namespace}}}partnumber"] = metadata["3mf:partnumber"].value
                 del metadata["3mf:partnumber"]
+            if "3mf:object_type" in metadata:
+                object_type = metadata["3mf:object_type"].value
+                if object_type != "model":  # Only write if not the default.
+                    mesh_object_element.attrib[f"{{{threemf_default_namespace}}}type"] = object_type
+                del metadata["3mf:object_type"]
             if metadata:
                 metadatagroup_element = xml.etree.ElementTree.SubElement(object_element, f"{{{threemf_default_namespace}}}metadatagroup")
                 self.write_metadata(metadatagroup_element, metadata)
