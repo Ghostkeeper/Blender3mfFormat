@@ -345,7 +345,7 @@ class Export3MF(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
             # Find the most common material for this mesh, for maximum compression.
             material_indices = [triangle.material_index for triangle in mesh.loop_triangles]
             most_common_material_list_index = 0  # If there are no triangles, we provide 0 as index, but it'll not get read by write_triangles either then.
-            if material_indices:
+            if material_indices and blender_object.material_slots:
                 counter = collections.Counter(material_indices)
                 most_common_material_object_index = counter.most_common(1)[0][0]  # Is an index from the MeshLoopTriangle, referring to the list of materials attached to the Blender object.
                 most_common_material = blender_object.material_slots[most_common_material_object_index].material
@@ -451,9 +451,10 @@ class Export3MF(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
             triangle_element.attrib[v2_name] = str(triangle.vertices[1])
             triangle_element.attrib[v3_name] = str(triangle.vertices[2])
 
-            material_index = self.material_name_to_index[material_slots[triangle.material_index].material.name]  # Convert to index in our global list.
-            if material_index != object_material_list_index:  # Not equal to the index that our parent object was written with, so we must override it here.
-                triangle_element.attrib[p1_name] = str(material_index)
+            if triangle.material_index < len(material_slots):
+                material_index = self.material_name_to_index[material_slots[triangle.material_index].material.name]  # Convert to index in our global list.
+                if material_index != object_material_list_index:  # Not equal to the index that our parent object was written with, so we must override it here.
+                    triangle_element.attrib[p1_name] = str(material_index)
 
     def format_number(self, number, decimals):
         """
