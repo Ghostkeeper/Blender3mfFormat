@@ -693,6 +693,8 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
         bpy.context.view_layer.objects.active = blender_object
         blender_object.select_set(True)
         metadata.store(blender_object)
+        if "3mf:object_type" in resource_object.metadata and resource_object.metadata["3mf:object_type"].value in {"solidsupport", "support"}:  # Don't render support meshes.
+            blender_object.hide_render = True
 
         # Recurse for all components.
         for component in resource_object.components:
