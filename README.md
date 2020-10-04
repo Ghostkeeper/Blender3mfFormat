@@ -8,17 +8,11 @@ Installation
 ----
 This add-on requires Blender 2.80 or newer.
 
-To install this add-on, currently you need to manually copy the source code into Blender's add-ons folder. Here is how you do that:
-1. Download the source code from the [latest release](https://github.com/Ghostkeeper/Blender3mfFormat/releases/latest). You can find it under "Assets", or use the Clone or Download button for the latest source version.
-2. Extract the `io_mesh_3mf` folder in the zip archive to Blender's add-ons folder. The location of that folder varies depending on your operating system:
-    * Windows XP: `C:\Users\%username%\Application Data\Blender Foundation\Blender\<Blender version>\scripts\addons`
-    * Windows 7 and newer: `C:\Users\%username%\AppData\Roaming\Blender Foundation\Blender\<Blender version>\scripts\addons`
-    * MacOS: `/Users/$USER/Library/Application\ Support/Blender/<Blender version>/scripts/addons`
-    * Linux: `~/.config/blender/<Blender version>/scripts/addons`
-3. (Re)start Blender.
-4. Go to Edit -> Preferences and open the Add-ons tab on the left.
-5. As this addon is still under testing, make sure the "Testing" option/button (next to Official and Community) is selected.
-5. Make sure that the add-on called "Import-Export: 3MF format" is enabled (note: if entering into the search box, exclude the Import-Export text as this is the category and not part of the addon name, i.e. just search for 3mf and you should find it).
+To install this add-on, currently you need to tell Blender where to find a .zip archive with the add-on inside.
+1. Download the latest release from the [releases page](https://github.com/Ghostkeeper/Blender3mfFormat/releases/latest). This is a .zip archive.
+2. In Blender, go to Edit -> Preferences and open the Add-ons tab on the left.
+3. Click on the Install... button at the top. Navigate to the .zip you downloaded.
+4. Under the "Community" category, find the add-on called "Import-Export: 3MF format". Make sure that it's enabled. (Note: If searching with the search box, exclude the "Import-Export" text since this is the category, not part of the add-on name. Just search for "3MF" instead.)
 
 Usage
 ----
