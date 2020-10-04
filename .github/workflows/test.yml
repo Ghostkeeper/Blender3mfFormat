@@ -23,4 +23,4 @@ jobs:
       - name: Test
         run: python3 -m unittest test
       - name: Code style
-        run: python3 -m pycodestyle --ignore=E402,E501 .
+        run: python3 -m pycodestyle --ignore=E402 --max-line-length=120 .

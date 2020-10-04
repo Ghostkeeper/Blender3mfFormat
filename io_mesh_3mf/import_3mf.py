@@ -1,8 +1,13 @@
 # Blender add-on to import and export 3MF files.
 # Copyright (C) 2020 Ghostkeeper
-# This add-on is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
-# This add-on is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for details.
-# You should have received a copy of the GNU Affero General Public License along with this plug-in. If not, see <https://gnu.org/licenses/>.
+# This add-on is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General
+# Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option)
+# any later version.
+# This add-on is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
+# warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for
+# details.
+# You should have received a copy of the GNU Affero General Public License along with this plug-in. If not, see
+# <https://gnu.org/licenses/>.
 
 # <pep8 compliant>
 
@@ -36,7 +41,12 @@ from .unit_conversions import blender_to_metre, threemf_to_metre  # To convert t
 
 log = logging.getLogger(__name__)
 
-ResourceObject = collections.namedtuple("ResourceObject", ["vertices", "triangles", "materials", "components", "metadata"])
+ResourceObject = collections.namedtuple("ResourceObject", [
+    "vertices",
+    "triangles",
+    "materials",
+    "components",
+    "metadata"])
 Component = collections.namedtuple("Component", ["resource_object", "transformation"])
 ResourceMaterial = collections.namedtuple("ResourceMaterial", ["name", "colour"])
 
@@ -65,19 +75,22 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
         """
         super().__init__()
         self.resource_objects = {}  # Dictionary mapping resource IDs to ResourceObjects.
-        self.resource_materials = {}  # Dictionary mapping resource IDs to dictionaries mapping indexes to ResourceMaterial objects.
-        self.resource_to_material = {}  # Which of our resource materials already exists in the Blender scene as a Blender material.
+
+        # Dictionary mapping resource IDs to dictionaries mapping indexes to ResourceMaterial objects.
+        self.resource_materials = {}
+
+        # Which of our resource materials already exists in the Blender scene as a Blender material.
+        self.resource_to_material = {}
+
         self.num_loaded = 0
 
     def execute(self, context):
         """
         The main routine that reads out the 3MF file.
 
-        This function serves as a high-level overview of the steps involved to
-        read the 3MF file.
+        This function serves as a high-level overview of the steps involved to read the 3MF file.
         :param context: The Blender context.
-        :return: A set of status flags to indicate whether the operation
-        succeeded or not.
+        :return: A set of status flags to indicate whether the operation succeeded or not.
         """
         # Reset state.
         self.resource_objects = {}
@@ -85,8 +98,11 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
         self.resource_to_material = {}
         self.num_loaded = 0
         scene_metadata = Metadata()
-        scene_metadata.retrieve(bpy.context.scene)  # If there was already metadata in the scene, combine that with this file.
-        del scene_metadata["Title"]  # Don't load the title from the old scene. If there is a title in the imported 3MF, use that. Else, we'll not override the scene title and it gets retained.
+        # If there was already metadata in the scene, combine that with this file.
+        scene_metadata.retrieve(bpy.context.scene)
+        # Don't load the title from the old scene. If there is a title in the imported 3MF, use that.
+        # Else, we'll not override the scene title and it gets retained.
+        del scene_metadata["Title"]
         annotations = Annotations()
         annotations.retrieve()  # If there were already annotations in the scene, combine that with this file.
 
@@ -107,7 +123,7 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
             for rels_file in files_by_content_type.get(threemf_rels_mimetype, []):
                 annotations.add_rels(rels_file)
             annotations.add_content_types(files_by_content_type)
-            self.must_preserve(files_by_content_type, annotations)  # Preserve files that are labelled as 'must preserve'.
+            self.must_preserve(files_by_content_type, annotations)
 
             # Read the model data.
             for model_file in files_by_content_type.get(threemf_model_mimetype, []):
@@ -117,12 +133,14 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
                     log.error(f"3MF document in {path} is malformed: {str(e)}")
                     continue
                 if document is None:
-                    # This file is corrupt or we can't read it. There is no error code to communicate this to blender though.
+                    # This file is corrupt or we can't read it. There is no error code to communicate this to Blender
+                    # though.
                     continue  # Leave the scene empty / skip this file.
                 root = document.getroot()
                 if not self.is_supported(root.attrib.get("requiredextensions", "")):
                     log.warning(f"3MF document in {path} requires unknown extensions.")
-                    # Still continue processing even though the spec says not to. Our aim is to retrieve whatever information we can.
+                    # Still continue processing even though the spec says not to. Our aim is to retrieve whatever
+                    # information we can.
 
                 scale_unit = self.unit_scale(context, root)
                 self.resource_objects = {}
@@ -170,8 +188,10 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
             for path, mime_type in mime_types.items():
                 if mime_type not in result:
                     result[mime_type] = []
-                result[mime_type].append(archive.open(path))  # Zipfile can open an infinite number of streams at the same time. Don't worry about it.
-        except (zipfile.BadZipFile, EnvironmentError) as e:  # File is corrupt, or the OS prevents us from reading it (doesn't exist, no permissions, etc.)
+                # Zipfile can open an infinite number of streams at the same time. Don't worry about it.
+                result[mime_type].append(archive.open(path))
+        except (zipfile.BadZipFile, EnvironmentError) as e:
+            # File is corrupt, or the OS prevents us from reading it (doesn't exist, no permissions, etc.)
             log.error(f"Unable to read archive: {e}")
             return result
         return result
@@ -180,18 +200,15 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
         """
         Read the content types from a 3MF archive.
 
-        The output of this reading is a list of MIME types that are each mapped
-        to a regular expression that matches on the file paths within the
-        archive that could contain this content type. This encodes both types of
-        descriptors for the content types that can occur in the content types
-        document: Extensions and full paths.
+        The output of this reading is a list of MIME types that are each mapped to a regular expression that matches on
+        the file paths within the archive that could contain this content type. This encodes both types of descriptors
+        for the content types that can occur in the content types document: Extensions and full paths.
 
-        The output is ordered in priority. Matches that should be evaluated
-        first will be put in the front of the output list.
+        The output is ordered in priority. Matches that should be evaluated first will be put in the front of the output
+        list.
         :param archive: The 3MF archive to read the contents from.
-        :return: A list of tuples, in order of importance, where the first
-        element describes a regex of paths that match, and the second element is
-        the MIME type string of the content type.
+        :return: A list of tuples, in order of importance, where the first element describes a regex of paths that
+        match, and the second element is the MIME type string of the content type.
         """
         namespaces = {"ct": "http://schemas.openxmlformats.org/package/2006/content-types"}
         result = []
@@ -201,7 +218,9 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
                 try:
                     root = xml.etree.ElementTree.ElementTree(file=f)
                 except xml.etree.ElementTree.ParseError as e:
-                    log.warning(f"{threemf_content_types_location} has malformed XML (position {e.position[0]}:{e.position[1]}).")
+                    log.warning(
+                        f"{threemf_content_types_location} has malformed XML"
+                        f"(position {e.position[0]}:{e.position[1]}).")
                     root = None
 
                 if root is not None:
@@ -234,14 +253,12 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
         """
         Assign a MIME type to each file in the archive.
 
-        The MIME types are obtained through the content types file from the
-        archive. This content types file itself is not in the result though.
+        The MIME types are obtained through the content types file from the archive. This content types file itself is
+        not in the result though.
         :param archive: A 3MF archive with files to assign content types to.
-        :param content_types: The content types for files in that archive, in
-        order of priority.
-        :return: A dictionary mapping all file paths in the archive to a content
-        types. If the content type for a file is unknown, the content type will
-        be an empty string.
+        :param content_types: The content types for files in that archive, in order of priority.
+        :return: A dictionary mapping all file paths in the archive to a content types. If the content type for a file
+        is unknown, the content type will be an empty string.
         """
         result = {}
         for file_info in archive.filelist:
@@ -259,23 +276,18 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
 
     def must_preserve(self, files_by_content_type, annotations):
         """
-        Preserves files that are marked with the 'MustPreserve' relationship and
-        PrintTickets.
+        Preserves files that are marked with the 'MustPreserve' relationship and PrintTickets.
 
-        These files are saved in the Blender context as text files in a hidden
-        folder. If the preserved files are in conflict with previously loaded
-        3MF archives (same file path, different content) then they will not be
+        These files are saved in the Blender context as text files in a hidden folder. If the preserved files are in
+        conflict with previously loaded 3MF archives (same file path, different content) then they will not be
         preserved.
 
-        Archived files are stored in Base85 encoding to allow storing arbitrary
-        files, even binary files. This sadly means that the file size will
-        increase by about 25%, and that the files are not human-readable any
-        more when opened in Blender, even if they were originally
-        human-readable.
-        :param files_by_content_type: The files in this 3MF archive, by content
-        type. They must be provided by content type because that is how the
-        ``read_archive`` function stores them, which is not ideal. But this
-        function will sort that out.
+        Archived files are stored in Base85 encoding to allow storing arbitrary files, even binary files. This sadly
+        means that the file size will increase by about 25%, and that the files are not human-readable any more when
+        opened in Blender, even if they were originally human-readable.
+        :param files_by_content_type: The files in this 3MF archive, by content type. They must be provided by content
+        type because that is how the ``read_archive`` function stores them, which is not ideal. But this function will
+        sort that out.
         :param annotations: Collection of annotations gathered so far.
         """
         preserved_files = set()  # Find all files which must be preserved according to the annotations.
@@ -297,10 +309,14 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
                     filename = ".3mf_preserved/" + file.name
                     if filename in bpy.data.texts:
                         if bpy.data.texts[filename].as_string() == conflicting_mustpreserve_contents:
-                            continue  # This file was previously already in conflict. The new file will always be in conflict with one of the previous files.
-                    file_contents = base64.b85encode(file.read()).decode('UTF-8')  # Encode as Base85 so that the file can be saved in Blender's Text objects.
+                            # This file was previously already in conflict. The new file will always be in conflict with
+                            # one of the previous files.
+                            continue
+                    # Encode as Base85 so that the file can be saved in Blender's Text objects.
+                    file_contents = base64.b85encode(file.read()).decode('UTF-8')
                     if filename in bpy.data.texts:
-                        if bpy.data.texts[filename].as_string() == file_contents:  # File contents are EXACTLY the same, so the file is not in conflict.
+                        if bpy.data.texts[filename].as_string() == file_contents:
+                            # File contents are EXACTLY the same, so the file is not in conflict.
                             continue  # But we also don't need to re-add the same file then.
                         else:  # Same file exists with different contents, so they are in conflict.
                             bpy.data.texts[filename].clear()
@@ -313,8 +329,8 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
     def is_supported(self, required_extensions):
         """
         Determines if a document is supported by this add-on.
-        :param required_extensions: The value of the `requiredextensions`
-        attribute of the root node of the XML document.
+        :param required_extensions: The value of the `requiredextensions` attribute of the root node of the XML
+        document.
         :return: `True` if the document is supported, or `False` if it's not.
         """
         extensions = required_extensions.split(" ")
@@ -323,15 +339,12 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
 
     def unit_scale(self, context, root):
         """
-        Get the scaling factor we need to use for this document, according to
-        its unit.
+        Get the scaling factor we need to use for this document, according to its unit.
         :param context: The Blender context.
         :param root: An ElementTree root element containing the entire 3MF file.
-        :return: Floating point value that we need to scale this model by. A
-        small number (<1) means that we need to make the coordinates in Blender
-        smaller than the coordinates in the file. A large number (>1) means we
-        need to make the coordinates in Blender larger than the coordinates in
-        the file.
+        :return: Floating point value that we need to scale this model by. A small number (<1) means that we need to
+        make the coordinates in Blender smaller than the coordinates in the file. A large number (>1) means we need to
+        make the coordinates in Blender larger than the coordinates in the file.
         """
         scale = self.global_scale
 
@@ -348,11 +361,10 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
     def read_metadata(self, node, original_metadata=None):
         """
         Reads the metadata tags from a metadata group.
-        :param node: A node in the 3MF document that contains <metadata> tags.
-        This can be either a root node, or a <metadatagroup> node.
-        :param original_metadata: If there was already metadata for this context
-        from other documents, you can provide that metadata here. The metadata
-        of those documents will be combined then.
+        :param node: A node in the 3MF document that contains <metadata> tags. This can be either a root node, or a
+        <metadatagroup> node.
+        :param original_metadata: If there was already metadata for this context from other documents, you can provide
+        that metadata here. The metadata of those documents will be combined then.
         :return: A `Metadata` object.
         """
         if original_metadata is not None:
@@ -366,7 +378,9 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
                 continue  # This attribute has no name, so there's no key by which I can save the metadata.
             name = metadata_node.attrib["name"]
             preserve_str = metadata_node.attrib.get("preserve", "0")
-            preserve = preserve_str != "0" and preserve_str.lower() != "false"  # We don't use this ourselves since we always preserve, but the preserve attribute itself will also be preserved.
+            # We don't use this ourselves since we always preserve, but the preserve attribute itself will also be
+            # preserved.
+            preserve = preserve_str != "0" and preserve_str.lower() != "false"
             datatype = metadata_node.attrib.get("type", "")
             value = metadata_node.text
 
@@ -379,8 +393,7 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
         """
         Read out all of the material resources from the 3MF document.
 
-        The materials will be stored in `self.resource_materials` until it gets
-        used to build the items.
+        The materials will be stored in `self.resource_materials` until it gets used to build the items.
         :param root: The root of an XML document that may contain materials.
         """
         for basematerials_item in root.iterfind("./3mf:resources/3mf:basematerials", threemf_namespaces):
@@ -393,10 +406,12 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
                 log.warning(f"Duplicate material ID: {material_id}")
                 continue
 
-            self.resource_materials[material_id] = {}  # Use a dictionary mapping indices to resources, because some indices may be skipped due to being invalid.
+            # Use a dictionary mapping indices to resources, because some indices may be skipped due to being invalid.
+            self.resource_materials[material_id] = {}
             index = 0
 
-            for base_item in basematerials_item.iterfind("./3mf:base", threemf_namespaces):  # "Base" must be the stupidest name for a material resource. Oh well.
+            # "Base" must be the stupidest name for a material resource. Oh well.
+            for base_item in basematerials_item.iterfind("./3mf:base", threemf_namespaces):
                 name = base_item.attrib.get("name", "3MF Material")
                 colour = base_item.attrib.get("displaycolor")
                 if colour is not None:
@@ -447,7 +462,9 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
                     index = int(pindex)
                     material = self.resource_materials[pid][index]
                 except KeyError:
-                    log.warning(f"Object with ID {objectid} refers to material collection {pid} with index {pindex} which doesn't exist.")
+                    log.warning(
+                        f"Object with ID {objectid} refers to material collection {pid} with index {pindex}"
+                        f"which doesn't exist.")
                 except ValueError:
                     log.warning(f"Object with ID {objectid} specifies material index {pindex}, which is not integer.")
 
@@ -458,22 +475,34 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
             for metadata_node in object_node.iterfind("./3mf:metadatagroup", threemf_namespaces):
                 metadata = self.read_metadata(metadata_node, metadata)
             if "partnumber" in object_node.attrib:
-                # Blender has no way to ensure that custom properties get preserved if a mesh is split up, but for most operations this is retained properly.
-                metadata["3mf:partnumber"] = MetadataEntry(name="3mf:partnumber", preserve=True, datatype="xs:string", value=object_node.attrib["partnumber"])
-            metadata["3mf:object_type"] = MetadataEntry(name="3mf:object_type", preserve=True, datatype="xs:string", value=object_node.attrib.get("type", "model"))
+                # Blender has no way to ensure that custom properties get preserved if a mesh is split up, but for most
+                # operations this is retained properly.
+                metadata["3mf:partnumber"] = MetadataEntry(
+                    name="3mf:partnumber",
+                    preserve=True,
+                    datatype="xs:string",
+                    value=object_node.attrib["partnumber"])
+            metadata["3mf:object_type"] = MetadataEntry(
+                name="3mf:object_type",
+                preserve=True,
+                datatype="xs:string",
+                value=object_node.attrib.get("type", "model"))
 
-            self.resource_objects[objectid] = ResourceObject(vertices=vertices, triangles=triangles, materials=materials, components=components, metadata=metadata)
+            self.resource_objects[objectid] = ResourceObject(
+                vertices=vertices,
+                triangles=triangles,
+                materials=materials,
+                components=components,
+                metadata=metadata)
 
     def read_vertices(self, object_node):
         """
         Reads out the vertices from an XML node of an object.
 
-        If any vertex is corrupt, like with a coordinate missing or not proper
-        floats, then the 0 coordinate will be used. This is to prevent messing
-        up the list of indices.
+        If any vertex is corrupt, like with a coordinate missing or not proper floats, then the 0 coordinate will be
+        used. This is to prevent messing up the list of indices.
         :param object_node: An <object> element from the 3dmodel.model file.
-        :return: List of vertices in that object. Each vertex is a tuple of 3
-        floats for X, Y and Z.
+        :return: List of vertices in that object. Each vertex is a tuple of 3 floats for X, Y and Z.
         """
         result = []
         for vertex in object_node.iterfind("./3mf:mesh/3mf:vertices/3mf:vertex", threemf_namespaces):
@@ -500,19 +529,14 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
         """
         Reads out the triangles from an XML node of an object.
 
-        These triangles always consist of 3 vertices each. Each vertex is an
-        index to the list of vertices read previously. The triangle also
-        contains an associated material, or None if the triangle gets no
-        material.
+        These triangles always consist of 3 vertices each. Each vertex is an index to the list of vertices read
+        previously. The triangle also contains an associated material, or None if the triangle gets no material.
         :param object_node: An <object> element from the 3dmodel.model file.
-        :param default_material: If the triangle specifies no material, it
-        should get this material. May be `None` if the model specifies no
-        material.
-        :param material_pid: Triangles that specify a material index will get
-        their material from this material group.
-        :return: Two lists of equal length. The first lists the vertices of each
-        triangle, which are 3-tuples of integers referring to the first, second
-        and third vertex of the triangle. The second list contains a material
+        :param default_material: If the triangle specifies no material, it should get this material. May be `None` if
+        the model specifies no material.
+        :param material_pid: Triangles that specify a material index will get their material from this material group.
+        :return: Two lists of equal length. The first lists the vertices of each triangle, which are 3-tuples of
+        integers referring to the first, second and third vertex of the triangle. The second list contains a material
         for each triangle, or `None` if the triangle doesn't get a material.
         """
         vertices = []
@@ -535,7 +559,8 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
                     try:
                         material = self.resource_materials[pid][int(p1)]
                     except KeyError as e:
-                        log.warning(f"Material {e} is missing.")  # Sorry. It's hard to give an exception more specific than this.
+                        # Sorry. It's hard to give an exception more specific than this.
+                        log.warning(f"Material {e} is missing.")
                         material = default_material
                     except ValueError as e:
                         log.warning(f"Material index is not an integer: {e}")
@@ -555,8 +580,8 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
         """
         Reads out the components from an XML node of an object.
 
-        These components refer to other resource objects, with a transformation
-        applied. They will eventually appear in the scene as sub-objects.
+        These components refer to other resource objects, with a transformation applied. They will eventually appear in
+        the scene as sub-objects.
         :param object_node: An <object> element from the 3dmodel.model file.
         :return: List of components in this object node.
         """
@@ -634,7 +659,11 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
             for metadata_node in build_item.iterfind("./3mf:metadatagroup", threemf_namespaces):
                 metadata = self.read_metadata(metadata_node, metadata)
             if "partnumber" in build_item.attrib:
-                metadata["3mf:partnumber"] = MetadataEntry(name="3mf:partnumber", preserve=True, datatype="xs:string", value=build_item.attrib["partnumber"])
+                metadata["3mf:partnumber"] = MetadataEntry(
+                    name="3mf:partnumber",
+                    preserve=True,
+                    datatype="xs:string",
+                    value=build_item.attrib["partnumber"])
 
             transform = mathutils.Matrix.Scale(scale_unit, 4)
             transform @= self.parse_transformation(build_item.attrib.get("transform", ""))
@@ -645,20 +674,17 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
         """
         Converts a resource object into a Blender object.
 
-        This resource object may refer to components that need to be built
-        along. These components may again have subcomponents, and so on. These
-        will be built recursively. A "stack trace" will be traced in order to
-        prevent going into an infinite recursion.
+        This resource object may refer to components that need to be built along. These components may again have
+        subcomponents, and so on. These will be built recursively. A "stack trace" will be traced in order to prevent
+        going into an infinite recursion.
         :param resource_object: The resource object that needs to be converted.
-        :param transformation: A transformation matrix to apply to this resource
-        object.
+        :param transformation: A transformation matrix to apply to this resource object.
         :param metadata: A collection of metadata belonging to this build item.
-        :param objectid_stack_trace: A list of all object IDs that have been
-        processed so far, including the object ID we're processing now.
-        :param parent: The resulting object must be marked as a child of this
-        Blender object.
-        :return: A sequence of Blender objects. These objects may be "nested" in
-        the sense that they sometimes refer to other objects as their parents.
+        :param objectid_stack_trace: A list of all object IDs that have been processed so far, including the object ID
+        we're processing now.
+        :param parent: The resulting object must be marked as a child of this Blender object.
+        :return: A sequence of Blender objects. These objects may be "nested" in the sense that they sometimes refer to
+        other objects as their parents.
         """
         # Create a mesh if there is mesh data here.
         mesh = None
@@ -668,7 +694,8 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
             mesh.update()
             resource_object.metadata.store(mesh)
 
-            materials_to_index = {}  # Mapping resource materials to indices in the list of materials for this specific mesh.
+            # Mapping resource materials to indices in the list of materials for this specific mesh.
+            materials_to_index = {}
             for triangle_index, triangle_material in enumerate(resource_object.materials):
                 if triangle_material is None:
                     continue
@@ -706,12 +733,15 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
         bpy.context.view_layer.objects.active = blender_object
         blender_object.select_set(True)
         metadata.store(blender_object)
-        if "3mf:object_type" in resource_object.metadata and resource_object.metadata["3mf:object_type"].value in {"solidsupport", "support"}:  # Don't render support meshes.
+        if "3mf:object_type" in resource_object.metadata\
+                and resource_object.metadata["3mf:object_type"].value in {"solidsupport", "support"}:
+            # Don't render support meshes.
             blender_object.hide_render = True
 
         # Recurse for all components.
         for component in resource_object.components:
-            if component.resource_object in objectid_stack_trace:  # These object IDs refer to each other in a loop. Don't go in there!
+            if component.resource_object in objectid_stack_trace:
+                # These object IDs refer to each other in a loop. Don't go in there!
                 log.warning(f"Recursive components in object ID: {component.resource_object}")
                 continue
             try:

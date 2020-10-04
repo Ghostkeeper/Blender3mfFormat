@@ -1,8 +1,13 @@
 # Blender add-on to import and export 3MF files.
 # Copyright (C) 2020 Ghostkeeper
-# This add-on is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
-# This add-on is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for details.
-# You should have received a copy of the GNU Affero General Public License along with this plug-in. If not, see <https://gnu.org/licenses/>.
+# This add-on is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General
+# Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any
+# later version.
+# This add-on is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
+# warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for
+# details.
+# You should have received a copy of the GNU Affero General Public License along with this plug-in. If not, see
+# <https://gnu.org/licenses/>.
 
 # <pep8 compliant>
 
@@ -19,7 +24,8 @@ from .mock.bpy import MockOperator, MockExportHelper, MockImportHelper
 
 # The import and export classes inherit from classes from the Blender API. These classes would be MagicMocks as well.
 # However their metaclasses are then also MagicMocks, but different instances of MagicMock.
-# Python sees this as that the metaclasses that ImportHelper/ExportHelper inherits from are not the same and raises an error.
+# Python sees this as that the metaclasses that ImportHelper/ExportHelper inherits from are not the same and raises an
+# error.
 # So here we need to specify that the classes that they inherit from are NOT MagicMock but just an ordinary mock object.
 import bpy.types
 import bpy_extras.io_utils
@@ -33,7 +39,8 @@ from io_mesh_3mf.constants import (
     threemf_model_mimetype,
     threemf_rels_mimetype
 )
-from io_mesh_3mf.metadata import Metadata, MetadataEntry  # To compare the metadata objects created by the code under test.
+# To compare the metadata objects created by the code under test.
+from io_mesh_3mf.metadata import Metadata, MetadataEntry
 
 
 class TestImport3MF(unittest.TestCase):
@@ -63,7 +70,8 @@ class TestImport3MF(unittest.TestCase):
             components=[],
             metadata=Metadata()
         )
-        self.black_hole = io.BytesIO()  # A dummy stream to write to, in order to construct archives to import from in-memory.
+        # A dummy stream to write to, in order to construct archives to import from in-memory.
+        self.black_hole = io.BytesIO()
 
         self.resources_path = os.path.join(os.path.dirname(__file__), "resources")
 
@@ -75,7 +83,10 @@ class TestImport3MF(unittest.TestCase):
         """
         Tests reading an archive file that doesn't exist.
         """
-        self.assertEqual(self.importer.read_archive("some/nonexistent_path"), {}, "On an environment error, return an empty dictionary.")
+        self.assertEqual(
+            self.importer.read_archive("some/nonexistent_path"),
+            {},
+            "On an environment error, return an empty dictionary.")
 
     def test_read_archive_corrupt(self):
         """
@@ -89,7 +100,10 @@ class TestImport3MF(unittest.TestCase):
         Tests reading an archive file that doesn't have the default model file.
         """
         archive_path = os.path.join(self.resources_path, "empty_archive.zip")
-        self.assertEqual(self.importer.read_archive(archive_path), {}, "There are no files in this archive, so don't return any types.")
+        self.assertEqual(
+            self.importer.read_archive(archive_path),
+            {},
+            "There are no files in this archive, so don't return any types.")
 
     def test_read_archive_default_position(self):
         """
@@ -97,12 +111,18 @@ class TestImport3MF(unittest.TestCase):
         """
         archive_path = os.path.join(self.resources_path, "only_3dmodel_file.3mf")
         result = self.importer.read_archive(archive_path)
-        self.assertIn(threemf_model_mimetype, result, "There should be a listing for the MIME type of the model, since there was a model in this archive.")
+        self.assertIn(
+            threemf_model_mimetype,
+            result,
+            "There should be a listing for the MIME type of the model, since there was a model in this archive.")
         model_files = result[threemf_model_mimetype]
         self.assertEqual(len(model_files), 1, "There was just 1 model file.")
 
         document = xml.etree.ElementTree.ElementTree(file=model_files[0])
-        self.assertEqual(document.getroot().tag, f"{{{threemf_default_namespace}}}model", "The file is an XML document with a <model> tag in the root.")
+        self.assertEqual(
+            document.getroot().tag,
+            f"{{{threemf_default_namespace}}}model",
+            "The file is an XML document with a <model> tag in the root.")
 
     def test_read_content_types_missing(self):
         """
@@ -111,23 +131,40 @@ class TestImport3MF(unittest.TestCase):
         archive = zipfile.ZipFile(self.black_hole, 'w')
         result = self.importer.read_content_types(archive)  # At this point the archive is completely empty.
 
-        # In order to verify if the regexes are correct, transform the output to list the regex pattern rather than the compiled unit.
+        # In order to verify if the regexes are correct, transform the output to list the regex pattern rather than the
+        # compiled unit.
         result = [(regex.pattern, mimetype) for regex, mimetype in result]
-        self.assertIn((r".*\.rels", threemf_rels_mimetype), result, "The relationships MIME type must always be present for robustness, even if the file is broken.")
-        self.assertIn((r".*\.model", threemf_model_mimetype), result, "The model MIME type must always be present for robustness, even if the file is broken.")
+        self.assertIn(
+            (r".*\.rels", threemf_rels_mimetype),
+            result,
+            "The relationships MIME type must always be present for robustness, even if the file is broken.")
+        self.assertIn(
+            (r".*\.model", threemf_model_mimetype),
+            result,
+            "The model MIME type must always be present for robustness, even if the file is broken.")
 
     def test_read_content_types_invalid_xml(self):
         """
         Tests reading an archive when the content types file is invalid XML.
         """
         archive = zipfile.ZipFile(self.black_hole, 'w')
-        archive.writestr(threemf_content_types_location, "I do one situp a day. Half of it when I get up out of bed, the other half when I lay down.")  # Not a valid XML document.
+        archive.writestr(
+            threemf_content_types_location,
+            "I do one situp a day. Half of it when I get up out of bed, the other half when I lay down.")
+        # Not a valid XML document.
         result = self.importer.read_content_types(archive)
 
-        # In order to verify if the regexes are correct, transform the output to list the regex pattern rather than the compiled unit.
+        # In order to verify if the regexes are correct, transform the output to list the regex pattern rather than the
+        # compiled unit.
         result = [(regex.pattern, mimetype) for regex, mimetype in result]
-        self.assertIn((r".*\.rels", threemf_rels_mimetype), result, "The relationships MIME type must always be present for robustness, even if the file is broken.")
-        self.assertIn((r".*\.model", threemf_model_mimetype), result, "The model MIME type must always be present for robustness, even if the file is broken.")
+        self.assertIn(
+            (r".*\.rels", threemf_rels_mimetype),
+            result,
+            "The relationships MIME type must always be present for robustness, even if the file is broken.")
+        self.assertIn(
+            (r".*\.model", threemf_model_mimetype),
+            result,
+            "The model MIME type must always be present for robustness, even if the file is broken.")
 
     def test_read_content_types_empty(self):
         """
@@ -138,10 +175,18 @@ class TestImport3MF(unittest.TestCase):
         archive.writestr(threemf_content_types_location, "")  # Completely empty file.
         result = self.importer.read_content_types(archive)
 
-        # In order to verify if the regexes are correct, transform the output to list the regex pattern rather than the compiled unit.
+        # In order to verify if the regexes are correct, transform the output to list the regex pattern rather than the
+        # compiled unit.
         result = [(regex.pattern, mimetype) for regex, mimetype in result]
-        self.assertIn((r".*\.rels", threemf_rels_mimetype), result, "The relationships MIME type must always be present for robustness, even if they weren't present in the file.")
-        self.assertIn((r".*\.model", threemf_model_mimetype), result, "The model MIME type must always be present for robustness, even if they weren't present in the file.")
+        self.assertIn(
+            (r".*\.rels", threemf_rels_mimetype),
+            result,
+            "The relationships MIME type must always be present for robustness, "
+            "even if they weren't present in the file.")
+        self.assertIn(
+            (r".*\.model", threemf_model_mimetype),
+            result,
+            "The model MIME type must always be present for robustness, even if they weren't present in the file.")
 
     def test_read_content_types_default(self):
         """
@@ -155,10 +200,19 @@ class TestImport3MF(unittest.TestCase):
 </Types>""")  # The default contents of the [Content_Types].xml document, for just the core specification.
         result = self.importer.read_content_types(archive)
 
-        # In order to verify if the regexes are correct, transform the output to list the regex pattern rather than the compiled unit.
+        # In order to verify if the regexes are correct, transform the output to list the regex pattern rather than the
+        # compiled unit.
         result = [(regex.pattern, mimetype) for regex, mimetype in result]
-        self.assertIn((r".*\.rels", threemf_rels_mimetype), result, "This is the relationships file type, which was specified in the file. It doesn't matter that it's in the output twice.")
-        self.assertIn((r".*\.model", threemf_model_mimetype), result, "This is the model file type, which was specified in the file. It doesn't matter that it's in the output twice.")
+        self.assertIn(
+            (r".*\.rels", threemf_rels_mimetype),
+            result,
+            "This is the relationships file type, which was specified in the file. "
+            "It doesn't matter that it's in the output twice.")
+        self.assertIn(
+            (r".*\.model", threemf_model_mimetype),
+            result,
+            "This is the model file type, which was specified in the file. "
+            "It doesn't matter that it's in the output twice.")
 
     def test_read_content_types_custom_defaults(self):
         """
@@ -172,13 +226,23 @@ class TestImport3MF(unittest.TestCase):
 </Types>""")  # A customised content types specification, with one default and one override.
         result = self.importer.read_content_types(archive)
 
-        # In order to verify if the regexes are correct, transform the output to list the regex pattern rather than the compiled unit.
+        # In order to verify if the regexes are correct, transform the output to list the regex pattern rather than the
+        # compiled unit.
         result = [(regex.pattern, mimetype) for regex, mimetype in result]
-        custom_index = result.index((r".*\.txt", "text/plain"))  # If this throws a ValueError, the custom default was not parsed properly.
+        # If this throws a ValueError, the custom default was not parsed properly.
+        custom_index = result.index((r".*\.txt", "text/plain"))
         rels_index = result.index((r".*\.rels", threemf_rels_mimetype))
         model_index = result.index((r".*\.model", threemf_model_mimetype))
-        self.assertLess(custom_index, rels_index, "Customised defaults must have higher priority than the fallbacks that were added in case of a corrupt [Content_Types].xml file.")
-        self.assertLess(custom_index, model_index, "Customised defaults must have higher priority than the fallbacks that were added in case of a corrupt [Content_Types].xml file.")
+        self.assertLess(
+            custom_index,
+            rels_index,
+            "Customised defaults must have higher priority than the fallbacks that were added "
+            "in case of a corrupt [Content_Types].xml file.")
+        self.assertLess(
+            custom_index,
+            model_index,
+            "Customised defaults must have higher priority than the fallbacks that were added "
+            "in case of a corrupt [Content_Types].xml file.")
 
     def test_read_content_types_custom_overrides(self):
         """
@@ -192,9 +256,11 @@ class TestImport3MF(unittest.TestCase):
 </Types>""")  # A customised content types specification, with one default and one override.
         result = self.importer.read_content_types(archive)
 
-        # In order to verify if the regexes are correct, transform the output to list the regex pattern rather than the compiled unit.
+        # In order to verify if the regexes are correct, transform the output to list the regex pattern rather than the
+        # compiled unit.
         result = [(regex.pattern, mimetype) for regex, mimetype in result]
-        override_index = result.index((r"/path/to/file\.jpg", "image/thumbnail"))  # If this throws a ValueError, the custom override was not parsed properly.
+        # If this throws a ValueError, the custom override was not parsed properly.
+        override_index = result.index((r"/path/to/file\.jpg", "image/thumbnail"))
         default_index = result.index((r".*\.txt", "text/plain"))
         rels_index = result.index((r".*\.rels", threemf_rels_mimetype))
         model_index = result.index((r".*\.model", threemf_model_mimetype))
@@ -214,15 +280,17 @@ class TestImport3MF(unittest.TestCase):
 
     def test_assign_content_types_ignore_content_types_file(self):
         """
-        Tests that the content types file is ignored in the archive. It should
-        not show up in the result.
+        Tests that the content types file is ignored in the archive. It should not show up in the result.
         """
         archive = zipfile.ZipFile(self.black_hole, 'w')
         archive.writestr(threemf_content_types_location, "")  # Contents of the file don't matter for this test.
         content_types = [(re.compile(r".*\.txt"), "text/plain")]
         result = self.importer.assign_content_types(archive, content_types)
 
-        self.assertEqual(result, {}, "The content types file in the archive should not be assigned a content type itself.")
+        self.assertEqual(
+            result,
+            {},
+            "The content types file in the archive should not be assigned a content type itself.")
 
     def test_assign_content_types_by_path(self):
         """
@@ -271,18 +339,26 @@ class TestImport3MF(unittest.TestCase):
         Tests whether the priority in the content types list is honoured.
         """
         archive = zipfile.ZipFile(self.black_hole, "w")
-        archive.writestr("some_directory/file.txt", "As the plane lands in Glasgow, passengers are reminded to set their watches back 25 years.")
+        archive.writestr(
+            "some_directory/file.txt",
+            "As the plane lands in Glasgow, passengers are reminded to set their watches back 25 years.")
         content_types = [
             (re.compile(r".*\.txt"), "First type"),
             (re.compile(r"some_directory/file.txt"), "Second type")
         ]
 
         result = self.importer.assign_content_types(archive, content_types)
-        self.assertEqual(result, {"some_directory/file.txt": "First type"}, "The first type was first in the list of content types, so that takes priority.")
+        self.assertEqual(
+            result,
+            {"some_directory/file.txt": "First type"},
+            "The first type was first in the list of content types, so that takes priority.")
 
         content_types.reverse()  # Reverse the priority. See if it's any different.
         result = self.importer.assign_content_types(archive, content_types)
-        self.assertEqual(result, {"some_directory/file.txt": "Second type"}, "Now that the priority is reversed, the second type has highest priority.")
+        self.assertEqual(
+            result,
+            {"some_directory/file.txt": "Second type"},
+            "Now that the priority is reversed, the second type has highest priority.")
 
     def test_is_supported_true(self):
         """
@@ -301,7 +377,9 @@ class TestImport3MF(unittest.TestCase):
         with unittest.mock.patch("io_mesh_3mf.import_3mf.threemf_supported_extensions", {"http://a", "http://b"}):
             for document_requirements in supported_documents:
                 with self.subTest(document_requirements=document_requirements):
-                    self.assertTrue(self.importer.is_supported(document_requirements), "These namespaces are supported (A and B are).")
+                    self.assertTrue(
+                        self.importer.is_supported(document_requirements),
+                        "These namespaces are supported (A and B are).")
 
     def test_is_supported_false(self):
         """
@@ -317,7 +395,9 @@ class TestImport3MF(unittest.TestCase):
         with unittest.mock.patch("io_mesh_3mf.import_3mf.threemf_supported_extensions", {"http://a", "http://b"}):
             for document_requirements in not_supported_documents:
                 with self.subTest(document_requirements=document_requirements):
-                    self.assertFalse(self.importer.is_supported(document_requirements), "These namespaces are not supported (only A and B are).")
+                    self.assertFalse(
+                        self.importer.is_supported(document_requirements),
+                        "These namespaces are not supported (only A and B are).")
 
     def test_unit_scale_global(self):
         """
@@ -334,7 +414,10 @@ class TestImport3MF(unittest.TestCase):
         root.attrib["unit"] = 'meter'
         context.scene.unit_settings.length_unit = 'METERS'
 
-        self.assertAlmostEqual(self.importer.unit_scale(context, root), global_scale, "The global scale must be applied directly to the output.")
+        self.assertAlmostEqual(
+            self.importer.unit_scale(context, root),
+            global_scale,
+            "The global scale must be applied directly to the output.")
 
     def test_unit_scale_scene(self):
         """
@@ -351,7 +434,10 @@ class TestImport3MF(unittest.TestCase):
         root.attrib["unit"] = 'meter'
         context.scene.unit_settings.length_unit = 'METERS'
 
-        self.assertAlmostEqual(self.importer.unit_scale(context, root), 1.0 / scene_scale, "The scene scale must be compensated for.")
+        self.assertAlmostEqual(
+            self.importer.unit_scale(context, root),
+            1.0 / scene_scale,
+            "The scene scale must be compensated for.")
 
     def test_unit_scale_conversion(self):
         """
@@ -567,11 +653,15 @@ class TestImport3MF(unittest.TestCase):
         for positive_preserve in positive_preserve_values:
             with self.subTest(preserve=positive_preserve):
                 self.assertIn(positive_preserve, result, "We added this entry.")
-                self.assertTrue(result[positive_preserve].preserve, "These are preserve values that indicate that they need to be preserved.")
+                self.assertTrue(
+                    result[positive_preserve].preserve,
+                    "These are preserve values that indicate that they need to be preserved.")
         for negative_preserve in negative_preserve_values:
             with self.subTest(preserve=negative_preserve):
                 self.assertIn(negative_preserve, result, "We added this entry.")
-                self.assertFalse(result[negative_preserve].preserve, "These are preserve values that indicate that they don't need to be preserved.")
+                self.assertFalse(
+                    result[negative_preserve].preserve,
+                    "These are preserve values that indicate that they don't need to be preserved.")
 
     def test_read_metadata_type(self):
         """
@@ -595,7 +685,9 @@ class TestImport3MF(unittest.TestCase):
         metadata_node = xml.etree.ElementTree.SubElement(object_node, f"{{{threemf_default_namespace}}}metadata")
         metadata_node.attrib["name"] = "cool"
         metadata_node.text = "definitely"
-        existing_metadata = {"original_entry": "original_value"}  # Using a dict here to mock the Metadata() object! Actual testing of the combining is done with the Metadata class tests.
+        # Using a dict here to mock the Metadata() object! Actual testing of the combining is done with the Metadata
+        # class tests.
+        existing_metadata = {"original_entry": "original_value"}
 
         result = self.importer.read_metadata(object_node, existing_metadata)
         self.assertIn("cool", result, "The new metadata entry is put in the result.")
@@ -611,20 +703,28 @@ class TestImport3MF(unittest.TestCase):
 
         self.importer.read_materials(root)
 
-        self.assertDictEqual(self.importer.resource_materials, {}, "There was no <basematerials> tag, so there should not be any materials.")
+        self.assertDictEqual(
+            self.importer.resource_materials,
+            {},
+            "There was no <basematerials> tag, so there should not be any materials.")
 
     def test_read_materials_empty(self):
         """
-        Tests reading materials from a file that has an empty <basematerials>
-        tag.
+        Tests reading materials from a file that has an empty <basematerials> tag.
         """
         root = xml.etree.ElementTree.Element(f"{{{threemf_default_namespace}}}model")
         resources = xml.etree.ElementTree.SubElement(root, f"{{{threemf_default_namespace}}}resources")
-        xml.etree.ElementTree.SubElement(resources, f"{{{threemf_default_namespace}}}basematerials", attrib={"id": "material-set"})
+        xml.etree.ElementTree.SubElement(
+            resources,
+            f"{{{threemf_default_namespace}}}basematerials",
+            attrib={"id": "material-set"})
 
         self.importer.read_materials(root)
 
-        self.assertDictEqual(self.importer.resource_materials, {}, "The <basematerials> tag was empty, so there should not be any materials.")
+        self.assertDictEqual(
+            self.importer.resource_materials,
+            {},
+            "The <basematerials> tag was empty, so there should not be any materials.")
 
     def test_read_materials_material(self):
         """
@@ -634,7 +734,10 @@ class TestImport3MF(unittest.TestCase):
         """
         root = xml.etree.ElementTree.Element(f"{{{threemf_default_namespace}}}model")
         resources = xml.etree.ElementTree.SubElement(root, f"{{{threemf_default_namespace}}}resources")
-        basematerials = xml.etree.ElementTree.SubElement(resources, f"{{{threemf_default_namespace}}}basematerials", attrib={"id": "material-set"})
+        basematerials = xml.etree.ElementTree.SubElement(
+            resources,
+            f"{{{threemf_default_namespace}}}basematerials",
+            attrib={"id": "material-set"})
         xml.etree.ElementTree.SubElement(basematerials, f"{{{threemf_default_namespace}}}base")
 
         self.importer.read_materials(root)
@@ -644,7 +747,10 @@ class TestImport3MF(unittest.TestCase):
                 0: io_mesh_3mf.import_3mf.ResourceMaterial(name="3MF Material", colour=None)
             }
         }
-        self.assertDictEqual(self.importer.resource_materials, ground_truth, "There is one material, with a default name and no colour.")
+        self.assertDictEqual(
+            self.importer.resource_materials,
+            ground_truth,
+            "There is one material, with a default name and no colour.")
 
     def test_read_materials_multiple(self):
         """
@@ -652,7 +758,10 @@ class TestImport3MF(unittest.TestCase):
         """
         root = xml.etree.ElementTree.Element(f"{{{threemf_default_namespace}}}model")
         resources = xml.etree.ElementTree.SubElement(root, f"{{{threemf_default_namespace}}}resources")
-        basematerials = xml.etree.ElementTree.SubElement(resources, f"{{{threemf_default_namespace}}}basematerials", attrib={"id": "material-set"})
+        basematerials = xml.etree.ElementTree.SubElement(
+            resources,
+            f"{{{threemf_default_namespace}}}basematerials",
+            attrib={"id": "material-set"})
         xml.etree.ElementTree.SubElement(basematerials, f"{{{threemf_default_namespace}}}base", attrib={"name": "PLA"})
         xml.etree.ElementTree.SubElement(basematerials, f"{{{threemf_default_namespace}}}base", attrib={"name": "BLA"})
 
@@ -664,20 +773,24 @@ class TestImport3MF(unittest.TestCase):
                 1: io_mesh_3mf.import_3mf.ResourceMaterial(name="BLA", colour=None)
             }
         }
-        self.assertDictEqual(self.importer.resource_materials, ground_truth, "There are two materials, each with their own names.")
+        self.assertDictEqual(
+            self.importer.resource_materials,
+            ground_truth,
+            "There are two materials, each with their own names.")
 
     def test_read_materials_colour(self):
         """
         Test reading the colour from a material.
         """
-        colour_translation = {  # Ground truth for what each colour should translate to when reading from the 3MF document.
+        # Ground truth for what each colour should translate to when reading from the 3MF document.
+        colour_translation = {
             None: None,  # Missing colour.
             "#4080C0": (0x40 / 255, 0x80 / 255, 0xC0 / 255, 1.0),  # Correct case.
             "4080C0": (0x40 / 255, 0x80 / 255, 0xC0 / 255, 1.0),  # Strictly incorrect, but we'll allow it.
             "#FFC08040": (1.0, 0xC0 / 255, 0x80 / 255, 0x40 / 255),  # Correct case with alpha.
-            "FFC08040": (1.0, 0xC0 / 255, 0x80 / 255, 0x40 / 255),  # Strictly incorrect, but we'll allow it. With alpha.
+            "FFC08040": (1.0, 0xC0 / 255, 0x80 / 255, 0x40 / 255),  # Strictly incorrect. With alpha.
             "ABCD": (0.0, 0.0, 0xAB / 255, 0xCD / 255),  # Not enough characters. Interpret as web colours.
-            "ABCDEFABCDEF": (0xEF / 255, 0xAB / 255, 0xCD / 255, 0xEF / 255),  # Too many characters. Interpret as web colours.
+            "ABCDEFABCDEF": (0xEF / 255, 0xAB / 255, 0xCD / 255, 0xEF / 255),  # Too many characters.
             "ffc080": (0xFF / 255, 0xc0 / 255, 0x80 / 255, 1.0),  # Lowercase characters.
             "": None,  # Doesn't parse.
             "3MF3MF": None  # Doesn't parse, since M is out of range for a hexadecimal number.
@@ -687,7 +800,10 @@ class TestImport3MF(unittest.TestCase):
             with self.subTest(threemf_colour=threemf_colour, blender_colour=blender_colour):
                 root = xml.etree.ElementTree.Element(f"{{{threemf_default_namespace}}}model")
                 resources = xml.etree.ElementTree.SubElement(root, f"{{{threemf_default_namespace}}}resources")
-                basematerials = xml.etree.ElementTree.SubElement(resources, f"{{{threemf_default_namespace}}}basematerials", attrib={"id": "material-set"})
+                basematerials = xml.etree.ElementTree.SubElement(
+                    resources,
+                    f"{{{threemf_default_namespace}}}basematerials",
+                    attrib={"id": "material-set"})
                 xml.etree.ElementTree.SubElement(basematerials, f"{{{threemf_default_namespace}}}base", attrib={
                     "displaycolor": threemf_colour
                 })
@@ -708,12 +824,16 @@ class TestImport3MF(unittest.TestCase):
         """
         root = xml.etree.ElementTree.Element(f"{{{threemf_default_namespace}}}model")
         resources = xml.etree.ElementTree.SubElement(root, f"{{{threemf_default_namespace}}}resources")
-        basematerials = xml.etree.ElementTree.SubElement(resources, f"{{{threemf_default_namespace}}}basematerials")  # No ID in attrib!
+        basematerials = xml.etree.ElementTree.SubElement(resources, f"{{{threemf_default_namespace}}}basematerials")
+        # No ID in attrib!
         xml.etree.ElementTree.SubElement(basematerials, f"{{{threemf_default_namespace}}}base")
 
         self.importer.read_materials(root)
 
-        self.assertDictEqual(self.importer.resource_materials, {}, "The material was not read successfully since the <basematerials> had no ID attribute.")
+        self.assertDictEqual(
+            self.importer.resource_materials,
+            {},
+            "The material was not read successfully since the <basematerials> had no ID attribute.")
 
     def test_read_materials_multiple_bases(self):
         """
@@ -723,9 +843,15 @@ class TestImport3MF(unittest.TestCase):
         """
         root = xml.etree.ElementTree.Element(f"{{{threemf_default_namespace}}}model")
         resources = xml.etree.ElementTree.SubElement(root, f"{{{threemf_default_namespace}}}resources")
-        base1 = xml.etree.ElementTree.SubElement(resources, f"{{{threemf_default_namespace}}}basematerials", attrib={"id": "set1"})
+        base1 = xml.etree.ElementTree.SubElement(
+            resources,
+            f"{{{threemf_default_namespace}}}basematerials",
+            attrib={"id": "set1"})
         xml.etree.ElementTree.SubElement(base1, f"{{{threemf_default_namespace}}}base")
-        base2 = xml.etree.ElementTree.SubElement(resources, f"{{{threemf_default_namespace}}}basematerials", attrib={"id": "set2"})
+        base2 = xml.etree.ElementTree.SubElement(
+            resources,
+            f"{{{threemf_default_namespace}}}basematerials",
+            attrib={"id": "set2"})
         xml.etree.ElementTree.SubElement(base2, f"{{{threemf_default_namespace}}}base")
 
         self.importer.read_materials(root)
@@ -738,7 +864,10 @@ class TestImport3MF(unittest.TestCase):
                 0: io_mesh_3mf.import_3mf.ResourceMaterial(name="3MF Material", colour=None)
             }
         }
-        self.assertDictEqual(self.importer.resource_materials, ground_truth, "There are two base material IDs, each with one material in it (starting each index from 0).")
+        self.assertDictEqual(
+            self.importer.resource_materials,
+            ground_truth,
+            "There are two base material IDs, each with one material in it (starting each index from 0).")
 
     def test_read_materials_duplicate_id(self):
         """
@@ -748,10 +877,21 @@ class TestImport3MF(unittest.TestCase):
         """
         root = xml.etree.ElementTree.Element(f"{{{threemf_default_namespace}}}model")
         resources = xml.etree.ElementTree.SubElement(root, f"{{{threemf_default_namespace}}}resources")
-        base1 = xml.etree.ElementTree.SubElement(resources, f"{{{threemf_default_namespace}}}basematerials", attrib={"id": "set1"})
-        xml.etree.ElementTree.SubElement(base1, f"{{{threemf_default_namespace}}}base", attrib={"name": "First material"})
-        base2 = xml.etree.ElementTree.SubElement(resources, f"{{{threemf_default_namespace}}}basematerials", attrib={"id": "set1"})  # The same ID as the other one!
-        xml.etree.ElementTree.SubElement(base2, f"{{{threemf_default_namespace}}}base", attrib={"name": "Second material"})
+        base1 = xml.etree.ElementTree.SubElement(
+            resources,
+            f"{{{threemf_default_namespace}}}basematerials",
+            attrib={"id": "set1"})
+        xml.etree.ElementTree.SubElement(
+            base1,
+            f"{{{threemf_default_namespace}}}base", attrib={"name": "First material"})
+        base2 = xml.etree.ElementTree.SubElement(
+            resources,
+            f"{{{threemf_default_namespace}}}basematerials",
+            attrib={"id": "set1"})  # The same ID as the other one!
+        xml.etree.ElementTree.SubElement(
+            base2,
+            f"{{{threemf_default_namespace}}}base",
+            attrib={"name": "Second material"})
 
         self.importer.read_materials(root)
 
@@ -768,7 +908,10 @@ class TestImport3MF(unittest.TestCase):
                 }
             }
         ]
-        self.assertIn(self.importer.resource_materials, ground_truth, "Either one of the materials must be present, not both.")
+        self.assertIn(
+            self.importer.resource_materials,
+            ground_truth,
+            "Either one of the materials must be present, not both.")
 
     def test_read_vertices_missing(self):
         """
@@ -777,7 +920,10 @@ class TestImport3MF(unittest.TestCase):
         object_node = xml.etree.ElementTree.Element(f"{{{threemf_default_namespace}}}object")
         xml.etree.ElementTree.SubElement(object_node, f"{{{threemf_default_namespace}}}mesh")
 
-        self.assertListEqual(self.importer.read_vertices(object_node), [], "There is no <vertices> element, so the resulting vertex list is empty.")
+        self.assertListEqual(
+            self.importer.read_vertices(object_node),
+            [],
+            "There is no <vertices> element, so the resulting vertex list is empty.")
 
     def test_read_vertices_empty(self):
         """
@@ -787,12 +933,14 @@ class TestImport3MF(unittest.TestCase):
         mesh_node = xml.etree.ElementTree.SubElement(object_node, f"{{{threemf_default_namespace}}}mesh")
         xml.etree.ElementTree.SubElement(mesh_node, f"{{{threemf_default_namespace}}}vertices")
 
-        self.assertListEqual(self.importer.read_vertices(object_node), [], "There are no vertices in the <vertices> element, so the resulting vertex list is empty.")
+        self.assertListEqual(
+            self.importer.read_vertices(object_node),
+            [],
+            "There are no vertices in the <vertices> element, so the resulting vertex list is empty.")
 
     def test_read_vertices_multiple(self):
         """
-        Tests reading an object with a <vertices> element with several <vertex>
-        elements in it.
+        Tests reading an object with a <vertices> element with several <vertex> elements in it.
 
         This is the most common case.
         """
@@ -808,7 +956,10 @@ class TestImport3MF(unittest.TestCase):
             vertex_node.attrib["y"] = str(vertex[1])
             vertex_node.attrib["z"] = str(vertex[2])
 
-        self.assertListEqual(self.importer.read_vertices(object_node), vertices, "The outcome must be the same vertices as what went into the XML document.")
+        self.assertListEqual(
+            self.importer.read_vertices(object_node),
+            vertices,
+            "The outcome must be the same vertices as what went into the XML document.")
 
     def test_read_vertices_missing_coordinates(self):
         """
@@ -823,7 +974,10 @@ class TestImport3MF(unittest.TestCase):
         # Don't write a Y value.
         vertex_node.attrib["z"] = "6.9"
 
-        self.assertListEqual(self.importer.read_vertices(object_node), [(13.37, 0, 6.9)], "The Y value must be defaulting to 0, since it was missing.")
+        self.assertListEqual(
+            self.importer.read_vertices(object_node),
+            [(13.37, 0, 6.9)],
+            "The Y value must be defaulting to 0, since it was missing.")
 
     def test_read_vertices_broken_coordinates(self):
         """
@@ -839,7 +993,11 @@ class TestImport3MF(unittest.TestCase):
         vertex_node.attrib["y"] = "23,37"  # Must use period as the decimal separator.
         vertex_node.attrib["z"] = "over there"  # Doesn't parse to a float either.
 
-        self.assertListEqual(self.importer.read_vertices(object_node), [(42, 0, 0)], "The Y value defaults to 0 due to using comma as decimal separator. The Z value defaults to 0 due to not being a float at all.")
+        self.assertListEqual(
+            self.importer.read_vertices(object_node),
+            [(42, 0, 0)],
+            "The Y value defaults to 0 due to using comma as decimal separator. "
+            "The Z value defaults to 0 due to not being a float at all.")
 
     def test_read_triangles_missing(self):
         """
@@ -849,7 +1007,10 @@ class TestImport3MF(unittest.TestCase):
         xml.etree.ElementTree.SubElement(object_node, f"{{{threemf_default_namespace}}}mesh")
 
         triangles, _ = self.importer.read_triangles(object_node, None, "")
-        self.assertListEqual(triangles, [], "There is no <triangles> element, so the resulting triangle list is empty.")
+        self.assertListEqual(
+            triangles,
+            [],
+            "There is no <triangles> element, so the resulting triangle list is empty.")
 
     def test_read_triangles_empty(self):
         """
@@ -860,7 +1021,10 @@ class TestImport3MF(unittest.TestCase):
         xml.etree.ElementTree.SubElement(mesh_node, f"{{{threemf_default_namespace}}}triangles")
 
         triangles, _ = self.importer.read_triangles(object_node, None, "")
-        self.assertListEqual(triangles, [], "There are no triangles in the <triangles> element, so the resulting triangle list is empty.")
+        self.assertListEqual(
+            triangles,
+            [],
+            "There are no triangles in the <triangles> element, so the resulting triangle list is empty.")
 
     def test_read_triangles_multiple(self):
         """
@@ -880,7 +1044,10 @@ class TestImport3MF(unittest.TestCase):
             triangle_node.attrib["v3"] = str(triangle[2])
 
         reconstructed_triangles, _ = self.importer.read_triangles(object_node, None, "")
-        self.assertListEqual(reconstructed_triangles, triangles, "The outcome must be the same triangles as what we put in.")
+        self.assertListEqual(
+            reconstructed_triangles,
+            triangles,
+            "The outcome must be the same triangles as what we put in.")
 
     def test_read_triangles_missing_vertex(self):
         """
@@ -908,18 +1075,25 @@ class TestImport3MF(unittest.TestCase):
         object_node = xml.etree.ElementTree.Element(f"{{{threemf_default_namespace}}}object")
         mesh_node = xml.etree.ElementTree.SubElement(object_node, f"{{{threemf_default_namespace}}}mesh")
         triangles_node = xml.etree.ElementTree.SubElement(mesh_node, f"{{{threemf_default_namespace}}}triangles")
-        negative_index_triangle_node = xml.etree.ElementTree.SubElement(triangles_node, f"{{{threemf_default_namespace}}}triangle")
+        negative_index_triangle_node = xml.etree.ElementTree.SubElement(
+            triangles_node,
+            f"{{{threemf_default_namespace}}}triangle")
         negative_index_triangle_node.attrib["v1"] = "1"
         negative_index_triangle_node.attrib["v2"] = "-1"  # Invalid! Makes the triangle go missing.
         negative_index_triangle_node.attrib["v3"] = "2"
-        float_index_triangle_node = xml.etree.ElementTree.SubElement(triangles_node, f"{{{threemf_default_namespace}}}triangle")
+        float_index_triangle_node = xml.etree.ElementTree.SubElement(
+            triangles_node,
+            f"{{{threemf_default_namespace}}}triangle")
         float_index_triangle_node.attrib["v1"] = "2.5"  # Not an integer! Should make the triangle go missing.
         float_index_triangle_node.attrib["v2"] = "3"
         float_index_triangle_node.attrib["v3"] = "4"
-        invalid_index_triangle_node = xml.etree.ElementTree.SubElement(triangles_node, f"{{{threemf_default_namespace}}}triangle")
+        invalid_index_triangle_node = xml.etree.ElementTree.SubElement(
+            triangles_node,
+            f"{{{threemf_default_namespace}}}triangle")
         invalid_index_triangle_node.attrib["v1"] = "5"
         invalid_index_triangle_node.attrib["v2"] = "6"
-        invalid_index_triangle_node.attrib["v3"] = "doodie"  # Doesn't parse as integer! Should make the triangle go missing.
+        # Doesn't parse as integer! Should make the triangle go missing.
+        invalid_index_triangle_node.attrib["v3"] = "doodie"
 
         triangles, _ = self.importer.read_triangles(object_node, None, "")
         self.assertListEqual(triangles, [], "All triangles are invalid, so the output should have no triangles.")
@@ -943,7 +1117,10 @@ class TestImport3MF(unittest.TestCase):
 
         _, materials = self.importer.read_triangles(object_node, default_material, "")
 
-        self.assertListEqual(materials, [default_material], "Since the triangle doesn't specify any material or index, it should use the default material.")
+        self.assertListEqual(
+            materials,
+            [default_material],
+            "Since the triangle doesn't specify any material or index, it should use the default material.")
 
     def test_read_triangles_default_pindex(self):
         """
@@ -962,13 +1139,17 @@ class TestImport3MF(unittest.TestCase):
         })
         default_material = io_mesh_3mf.import_3mf.ResourceMaterial(name="PLA", colour=None)
         self.importer.resource_materials["material-set"] = {
-            0: io_mesh_3mf.import_3mf.ResourceMaterial(name="Other material", colour=None),  # It should NOT default to this one.
+            0: io_mesh_3mf.import_3mf.ResourceMaterial(name="Other material", colour=None),  # DON'T default this one.
             1: default_material
         }
 
         _, materials = self.importer.read_triangles(object_node, default_material, "")
 
-        self.assertListEqual(materials, [default_material], "It specifies a PID but not an index, so it should still use the default material (even if that material is not in the specified group.")
+        self.assertListEqual(
+            materials,
+            [default_material],
+            "It specifies a PID but not an index, so it should still use the default material "
+            "(even if that material is not in the specified group.")
 
     def test_read_triangles_default_pid(self):
         """
@@ -992,9 +1173,13 @@ class TestImport3MF(unittest.TestCase):
             1: correct_material
         }
 
-        _, materials = self.importer.read_triangles(object_node, default_material, "material-set")  # Supply a default PID. It should use the indices from the triangles to reference to this PID.
+        # Supply a default PID. It should use the indices from the triangles to reference to this PID.
+        _, materials = self.importer.read_triangles(object_node, default_material, "material-set")
 
-        self.assertListEqual(materials, [correct_material], "It specifies an index but not a PID, so it should use the PID from the object.")
+        self.assertListEqual(
+            materials,
+            [correct_material],
+            "It specifies an index but not a PID, so it should use the PID from the object.")
 
     def test_read_triangles_material_override(self):
         """
@@ -1021,9 +1206,13 @@ class TestImport3MF(unittest.TestCase):
             }
         }
 
-        _, materials = self.importer.read_triangles(object_node, default_material, "material-set")  # Supply a default PID. It should use the indices from the triangles to reference to this PID.
+        # Supply a default PID. It should use the indices from the triangles to reference to this PID.
+        _, materials = self.importer.read_triangles(object_node, default_material, "material-set")
 
-        self.assertListEqual(materials, [correct_material], "The material PID is overridden so it should use a different group of materials now.")
+        self.assertListEqual(
+            materials,
+            [correct_material],
+            "The material PID is overridden so it should use a different group of materials now.")
 
     def test_read_material_index_out_of_range(self):
         """
@@ -1045,9 +1234,14 @@ class TestImport3MF(unittest.TestCase):
             0: default_material
         }
 
-        _, materials = self.importer.read_triangles(object_node, default_material, "material-set")  # Supply a default PID. It should use the indices from the triangles to reference to this PID.
+        # Supply a default PID. It should use the indices from the triangles to reference to this PID.
+        _, materials = self.importer.read_triangles(object_node, default_material, "material-set")
 
-        self.assertListEqual(materials, [default_material], "The material index in p1 was way out of range for the 'material-set' group of materials, so it should use the default instead.")
+        self.assertListEqual(
+            materials,
+            [default_material],
+            "The material index in p1 was way out of range for the 'material-set' group of materials, "
+            "so it should use the default instead.")
 
     def test_read_material_index_malformed(self):
         """
@@ -1069,9 +1263,13 @@ class TestImport3MF(unittest.TestCase):
             0: default_material
         }
 
-        _, materials = self.importer.read_triangles(object_node, default_material, "material-set")  # Supply a default PID. It should use the indices from the triangles to reference to this PID.
+        # Supply a default PID. It should use the indices from the triangles to reference to this PID.
+        _, materials = self.importer.read_triangles(object_node, default_material, "material-set")
 
-        self.assertListEqual(materials, [default_material], "The material index in p1 was not integer, so it should revert to the default.")
+        self.assertListEqual(
+            materials,
+            [default_material],
+            "The material index in p1 was not integer, so it should revert to the default.")
 
     def test_read_components_missing(self):
         """
@@ -1079,7 +1277,10 @@ class TestImport3MF(unittest.TestCase):
         """
         object_node = xml.etree.ElementTree.Element(f"{{{threemf_default_namespace}}}object")
 
-        self.assertListEqual(self.importer.read_components(object_node), [], "There is no <components> element, so the resulting component list is empty.")
+        self.assertListEqual(
+            self.importer.read_components(object_node),
+            [],
+            "There is no <components> element, so the resulting component list is empty.")
 
     def test_read_components_empty(self):
         """
@@ -1088,27 +1289,35 @@ class TestImport3MF(unittest.TestCase):
         object_node = xml.etree.ElementTree.Element(f"{{{threemf_default_namespace}}}object")
         xml.etree.ElementTree.SubElement(object_node, f"{{{threemf_default_namespace}}}components")
 
-        self.assertListEqual(self.importer.read_components(object_node), [], "There are no components in the <components> element, so the resulting component list is empty.")
+        self.assertListEqual(
+            self.importer.read_components(object_node),
+            [],
+            "There are no components in the <components> element, so the resulting component list is empty.")
 
     def test_read_components_multiple(self):
         """
         Tests reading several components from the <components> element.
 
-        This tests reading out the Object IDs in these components. The
-        transformations are tested in a different test.
+        This tests reading out the Object IDs in these components. The transformations are tested in a different test.
 
         This is the most common case. The happy path, if you will.
         """
-        component_objectids = {"3", "4.2", "-5", "llama"}  # A few object IDs that must be present. They don't necessarily need to appear in order though.
+        # A few object IDs that must be present. They don't necessarily need to appear in order though.
+        component_objectids = {"3", "4.2", "-5", "llama"}
 
         object_node = xml.etree.ElementTree.Element(f"{{{threemf_default_namespace}}}object")
         components_node = xml.etree.ElementTree.SubElement(object_node, f"{{{threemf_default_namespace}}}components")
         for component_objectid in component_objectids:
-            component_node = xml.etree.ElementTree.SubElement(components_node, f"{{{threemf_default_namespace}}}component")
+            component_node = xml.etree.ElementTree.SubElement(
+                components_node,
+                f"{{{threemf_default_namespace}}}component")
             component_node.attrib["objectid"] = component_objectid
 
         result = self.importer.read_components(object_node)
-        self.assertSetEqual({component.resource_object for component in result}, component_objectids, "The component IDs in the result must be the same set as the ones we put in.")
+        self.assertSetEqual(
+            {component.resource_object for component in result},
+            component_objectids,
+            "The component IDs in the result must be the same set as the ones we put in.")
 
     def test_read_components_missing_objectid(self):
         """
@@ -1121,7 +1330,10 @@ class TestImport3MF(unittest.TestCase):
         xml.etree.ElementTree.SubElement(components_node, f"{{{threemf_default_namespace}}}component")
         # No objectid attribute!
 
-        self.assertListEqual(self.importer.read_components(object_node), [], "The only component in the input had no object ID, so it must not be included in the output.")
+        self.assertListEqual(
+            self.importer.read_components(object_node),
+            [],
+            "The only component in the input had no object ID, so it must not be included in the output.")
 
     def test_read_components_transform(self):
         """
@@ -1129,16 +1341,26 @@ class TestImport3MF(unittest.TestCase):
         """
         object_node = xml.etree.ElementTree.Element(f"{{{threemf_default_namespace}}}object")
         components_node = xml.etree.ElementTree.SubElement(object_node, f"{{{threemf_default_namespace}}}components")
-        component_node_no_transform = xml.etree.ElementTree.SubElement(components_node, f"{{{threemf_default_namespace}}}component")  # One node without transformation.
+        component_node_no_transform = xml.etree.ElementTree.SubElement(
+            components_node,
+            f"{{{threemf_default_namespace}}}component")  # One node without transformation.
         component_node_no_transform.attrib["objectid"] = "1"
-        component_node_scaled = xml.etree.ElementTree.SubElement(components_node, f"{{{threemf_default_namespace}}}component")
+        component_node_scaled = xml.etree.ElementTree.SubElement(
+            components_node,
+            f"{{{threemf_default_namespace}}}component")
         component_node_scaled.attrib["objectid"] = "1"
         component_node_scaled.attrib["transform"] = "2 0 0 0 2 0 0 0 2 0 0 0"  # Scaled 200%.
 
         result = self.importer.read_components(object_node)
         self.assertEqual(len(result), 2, "We put two components in, both valid, so we must get two components out.")
-        self.assertEqual(result[0].transformation, mathutils.Matrix.Identity(4), "The transformation of the first element is missing, so it must be the identity matrix.")
-        self.assertEqual(result[1].transformation, mathutils.Matrix.Scale(2.0, 4), "The transformation of the second element was a factor-2 scale.")
+        self.assertEqual(
+            result[0].transformation,
+            mathutils.Matrix.Identity(4),
+            "The transformation of the first element is missing, so it must be the identity matrix.")
+        self.assertEqual(
+            result[1].transformation,
+            mathutils.Matrix.Scale(2.0, 4),
+            "The transformation of the second element was a factor-2 scale.")
 
     def test_parse_transformation_empty(self):
         """
@@ -1146,7 +1368,11 @@ class TestImport3MF(unittest.TestCase):
 
         It should result in the identity matrix then.
         """
-        self.assertEqual(self.importer.parse_transformation(""), mathutils.Matrix.Identity(4), "Any missing elements are filled from the identity matrix, so if everything is missing everything is identity.")
+        self.assertEqual(
+            self.importer.parse_transformation(""),
+            mathutils.Matrix.Identity(4),
+            "Any missing elements are filled from the identity matrix, "
+            "so if everything is missing everything is identity.")
 
     def test_parse_transformation_partial(self):
         """
@@ -1156,7 +1382,10 @@ class TestImport3MF(unittest.TestCase):
         """
         transform_str = "1.1 1.2 1.3 2.1 2.2"  # Fill in only 5 of the cells.
         ground_truth = mathutils.Matrix([[1.1, 2.1, 0, 0], [1.2, 2.2, 0, 0], [1.3, 0, 1, 0], [0, 0, 0, 1]])
-        self.assertEqual(self.importer.parse_transformation(transform_str), ground_truth, "Any missing elements are filled from the identity matrix.")
+        self.assertEqual(
+            self.importer.parse_transformation(transform_str),
+            ground_truth,
+            "Any missing elements are filled from the identity matrix.")
 
     def test_parse_transformation_broken(self):
         """
@@ -1164,45 +1393,57 @@ class TestImport3MF(unittest.TestCase):
         proper floats.
         """
         transform_str = "1.1 1.2 1.3 2.1 lead 2.3 3.1 3.2 3.3 4.1 4.2 4.3"
-        ground_truth = mathutils.Matrix([[1.1, 2.1, 3.1, 4.1], [1.2, 1.0, 3.2, 4.2], [1.3, 2.3, 3.3, 4.3], [0, 0, 0, 1]])  # Cell 2,2 is replaced with the value in the Identity matrix there (1.0).
-        self.assertEqual(self.importer.parse_transformation(transform_str), ground_truth, "Any invalid elements are filled from the identity matrix.")
+        ground_truth = mathutils.Matrix([
+            [1.1, 2.1, 3.1, 4.1],
+            [1.2, 1.0, 3.2, 4.2],  # Cell 2,2 is replaced with the value in the Identity matrix there (1.0).
+            [1.3, 2.3, 3.3, 4.3],
+            [0, 0, 0, 1]])
+        self.assertEqual(
+            self.importer.parse_transformation(transform_str),
+            ground_truth,
+            "Any invalid elements are filled from the identity matrix.")
 
     def test_build_items_missing(self):
         """
         Tests building the items when the <build> element is missing.
         """
-        self.importer.build_object = unittest.mock.MagicMock()  # Mock out the function that actually creates the object.
+        # Mock out the function that actually creates the object.
+        self.importer.build_object = unittest.mock.MagicMock()
         root = xml.etree.ElementTree.Element(f"{{{threemf_default_namespace}}}model")
 
         self.importer.build_items(root, 1.0)
 
-        self.importer.build_object.assert_not_called()  # There are no items, so we shouldn't build any object resources.
+        # There are no items, so we shouldn't build any object resources.
+        self.importer.build_object.assert_not_called()
 
     def test_build_items_empty(self):
         """
         Tests building the items when the <build> element is empty.
         """
-        self.importer.build_object = unittest.mock.MagicMock()  # Mock out the function that actually creates the object.
+        # Mock out the function that actually creates the object.
+        self.importer.build_object = unittest.mock.MagicMock()
         root = xml.etree.ElementTree.Element(f"{{{threemf_default_namespace}}}model")
         xml.etree.ElementTree.SubElement(root, f"{{{threemf_default_namespace}}}build")
         # <build> element left empty.
 
         self.importer.build_items(root, 1.0)
 
-        self.importer.build_object.assert_not_called()  # There are no items, so we shouldn't build any object resources.
+        # There are no items, so we shouldn't build any object resources.
+        self.importer.build_object.assert_not_called()
 
     def test_build_items_multiple(self):
         """
         Tests building multiple items.
 
-        This can be considered the "happy path". It's the normal case where
-        there are proper objects in the scene.
+        This can be considered the "happy path". It's the normal case where there are proper objects in the scene.
         """
-        self.importer.build_object = unittest.mock.MagicMock()  # Mock out the function that actually creates the object.
+        # Mock out the function that actually creates the object.
+        self.importer.build_object = unittest.mock.MagicMock()
         self.importer.resource_objects["1"] = unittest.mock.MagicMock()  # Add a few "resources".
         self.importer.resource_objects["2"] = unittest.mock.MagicMock()
         self.importer.resource_objects["ananas"] = unittest.mock.MagicMock()
-        root = xml.etree.ElementTree.Element(f"{{{threemf_default_namespace}}}model")  # Build a document with three <item> elements in the <build> element.
+        # Build a document with three <item> elements in the <build> element.
+        root = xml.etree.ElementTree.Element(f"{{{threemf_default_namespace}}}model")
         build_element = xml.etree.ElementTree.SubElement(root, f"{{{threemf_default_namespace}}}build")
         item1_element = xml.etree.ElementTree.SubElement(build_element, f"{{{threemf_default_namespace}}}item")
         item1_element.attrib["objectid"] = "1"
@@ -1216,16 +1457,25 @@ class TestImport3MF(unittest.TestCase):
         expected_args_list = [
             unittest.mock.call(self.importer.resource_objects["1"], mathutils.Matrix.Identity(4), Metadata(), ["1"]),
             unittest.mock.call(self.importer.resource_objects["2"], mathutils.Matrix.Identity(4), Metadata(), ["2"]),
-            unittest.mock.call(self.importer.resource_objects["ananas"], mathutils.Matrix.Identity(4), Metadata(), ["ananas"])
+            unittest.mock.call(
+                self.importer.resource_objects["ananas"],
+                mathutils.Matrix.Identity(4),
+                Metadata(),
+                ["ananas"])
         ]
-        self.assertListEqual(self.importer.build_object.call_args_list, expected_args_list, "We must build these three objects with their correct transformations and object IDs.")
+        self.assertListEqual(
+            self.importer.build_object.call_args_list,
+            expected_args_list,
+            "We must build these three objects with their correct transformations and object IDs.")
 
     def test_build_items_nonexistent(self):
         """
         Tests building items with object IDs that don't exist.
         """
-        self.importer.build_object = unittest.mock.MagicMock()  # Mock out the function that actually creates the object.
-        root = xml.etree.ElementTree.Element(f"{{{threemf_default_namespace}}}model")  # Build a document with an <item> in it.
+        # Mock out the function that actually creates the object.
+        self.importer.build_object = unittest.mock.MagicMock()
+        # Build a document with an <item> in it.
+        root = xml.etree.ElementTree.Element(f"{{{threemf_default_namespace}}}model")
         build_element = xml.etree.ElementTree.SubElement(root, f"{{{threemf_default_namespace}}}build")
         item_element = xml.etree.ElementTree.SubElement(build_element, f"{{{threemf_default_namespace}}}item")
         item_element.attrib["objectid"] = "bombosity"  # Object ID doesn't exist.
@@ -1238,24 +1488,32 @@ class TestImport3MF(unittest.TestCase):
         """
         Tests whether the unit scale is properly applied to the built items.
         """
-        self.importer.build_object = unittest.mock.MagicMock()  # Mock out the function that actually creates the object.
+        # Mock out the function that actually creates the object.
+        self.importer.build_object = unittest.mock.MagicMock()
         self.importer.resource_objects["1"] = self.single_triangle
-        root = xml.etree.ElementTree.Element(f"{{{threemf_default_namespace}}}model")  # Build a document with an <item> in it.
+        # Build a document with an <item> in it.
+        root = xml.etree.ElementTree.Element(f"{{{threemf_default_namespace}}}model")
         build_element = xml.etree.ElementTree.SubElement(root, f"{{{threemf_default_namespace}}}build")
         item_element = xml.etree.ElementTree.SubElement(build_element, f"{{{threemf_default_namespace}}}item")
         item_element.attrib["objectid"] = "1"
 
         self.importer.build_items(root, 2.5)  # Build with a unit scale of 250%.
 
-        self.importer.build_object.assert_called_once_with(self.single_triangle, mathutils.Matrix.Scale(2.5, 4), Metadata(), ["1"])
+        self.importer.build_object.assert_called_once_with(
+            self.single_triangle,
+            mathutils.Matrix.Scale(2.5, 4),
+            Metadata(),
+            ["1"])
 
     def test_build_items_transformed(self):
         """
         Tests building items that are being transformed.
         """
-        self.importer.build_object = unittest.mock.MagicMock()  # Mock out the function that actually creates the object.
+        # Mock out the function that actually creates the object.
+        self.importer.build_object = unittest.mock.MagicMock()
         self.importer.resource_objects["1"] = self.single_triangle
-        root = xml.etree.ElementTree.Element(f"{{{threemf_default_namespace}}}model")  # Build a document with an <item> in it.
+        # Build a document with an <item> in it.
+        root = xml.etree.ElementTree.Element(f"{{{threemf_default_namespace}}}model")
         build_element = xml.etree.ElementTree.SubElement(root, f"{{{threemf_default_namespace}}}build")
         item_element = xml.etree.ElementTree.SubElement(build_element, f"{{{threemf_default_namespace}}}item")
         item_element.attrib["objectid"] = "1"
@@ -1263,33 +1521,56 @@ class TestImport3MF(unittest.TestCase):
 
         self.importer.build_items(root, 0.5)  # Build with a unit scale of 50%.
 
-        expected_transformation = mathutils.Matrix.Scale(0.5, 4) @ mathutils.Matrix.Translation(mathutils.Vector([30, 40, 0]))  # Both transformation must be applied (and in correct order).
-        self.importer.build_object.assert_called_once_with(self.single_triangle, expected_transformation, Metadata(), ["1"])
+        # Both transformation must be applied (and in correct order).
+        expected_transformation = mathutils.Matrix.Scale(0.5, 4) @\
+            mathutils.Matrix.Translation(mathutils.Vector([30, 40, 0]))
+        self.importer.build_object.assert_called_once_with(
+            self.single_triangle,
+            expected_transformation,
+            Metadata(),
+            ["1"])
 
     def test_build_items_metadata(self):
         """
         Tests building an item with metadata information.
         """
-        self.importer.build_object = unittest.mock.MagicMock()  # Mock out the function that actually creates the object.
+        # Mock out the function that actually creates the object.
+        self.importer.build_object = unittest.mock.MagicMock()
         self.importer.resource_objects["1"] = self.single_triangle
-        root = xml.etree.ElementTree.Element(f"{{{threemf_default_namespace}}}model")  # Build a document with an <item> in it.
+        # Build a document with an <item> in it.
+        root = xml.etree.ElementTree.Element(f"{{{threemf_default_namespace}}}model")
         build_element = xml.etree.ElementTree.SubElement(root, f"{{{threemf_default_namespace}}}build")
         item_element = xml.etree.ElementTree.SubElement(build_element, f"{{{threemf_default_namespace}}}item")
         item_element.attrib["objectid"] = "1"
 
         # Add some metadata.
         item_element.attrib["partnumber"] = "numero uno"
-        metadata_element = xml.etree.ElementTree.SubElement(item_element, f"{{{threemf_default_namespace}}}metadatagroup")
-        title_element = xml.etree.ElementTree.SubElement(metadata_element, f"{{{threemf_default_namespace}}}metadata")
+        metadata_element = xml.etree.ElementTree.SubElement(
+            item_element,
+            f"{{{threemf_default_namespace}}}metadatagroup")
+        title_element = xml.etree.ElementTree.SubElement(
+            metadata_element,
+            f"{{{threemf_default_namespace}}}metadata")
         title_element.attrib["name"] = "Title"
         title_element.text = "Lead Potato Engineer"
 
         self.importer.build_items(root, 1.0)  # Build the item, executing the code under test.
 
         expected_metadata = Metadata()
-        expected_metadata["3mf:partnumber"] = MetadataEntry(name="3mf:partnumber", preserve=True, datatype="xs:string", value="numero uno")
-        expected_metadata["Title"] = MetadataEntry(name="Title", preserve=False, datatype="", value="Lead Potato Engineer")
-        self.importer.build_object.assert_called_once_with(self.single_triangle, mathutils.Matrix.Identity(4), expected_metadata, ["1"])
+        expected_metadata["3mf:partnumber"] = MetadataEntry(
+            name="3mf:partnumber",
+            preserve=True,
+            datatype="xs:string",
+            value="numero uno")
+        expected_metadata["Title"] = MetadataEntry(
+            name="Title",
+            preserve=False,
+            datatype="",
+            value="Lead Potato Engineer")
+        self.importer.build_object.assert_called_once_with(
+            self.single_triangle,
+            mathutils.Matrix.Identity(4),
+            expected_metadata, ["1"])
 
     def test_build_object_mesh_data(self):
         """
@@ -1302,12 +1583,12 @@ class TestImport3MF(unittest.TestCase):
         # Now look whether the result is put correctly in the context.
         bpy.data.meshes.new.assert_called_once()  # Exactly one mesh must have been created.
         mesh_mock = bpy.data.meshes.new()  # This is the mock object that the code got back from the Blender API call.
-        mesh_mock.from_pydata.assert_called_once_with(self.single_triangle.vertices, [], self.single_triangle.triangles)  # The mesh must be provided with correct vertex and triangle data.
+        # The mesh must be provided with correct vertex and triangle data.
+        mesh_mock.from_pydata.assert_called_once_with(self.single_triangle.vertices, [], self.single_triangle.triangles)
 
     def test_build_object_blender_object(self):
         """
-        Tests whether building a single object results in a correct Blender
-        object.
+        Tests whether building a single object results in a correct Blender object.
         """
         transformation = mathutils.Matrix.Identity(4)
         objectid_stack_trace = ["1"]
@@ -1315,9 +1596,14 @@ class TestImport3MF(unittest.TestCase):
 
         # Now look whether the Blender object is put correctly in the context.
         bpy.data.objects.new.assert_called_once()  # Exactly one object must have been created.
-        object_mock = bpy.data.objects.new()  # This is the mock object that the code got back from the Blender API call.
-        self.assertEqual(object_mock.matrix_world, transformation, "The transformation must be stored in the Blender object.")
-        bpy.context.collection.objects.link.assert_called_with(object_mock)  # The object must be linked to the collection.
+        # This is the mock object that the code got back from the Blender API call.
+        object_mock = bpy.data.objects.new()
+        self.assertEqual(
+            object_mock.matrix_world,
+            transformation,
+            "The transformation must be stored in the Blender object.")
+        # The object must be linked to the collection.
+        bpy.context.collection.objects.link.assert_called_with(object_mock)
         self.assertEqual(bpy.context.view_layer.objects.active, object_mock, "The object must be made active.")
         object_mock.select_set.assert_called_with(True)  # The object must be selected.
 
@@ -1330,8 +1616,12 @@ class TestImport3MF(unittest.TestCase):
         self.importer.build_object(self.single_triangle, transformation, Metadata(), objectid_stack_trace)
 
         # Now look whether the Blender object has the correct transformation.
-        object_mock = bpy.data.objects.new()  # This is the mock object that the code got back from the Blender API call.
-        self.assertEqual(object_mock.matrix_world, transformation, "The transformation must be stored in the world matrix of the Blender object.")
+        # This is the mock object that the code got back from the Blender API call.
+        object_mock = bpy.data.objects.new()
+        self.assertEqual(
+            object_mock.matrix_world,
+            transformation,
+            "The transformation must be stored in the world matrix of the Blender object.")
 
     def test_build_object_parent(self):
         """
@@ -1343,7 +1633,8 @@ class TestImport3MF(unittest.TestCase):
         self.importer.build_object(self.single_triangle, transformation, Metadata(), objectid_stack_trace, parent)
 
         # Now look whether the Blender object has the correct parent.
-        object_mock = bpy.data.objects.new()  # This is the mock object that the code got back from the Blender API call.
+        # This is the mock object that the code got back from the Blender API call.
+        object_mock = bpy.data.objects.new()
         self.assertEqual(object_mock.parent, parent, "The parent must be stored in the Blender object.")
 
     def test_build_object_with_component(self):
@@ -1365,7 +1656,8 @@ class TestImport3MF(unittest.TestCase):
         self.importer.resource_objects["2"] = with_component
 
         # We'll create two new objects, and we must distinguish them from each other to test their properties.
-        parent_mock = unittest.mock.MagicMock()  # Create two unique mocks for when two new Blender objects are going to be created.
+        # Create two unique mocks for when two new Blender objects are going to be created.
+        parent_mock = unittest.mock.MagicMock()
         child_mock = unittest.mock.MagicMock()
         bpy.data.objects.new.side_effect = [parent_mock, child_mock]
 
@@ -1375,15 +1667,20 @@ class TestImport3MF(unittest.TestCase):
         self.importer.build_object(with_component, transformation, Metadata(), objectid_stack_trace)
 
         # Test whether the component got created with correct properties.
-        self.assertEqual(bpy.data.objects.new.call_count, 2, "We must have created 2 objects from this: the parent and the child.")
-        self.assertEqual(child_mock.parent, parent_mock, "The component's parent must be set to the parent object.")
+        self.assertEqual(
+            bpy.data.objects.new.call_count,
+            2,
+            "We must have created 2 objects from this: the parent and the child.")
+        self.assertEqual(
+            child_mock.parent,
+            parent_mock,
+            "The component's parent must be set to the parent object.")
 
     def test_build_object_recursive(self):
         """
         Tests building an object which uses itself as component.
 
-        This produces an infinite recursive loop, so the component should be
-        ignored then.
+        This produces an infinite recursive loop, so the component should be ignored then.
         """
         resource_object = io_mesh_3mf.import_3mf.ResourceObject(  # A model with itself as component.
             vertices=[(0.0, 0.0, 0.0), (10.0, 0.0, 2.0), (0.0, 10.0, 2.0)],
@@ -1407,8 +1704,7 @@ class TestImport3MF(unittest.TestCase):
 
     def test_build_object_component_unknown(self):
         """
-        Tests building an object with a component referring to a non-existing
-        ID.
+        Tests building an object with a component referring to a non-existing ID.
         """
         resource_object = io_mesh_3mf.import_3mf.ResourceObject(  # A model with itself as component.
             vertices=[(0.0, 0.0, 0.0), (10.0, 0.0, 2.0), (0.0, 10.0, 2.0)],
@@ -1437,7 +1733,8 @@ class TestImport3MF(unittest.TestCase):
         The component's transformation must be the multiplication of both
         objects' transformations.
         """
-        with_transformed_component = io_mesh_3mf.import_3mf.ResourceObject(  # A model with a component that got transformed.
+        # A model with a component that got transformed.
+        with_transformed_component = io_mesh_3mf.import_3mf.ResourceObject(
             vertices=[(0.0, 0.0, 0.0), (10.0, 0.0, 2.0), (0.0, 10.0, 2.0)],
             triangles=[(0, 1, 2)],
             materials=[None],
@@ -1451,7 +1748,8 @@ class TestImport3MF(unittest.TestCase):
         self.importer.resource_objects["2"] = with_transformed_component
 
         # We'll create two new objects, and we must distinguish them from each other to test their properties.
-        parent_mock = unittest.mock.MagicMock()  # Create two unique mocks for when two new Blender objects are going to be created.
+        # Create two unique mocks for when two new Blender objects are going to be created.
+        parent_mock = unittest.mock.MagicMock()
         child_mock = unittest.mock.MagicMock()
         bpy.data.objects.new.side_effect = [parent_mock, child_mock]
 
@@ -1462,4 +1760,7 @@ class TestImport3MF(unittest.TestCase):
 
         # Test whether the objects have the correct transformations.
         self.assertEqual(parent_mock.matrix_world, transformation, "Only the translation was applied to the parent.")
-        self.assertEqual(child_mock.matrix_world, transformation @ mathutils.Matrix.Scale(2.0, 4), "The child must be transformed with both the parent transform and the component's transformation.")
+        self.assertEqual(
+            child_mock.matrix_world,
+            transformation @ mathutils.Matrix.Scale(2.0, 4),
+            "The child must be transformed with both the parent transform and the component's transformation.")

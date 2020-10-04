@@ -1,8 +1,13 @@
 # Blender add-on to import and export 3MF files.
 # Copyright (C) 2020 Ghostkeeper
-# This add-on is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
-# This add-on is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for details.
-# You should have received a copy of the GNU Affero General Public License along with this plug-in. If not, see <https://gnu.org/licenses/>.
+# This add-on is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General
+# Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any
+# later version.
+# This add-on is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
+# warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for
+# details.
+# You should have received a copy of the GNU Affero General Public License along with this plug-in. If not, see
+# <https://gnu.org/licenses/>.
 
 # <pep8 compliant>
 
@@ -30,47 +35,44 @@ from .constants import (
 Relationship = collections.namedtuple("Relationship", ["namespace", "source"])
 ContentType = collections.namedtuple("ContentType", ["mime_type"])
 
+# Flag object to denote that different 3MF archives give different content types to the same file in the archive.
+ConflictingContentType = object()
 
-ConflictingContentType = object()  # Flag object to denote that different 3MF archives give different content types to the same file in the archive.
 ANNOTATION_FILE = ".3mf_annotations"  # File name to use to store the annotations in the Blender data.
 
 
 class Annotations:
     """
-    This is a collection of annotations for a 3MF document. It annotates the
-    files in the archive with metadata information.
+    This is a collection of annotations for a 3MF document. It annotates the files in the archive with metadata
+    information.
 
-    The class contains serialisation and deserialisation functions in order to
-    be able to load and save the annotations from/to a 3MF archive, and to load
-    and save the annotations in the Blender scene.
+    The class contains serialisation and deserialisation functions in order to be able to load and save the annotations
+    from/to a 3MF archive, and to load and save the annotations in the Blender scene.
 
-    The annotations are stored in the `self.annotations` dictionary. The keys of
-    this dictionary are the targets of the annotations, normally the files in
-    this archive. It can be any URI however, and the files don't necessarily
-    need to exist.
+    The annotations are stored in the `self.annotations` dictionary. The keys of this dictionary are the targets of the
+    annotations, normally the files in this archive. It can be any URI however, and the files don't necessarily need to
+    exist.
 
-    The values are sets of annotations. The annotations are named tuples as
-    described in the beginning of this module. The set can contain any mixture
-    of these named tuples. Duplicates will get filtered out by the nature of the
-    set data structure.
+    The values are sets of annotations. The annotations are named tuples as described in the beginning of this module.
+    The set can contain any mixture of these named tuples. Duplicates will get filtered out by the nature of the set
+    data structure.
     """
 
     def __init__(self):
         """
         Creates an empty collection of annotations.
         """
-        self.annotations = {}  # All of the annotations so far. Keys are the target files of the annotations. Values are sets of annotation objects.
+        # All of the annotations so far. Keys are the target files of the annotations. Values are sets of annotation
+        # objects.
+        self.annotations = {}
 
     def add_rels(self, rels_file):
         """
-        Add relationships to this collection from a file stream containing a
-        .rels file from a 3MF archive.
+        Add relationships to this collection from a file stream containing a .rels file from a 3MF archive.
 
-        A relationship is treated as a file annotation, because it only contains
-        a file that the relationship is targeting, and a meaningless namespace.
-        The relationship also originates from a source, indicated by the path to
-        the relationship file. This will also get stored, so that it can be
-        properly restored later.
+        A relationship is treated as a file annotation, because it only contains a file that the relationship is
+        targetting, and a meaningless namespace. The relationship also originates from a source, indicated by the path
+        to the relationship file. This will also get stored, so that it can be properly restored later.
 
         Duplicate relationships won't get stored.
         :param rels_file: A file stream containing a .rels file.
@@ -83,7 +85,8 @@ class Annotations:
         try:
             root = xml.etree.ElementTree.ElementTree(file=rels_file)
         except xml.etree.ElementTree.ParseError as e:
-            logging.warning(f"Relationship file {rels_file.name} has malformed XML (position {e.position[0]}:{e.position[1]}).")
+            logging.warning(
+                f"Relationship file {rels_file.name} has malformed XML (position {e.position[0]}:{e.position[1]}).")
             return  # Skip this file.
 
         for relationship_node in root.iterfind("rel:Relationship", rels_namespaces):
@@ -96,29 +99,30 @@ class Annotations:
             if namespace == threemf_3dmodel_rel:  # Don't store relationships that we will write ourselves.
                 continue
 
-            target = urllib.parse.urljoin(base_path, target)  # Evaluate any relative URIs based on the path to this .rels file in the archive.
+            # Evaluate any relative URIs based on the path to this .rels file in the archive.
+            target = urllib.parse.urljoin(base_path, target)
+
             if target != "" and target[0] == "/":
-                target = target[1:]  # To coincide with the convention held by the zipfile package, paths in this archive will not start with a slash.
+                # To coincide with the convention held by the zipfile package, paths in this archive will not start with
+                # a slash.
+                target = target[1:]
 
             if target not in self.annotations:
                 self.annotations[target] = set()
 
-            self.annotations[target].add(Relationship(namespace=namespace, source=base_path))  # Add to the annotations as a relationship (since it's a set, don't create duplicates).
+            # Add to the annotations as a relationship (since it's a set, don't create duplicates).
+            self.annotations[target].add(Relationship(namespace=namespace, source=base_path))
 
     def add_content_types(self, files_by_content_type):
         """
-        Add annotations that signal the content types of the files in the
-        archive.
+        Add annotations that signal the content types of the files in the archive.
 
-        If a file already got a different content type from a different 3MF
-        archive, the content type of the file now becomes unknown (and
-        subsequently won't get stored in any exported 3MF archive).
+        If a file already got a different content type from a different 3MF archive, the content type of the file now
+        becomes unknown (and subsequently won't get stored in any exported 3MF archive).
 
-        Content types for files known to this 3MF implementation will not get
-        stored. This add-on will rewrite those files and may change the file
-        location and such.
-        :param files_by_content_type: The files in this archive, sorted by
-        content type.
+        Content types for files known to this 3MF implementation will not get stored. This add-on will rewrite those
+        files and may change the file location and such.
+        :param files_by_content_type: The files in this archive, sorted by content type.
         """
         for content_type, file_set in files_by_content_type.items():
             if content_type == "":
@@ -130,30 +134,37 @@ class Annotations:
                 if filename not in self.annotations:
                     self.annotations[filename] = set()
                 if ConflictingContentType in self.annotations[filename]:
-                    continue  # Content type was already conflicting through multiple previous files. It'll stay in conflict.
-                content_type_annotations = list(filter(lambda annotation: type(annotation) == ContentType, self.annotations[filename]))
-                if any(content_type_annotations) and content_type_annotations[0].mime_type != content_type:  # There was already a content type and it is different from this one.
+                    # Content type was already conflicting through multiple previous files. It'll stay in conflict.
+                    continue
+                content_type_annotations = list(filter(lambda annotation: type(annotation) == ContentType,
+                                                       self.annotations[filename]))
+                if any(content_type_annotations) and content_type_annotations[0].mime_type != content_type:
+                    # There was already a content type and it is different from this one.
                     # This file now has conflicting content types!
                     logging.warning(f"Found conflicting content types for file: {filename}")
                     for annotation in content_type_annotations:
                         self.annotations[filename].remove(annotation)
                     self.annotations[filename].add(ConflictingContentType)
-                else:  # No content type yet, or the existing content type is the same (so adding it again won't have any effect).
+                else:
+                    # No content type yet, or the existing content type is the same.
+                    # Adding it again wouldn't have any effect if it is the same.
                     self.annotations[filename].add(ContentType(content_type))
 
     def write_rels(self, archive):
         """
-        Write the relationship annotations in this collections to an archive as
-        .rels files.
+        Write the relationship annotations in this collections to an archive as .rels files.
 
-        Multiple relationship files may be added to the archive, if
-        relationships came from multiple sources in the original archives.
+        Multiple relationship files may be added to the archive, if relationships came from multiple sources in the
+        original archives.
         :param archive: A zip archive to add the relationships to.
         """
         current_id = 0  # Have an incrementing ID number to make all relationship IDs unique across the whole archive.
 
         # First sort all relationships by their source, so that we know which relationship goes into which file.
-        rels_by_source = {"/": set()}  # We always want to create a .rels file for the archive root, with our default relationships.
+
+        # We always want to create a .rels file for the archive root, with our default relationships.
+        rels_by_source = {"/": set()}
+
         for target, annotations in self.annotations.items():
             for annotation in annotations:
                 if type(annotation) is not Relationship:
@@ -197,7 +208,8 @@ class Annotations:
         content types that we have assigned.
         :param archive: A zip archive to add the content types to.
         """
-        # First sort all of the content types by their extension, so that we can find out what the most common content type is for each extension.
+        # First sort all of the content types by their extension, so that we can find out what the most common content
+        # type is for each extension.
         content_types_by_extension = {}
         for target, annotations in self.annotations.items():
             for annotation in annotations:
@@ -218,7 +230,8 @@ class Annotations:
         most_common[".rels"] = threemf_rels_mimetype
         most_common[".model"] = threemf_model_mimetype
 
-        # Write an XML file that contains the extension rules for the most common cases, and specific overrides for the outliers.
+        # Write an XML file that contains the extension rules for the most common cases,
+        # but specific overrides for the outliers.
         root = xml.etree.ElementTree.Element(f"{{{content_types_default_namespace}}}Types")
 
         # First add all of the extension-based rules.
@@ -236,7 +249,8 @@ class Annotations:
                 if type(annotation) is not ContentType:
                     continue
                 extension = os.path.splitext(target)[1]
-                if not extension or annotation.mime_type != most_common[extension]:  # This is an exceptional case that should be stored as an override.
+                if not extension or annotation.mime_type != most_common[extension]:
+                    # This is an exceptional case that should be stored as an override.
                     xml.etree.ElementTree.SubElement(root, f"{{{content_types_default_namespace}}}Override", attrib={
                         f"{{{content_types_default_namespace}}}PartName": "/" + target,
                         f"{{{content_types_default_namespace}}}ContentType": annotation.mime_type
@@ -291,7 +305,8 @@ class Annotations:
         exists, it parses that file and retrieves the data from it, restoring
         the state of the annotations collection that stored that file.
         """
-        self.annotations.clear()  # If there's nothing stored in the current scene, this clears the state of the annotations.
+        # If there's nothing stored in the current scene, this clears the state of the annotations.
+        self.annotations.clear()
 
         if ANNOTATION_FILE not in bpy.data.texts:
             return  # Nothing to read. Done!
@@ -306,7 +321,8 @@ class Annotations:
             try:
                 for annotation in annotations:
                     if annotation['annotation'] == 'relationship':
-                        self.annotations[target].add(Relationship(namespace=annotation['namespace'], source=annotation['source']))
+                        self.annotations[target].add(
+                            Relationship(namespace=annotation['namespace'], source=annotation['source']))
                     elif annotation['annotation'] == 'content_type':
                         self.annotations[target].add(ContentType(mime_type=annotation['mime_type']))
                     elif annotation['annotation'] == 'content_type_conflict':
@@ -316,7 +332,8 @@ class Annotations:
                         continue
             except TypeError:  # Raised when `annotations` is not iterable.
                 logging.warning(f"Annotation for target \"{target}\" is not properly structured.")
-            except KeyError as e:  # Raised when missing the 'annotation' key or a required key belonging to that annotation.
+            except KeyError as e:
+                # Raised when missing the 'annotation' key or a required key belonging to that annotation.
                 logging.warning(f"Annotation for target \"{target}\" missing key: {str(e)}")
             if not self.annotations[target]:  # Nothing was added in the end.
                 del self.annotations[target]  # Don't store the empty target either then.
