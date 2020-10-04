@@ -35,12 +35,12 @@ The following options are available when exporting to 3MF:
 * Apply modifiers: Apply the modifiers to the mesh data before exporting. This embeds these modifiers permanently in the file. If this is disabled, the unmodified meshes will be saved to the 3MF file instead.
 * Precision: Number of decimals to use for coordinates in the 3MF file. Greater precision will result in a larger file size.
 
-Release Plan
+Support
 ----
-This add-on is currently mostly functioning fine for the 3D content and the metadata of the file, but some auxiliary parts of the 3MF specification are not implemented yet.
+This add-on currently supports the full [3MF Core Specification](https://github.com/3MFConsortium/spec_core/blob/1.2.3/3MF%20Core%20Specification.md) version 1.2.3. However there are a number of places where it deviates from the specification on purpose.
 
-The broad scale plan for the release of this add-on is as follows:
-1. Release 0.1 implements a minimum viable product to be able to import 3MF files into Blender.
-2. Release 0.2 implements a minimum viable product to be able to export 3MF files from Blender.
-3. Release 1.0 needs to implement the full core specification of 3MF and be stable enough for release. This release can maybe be submitted to the Blender community for inclusion in the list of add-ons.
-4. Beyond 1.0 we can look into implementing some of the auxiliary extensions of 3MF, like materials and properties, beam lattices and slices.
+The 3MF specification demands that consumers of 3MF files (i.e. importing 3MF files) must fail quickly and catastrophically when anything is wrong. If a single field is wrong, the entire archive should not get loaded. This add-on has the opposite approach: If something small is wrong with the file, the rest of the file can still be loaded, but for instance without loading that particular triangle that's wrong. You'll get an incomplete file and a warning is placed in the Blender log.
+
+The 3MF specification is also not designed to handle loading multiple 3MF files at once, or to load 3MF files into existing scenes together with other 3MF files. This add-on will try to load as much as possible, but if there are conflicts with parts of the files, it will load neither. One example is the scene metadata such as the title of the scene. If loading two files with the same title, that title is kept. However when combining files with multiple titles, no title will be loaded.
+
+No 3MF extensions are currently supported. That is a goal for future development.
