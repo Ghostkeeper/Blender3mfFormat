@@ -30,14 +30,14 @@ bpy_extras.io_utils.ImportHelper = MockImportHelper
 bpy_extras.io_utils.ExportHelper = MockExportHelper
 import io_mesh_3mf.annotations  # Now finally we can import the unit under test.
 from io_mesh_3mf.constants import (
-    content_types_namespaces,
-    rels_default_namespace,
-    rels_namespaces,
-    rels_thumbnail,
-    threemf_3dmodel_location,
-    threemf_3dmodel_rel,
-    threemf_model_mimetype,
-    threemf_rels_mimetype
+    CONTENT_TYPES_NAMESPACES,
+    RELS_NAMESPACE,
+    RELS_NAMESPACES,
+    THUMBNAIL_REL,
+    MODEL_LOCATION,
+    MODEL_REL,
+    MODEL_MIMETYPE,
+    RELS_MIMETYPE
 )
 
 
@@ -82,7 +82,7 @@ class TestAnnotations(unittest.TestCase):
         Tests adding an empty relationships file.
         """
         # Construct an empty rels file.
-        root = xml.etree.ElementTree.Element(f"{{{rels_default_namespace}}}Relationships")
+        root = xml.etree.ElementTree.Element(f"{{{RELS_NAMESPACE}}}Relationships")
         rels_file = self.xml_to_filestream(root, "_rels/.rels")
 
         self.annotations.add_rels(rels_file)
@@ -97,17 +97,17 @@ class TestAnnotations(unittest.TestCase):
         Tests adding a relationships file with a relationship in it.
         """
         # Construct a relationships file with a relationship in it.
-        root = xml.etree.ElementTree.Element(f"{{{rels_default_namespace}}}Relationships")
-        xml.etree.ElementTree.SubElement(root, f"{{{rels_default_namespace}}}Relationship", attrib={
+        root = xml.etree.ElementTree.Element(f"{{{RELS_NAMESPACE}}}Relationships")
+        xml.etree.ElementTree.SubElement(root, f"{{{RELS_NAMESPACE}}}Relationship", attrib={
             "Target": "/path/to/thumbnail.png",
-            "Type": rels_thumbnail
+            "Type": THUMBNAIL_REL
         })
         rels_file = self.xml_to_filestream(root, "_rels/.rels")
 
         self.annotations.add_rels(rels_file)
 
         expected_annotations = {
-            "path/to/thumbnail.png": {io_mesh_3mf.annotations.Relationship(namespace=rels_thumbnail, source="/")}
+            "path/to/thumbnail.png": {io_mesh_3mf.annotations.Relationship(namespace=THUMBNAIL_REL, source="/")}
         }
         self.assertDictEqual(self.annotations.annotations, expected_annotations, "There is a thumbnail relationship.")
 
@@ -118,11 +118,11 @@ class TestAnnotations(unittest.TestCase):
         We expect to see only one copy of it in the result.
         """
         # Construct a relationships file with four identical relationships in it.
-        root = xml.etree.ElementTree.Element(f"{{{rels_default_namespace}}}Relationships")
+        root = xml.etree.ElementTree.Element(f"{{{RELS_NAMESPACE}}}Relationships")
         for i in range(4):
-            xml.etree.ElementTree.SubElement(root, f"{{{rels_default_namespace}}}Relationship", attrib={
+            xml.etree.ElementTree.SubElement(root, f"{{{RELS_NAMESPACE}}}Relationship", attrib={
                 "Target": "/path/to/thumbnail.png",
-                "Type": rels_thumbnail
+                "Type": THUMBNAIL_REL
             })
         rels_file = self.xml_to_filestream(root, "_rels/.rels")
 
@@ -132,7 +132,7 @@ class TestAnnotations(unittest.TestCase):
         self.annotations.add_rels(rels_file)
 
         expected_annotations = {
-            "path/to/thumbnail.png": {io_mesh_3mf.annotations.Relationship(namespace=rels_thumbnail, source="/")}
+            "path/to/thumbnail.png": {io_mesh_3mf.annotations.Relationship(namespace=THUMBNAIL_REL, source="/")}
         }
         self.assertDictEqual(
             self.annotations.annotations,
@@ -146,14 +146,14 @@ class TestAnnotations(unittest.TestCase):
         Those relationships should get ignored.
         """
         # Construct a relationships file with two broken relationships in it.
-        root = xml.etree.ElementTree.Element(f"{{{rels_default_namespace}}}Relationships")
-        xml.etree.ElementTree.SubElement(root, f"{{{rels_default_namespace}}}Relationship", attrib={
+        root = xml.etree.ElementTree.Element(f"{{{RELS_NAMESPACE}}}Relationships")
+        xml.etree.ElementTree.SubElement(root, f"{{{RELS_NAMESPACE}}}Relationship", attrib={
             "Target": "/path/to/thumbnail.png"
             # Missing type.
         })
-        xml.etree.ElementTree.SubElement(root, f"{{{rels_default_namespace}}}Relationship", attrib={
+        xml.etree.ElementTree.SubElement(root, f"{{{RELS_NAMESPACE}}}Relationship", attrib={
             # Missing target.
-            "Type": rels_thumbnail
+            "Type": THUMBNAIL_REL
         })
         rels_file = self.xml_to_filestream(root, "_rels/.rels")
 
@@ -169,10 +169,10 @@ class TestAnnotations(unittest.TestCase):
         Tests adding a relationships file with a relationship in it.
         """
         # Construct a relationships file with a different base path.
-        root = xml.etree.ElementTree.Element(f"{{{rels_default_namespace}}}Relationships")
-        xml.etree.ElementTree.SubElement(root, f"{{{rels_default_namespace}}}Relationship", attrib={
+        root = xml.etree.ElementTree.Element(f"{{{RELS_NAMESPACE}}}Relationships")
+        xml.etree.ElementTree.SubElement(root, f"{{{RELS_NAMESPACE}}}Relationship", attrib={
             "Target": "/path/to/thumbnail.png",
-            "Type": rels_thumbnail
+            "Type": THUMBNAIL_REL
         })
         # The _rels directory is NOT in the root of the archive.
         rels_file = self.xml_to_filestream(root, "metadata/_rels/.rels")
@@ -181,7 +181,7 @@ class TestAnnotations(unittest.TestCase):
 
         expected_annotations = {
             "path/to/thumbnail.png": {
-                io_mesh_3mf.annotations.Relationship(namespace=rels_thumbnail, source="metadata/")
+                io_mesh_3mf.annotations.Relationship(namespace=THUMBNAIL_REL, source="metadata/")
             }
         }
         self.assertDictEqual(
@@ -249,8 +249,8 @@ class TestAnnotations(unittest.TestCase):
         rels_file = io.BytesIO()
         rels_file.name = "_rels/.rels"
         files_by_content_type = {
-            threemf_model_mimetype: {model_file},
-            threemf_rels_mimetype: {rels_file}
+            MODEL_MIMETYPE: {model_file},
+            RELS_MIMETYPE: {rels_file}
         }
 
         self.annotations.add_content_types(files_by_content_type)
@@ -305,18 +305,18 @@ class TestAnnotations(unittest.TestCase):
 
         file.seek(0)
         root = xml.etree.ElementTree.ElementTree(file=file).getroot()
-        relationships = root.findall("rel:Relationship", namespaces=rels_namespaces)
+        relationships = root.findall("rel:Relationship", namespaces=RELS_NAMESPACES)
         self.assertEqual(
             len(relationships),
             1,
             "There must be exactly one relationship: The relationship to indicate the main 3D model.")
         self.assertEqual(
             relationships[0].attrib["Target"],
-            "/" + threemf_3dmodel_location,
+            "/" + MODEL_LOCATION,
             "The relationship must be about the default 3D model location.")
         self.assertEqual(
             relationships[0].attrib["Type"],
-            threemf_3dmodel_rel,
+            MODEL_REL,
             "The relationship must indicate that this is the default 3D model location.")
         # Don't test the Id attribute. It may be arbitrary.
 
@@ -337,7 +337,7 @@ class TestAnnotations(unittest.TestCase):
 
         file.seek(0)
         root = xml.etree.ElementTree.ElementTree(file=file).getroot()
-        relationships = root.findall("rel:Relationship", namespaces=rels_namespaces)
+        relationships = root.findall("rel:Relationship", namespaces=RELS_NAMESPACES)
         self.assertEqual(
             len(relationships),
             1,
@@ -358,13 +358,13 @@ class TestAnnotations(unittest.TestCase):
 
         file.seek(0)
         root = xml.etree.ElementTree.ElementTree(file=file).getroot()
-        relationships = root.findall("rel:Relationship", namespaces=rels_namespaces)
+        relationships = root.findall("rel:Relationship", namespaces=RELS_NAMESPACES)
         self.assertEqual(
             len(relationships),
             2,
             "The default 3D model relationship is present, as well as 1 additional custom relationship.")
         for relationship in relationships:
-            if relationship.attrib["Target"] == "/" + threemf_3dmodel_location:
+            if relationship.attrib["Target"] == "/" + MODEL_LOCATION:
                 continue  # We already tested this one in a different test.
             elif relationship.attrib["Target"] == "/file.txt":
                 self.assertEqual(relationship.attrib["Type"], "nsp", "This is the customized relationship we added.")
@@ -389,7 +389,7 @@ class TestAnnotations(unittest.TestCase):
 
         custom_file.seek(0)
         root = xml.etree.ElementTree.ElementTree(file=custom_file).getroot()
-        relationships = root.findall("rel:Relationship", namespaces=rels_namespaces)
+        relationships = root.findall("rel:Relationship", namespaces=RELS_NAMESPACES)
         self.assertEqual(len(relationships), 1, "Only the custom relationship got saved to this file.")
         self.assertEqual(relationships[0].attrib["Target"], "/file.txt", "The target of the relationship is absolute.")
         self.assertEqual(relationships[0].attrib["Type"], "nsp", "This is the namespace we added.")
@@ -409,24 +409,24 @@ class TestAnnotations(unittest.TestCase):
 
         file.seek(0)
         root = xml.etree.ElementTree.ElementTree(file=file).getroot()
-        defaults = root.findall("ct:Default", namespaces=content_types_namespaces)
+        defaults = root.findall("ct:Default", namespaces=CONTENT_TYPES_NAMESPACES)
         self.assertEqual(
             len(defaults),
             2,
             "There are two content types defined by the add-on itself, which are always present.")
         # Python doesn't support XPath expressions that match on multiple attributes, so we'll have to resort to two
         # checks here.
-        rels_tags = root.findall("ct:Default[@Extension='rels']", namespaces=content_types_namespaces)
+        rels_tags = root.findall("ct:Default[@Extension='rels']", namespaces=CONTENT_TYPES_NAMESPACES)
         self.assertEqual(len(rels_tags), 1, "There is one content type specification for .rels files.")
         self.assertEqual(
             rels_tags[0].attrib["ContentType"],
-            threemf_rels_mimetype,
+            RELS_MIMETYPE,
             "The MIME type of the .rels file must be filled in correctly.")
-        model_tags = root.findall("ct:Default[@Extension='model']", namespaces=content_types_namespaces)
+        model_tags = root.findall("ct:Default[@Extension='model']", namespaces=CONTENT_TYPES_NAMESPACES)
         self.assertEqual(len(model_tags), 1, "There is one content type specification for .model files.")
         self.assertEqual(
             model_tags[0].attrib["ContentType"],
-            threemf_model_mimetype,
+            MODEL_MIMETYPE,
             "The MIME type of the .model file must be filled in correctly.")
 
     def test_write_content_types_single(self):
@@ -448,7 +448,7 @@ class TestAnnotations(unittest.TestCase):
         file.seek(0)
         root = xml.etree.ElementTree.ElementTree(file=file).getroot()
         # Find the Default tag that our custom content type should've caused.
-        my_default = root.findall("ct:Default[@Extension='txt']", namespaces=content_types_namespaces)
+        my_default = root.findall("ct:Default[@Extension='txt']", namespaces=CONTENT_TYPES_NAMESPACES)
         self.assertEqual(
             len(my_default),
             1,
@@ -478,14 +478,14 @@ class TestAnnotations(unittest.TestCase):
         file.seek(0)
         root = xml.etree.ElementTree.ElementTree(file=file).getroot()
         # Find the Default type that our custom content type should've caused.
-        my_default = root.findall("ct:Default[@Extension='txt']", namespaces=content_types_namespaces)
+        my_default = root.findall("ct:Default[@Extension='txt']", namespaces=CONTENT_TYPES_NAMESPACES)
         self.assertEqual(len(my_default), 1, "There was a Default tag made for the .txt extension.")
         self.assertEqual(
             my_default[0].attrib["ContentType"],
             "some MIME type",
             "The MIME type for all files was the same: This one.")
         self.assertEqual(
-            len(root.findall("ct:Override", namespaces=content_types_namespaces)),
+            len(root.findall("ct:Override", namespaces=CONTENT_TYPES_NAMESPACES)),
             0,
             "There were no overrides since all .txt files have the same MIME type.")
 
@@ -517,13 +517,13 @@ class TestAnnotations(unittest.TestCase):
         file.seek(0)
         root = xml.etree.ElementTree.ElementTree(file=file).getroot()
         # Find the default type for the samey MIME type.
-        my_default = root.findall("ct:Default[@Extension='txt']", namespaces=content_types_namespaces)
+        my_default = root.findall("ct:Default[@Extension='txt']", namespaces=CONTENT_TYPES_NAMESPACES)
         self.assertEqual(len(my_default), 1, "There was a Default tag made for the .txt extension.")
         self.assertEqual(
             my_default[0].attrib["ContentType"],
             "samey",
             "The 'samey' MIME type was chosen as the most common one, so that one is the default.")
-        unique_override = root.findall("ct:Override", namespaces=content_types_namespaces)
+        unique_override = root.findall("ct:Override", namespaces=CONTENT_TYPES_NAMESPACES)
         self.assertEqual(len(unique_override), 1, "There was one override for the file with a unique MIME type.")
         self.assertEqual(
             unique_override[0].attrib["PartName"],

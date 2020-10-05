@@ -20,14 +20,14 @@ import urllib.parse  # To parse relative target paths in relationships.
 import xml.etree.ElementTree  # To parse the relationships files.
 
 from .constants import (
-    content_types_default_namespace,  # Namespace for writing content types files.
-    rels_default_namespace,  # Namespace for writing relationships files.
-    rels_namespaces,  # Namespaces for reading relationships files.
-    threemf_content_types_location,  # Location of content types file.
-    threemf_3dmodel_location,  # Target of default relationship.
-    threemf_3dmodel_rel,  # Known relationship.
-    threemf_rels_mimetype,  # Known content types.
-    threemf_model_mimetype
+    CONTENT_TYPES_NAMESPACE,  # Namespace for writing content types files.
+    RELS_NAMESPACE,  # Namespace for writing relationships files.
+    RELS_NAMESPACES,  # Namespaces for reading relationships files.
+    CONTENT_TYPES_LOCATION,  # Location of content types file.
+    MODEL_LOCATION,  # Target of default relationship.
+    MODEL_REL,  # Known relationship.
+    RELS_MIMETYPE,  # Known content types.
+    MODEL_MIMETYPE
 )
 
 
@@ -89,14 +89,14 @@ class Annotations:
                 f"Relationship file {rels_file.name} has malformed XML (position {e.position[0]}:{e.position[1]}).")
             return  # Skip this file.
 
-        for relationship_node in root.iterfind("rel:Relationship", rels_namespaces):
+        for relationship_node in root.iterfind("rel:Relationship", RELS_NAMESPACES):
             try:
                 target = relationship_node.attrib["Target"]
                 namespace = relationship_node.attrib["Type"]
             except KeyError as e:
                 logging.warning(f"Relationship missing attribute: {str(e)}")
                 continue  # Skip this relationship.
-            if namespace == threemf_3dmodel_rel:  # Don't store relationships that we will write ourselves.
+            if namespace == MODEL_REL:  # Don't store relationships that we will write ourselves.
                 continue
 
             # Evaluate any relative URIs based on the path to this .rels file in the archive.
@@ -127,7 +127,7 @@ class Annotations:
         for content_type, file_set in files_by_content_type.items():
             if content_type == "":
                 continue  # Don't store content type if the content type is unknown.
-            if content_type in {threemf_rels_mimetype, threemf_model_mimetype}:
+            if content_type in {RELS_MIMETYPE, MODEL_MIMETYPE}:
                 continue  # Don't store content type if it's a file we'll rewrite with this add-on.
             for file in file_set:
                 filename = file.name
@@ -176,21 +176,21 @@ class Annotations:
             if source == "/":  # Writing to the archive root. Don't want to start zipfile paths with a slash.
                 source = ""
             # Create an XML document containing all relationships for this source.
-            root = xml.etree.ElementTree.Element(f"{{{rels_default_namespace}}}Relationships")
+            root = xml.etree.ElementTree.Element(f"{{{RELS_NAMESPACE}}}Relationships")
             for target, namespace in annotations:
-                xml.etree.ElementTree.SubElement(root, f"{{{rels_default_namespace}}}Relationship", attrib={
-                    f"{{{rels_default_namespace}}}Id": "rel" + str(current_id),
-                    f"{{{rels_default_namespace}}}Target": "/" + target,
-                    f"{{{rels_default_namespace}}}Type": namespace
+                xml.etree.ElementTree.SubElement(root, f"{{{RELS_NAMESPACE}}}Relationship", attrib={
+                    f"{{{RELS_NAMESPACE}}}Id": "rel" + str(current_id),
+                    f"{{{RELS_NAMESPACE}}}Target": "/" + target,
+                    f"{{{RELS_NAMESPACE}}}Type": namespace
                 })
                 current_id += 1
 
             # Write relationships for files that we create.
             if source == "":
-                xml.etree.ElementTree.SubElement(root, f"{{{rels_default_namespace}}}Relationship", attrib={
-                    f"{{{rels_default_namespace}}}Id": "rel" + str(current_id),
-                    f"{{{rels_default_namespace}}}Target": "/" + threemf_3dmodel_location,
-                    f"{{{rels_default_namespace}}}Type": threemf_3dmodel_rel
+                xml.etree.ElementTree.SubElement(root, f"{{{RELS_NAMESPACE}}}Relationship", attrib={
+                    f"{{{RELS_NAMESPACE}}}Id": "rel" + str(current_id),
+                    f"{{{RELS_NAMESPACE}}}Target": "/" + MODEL_LOCATION,
+                    f"{{{RELS_NAMESPACE}}}Type": MODEL_REL
                 })
                 current_id += 1
 
@@ -199,7 +199,7 @@ class Annotations:
             # Write that XML document to a file.
             rels_file = source + "_rels/.rels"  # _rels folder in the "source" folder.
             with archive.open(rels_file, 'w') as f:
-                document.write(f, xml_declaration=True, encoding='UTF-8', default_namespace=rels_default_namespace)
+                document.write(f, xml_declaration=True, encoding='UTF-8', default_namespace=RELS_NAMESPACE)
 
     def write_content_types(self, archive):
         """
@@ -225,20 +225,20 @@ class Annotations:
             most_common[extension] = counter.most_common(1)[0][0]
 
         # Add the content types for files that this add-on creates by itself.
-        most_common[".rels"] = threemf_rels_mimetype
-        most_common[".model"] = threemf_model_mimetype
+        most_common[".rels"] = RELS_MIMETYPE
+        most_common[".model"] = MODEL_MIMETYPE
 
         # Write an XML file that contains the extension rules for the most common cases,
         # but specific overrides for the outliers.
-        root = xml.etree.ElementTree.Element(f"{{{content_types_default_namespace}}}Types")
+        root = xml.etree.ElementTree.Element(f"{{{CONTENT_TYPES_NAMESPACE}}}Types")
 
         # First add all of the extension-based rules.
         for extension, mime_type in most_common.items():
             if not extension:  # Skip files without extension.
                 continue
-            xml.etree.ElementTree.SubElement(root, f"{{{content_types_default_namespace}}}Default", attrib={
-                f"{{{content_types_default_namespace}}}Extension": extension[1:],  # Don't include the period.
-                f"{{{content_types_default_namespace}}}ContentType": mime_type
+            xml.etree.ElementTree.SubElement(root, f"{{{CONTENT_TYPES_NAMESPACE}}}Default", attrib={
+                f"{{{CONTENT_TYPES_NAMESPACE}}}Extension": extension[1:],  # Don't include the period.
+                f"{{{CONTENT_TYPES_NAMESPACE}}}ContentType": mime_type
             })
 
         # Then write the overrides for files that don't have the same content type as most of their exceptions.
@@ -249,15 +249,15 @@ class Annotations:
                 extension = os.path.splitext(target)[1]
                 if not extension or annotation.mime_type != most_common[extension]:
                     # This is an exceptional case that should be stored as an override.
-                    xml.etree.ElementTree.SubElement(root, f"{{{content_types_default_namespace}}}Override", attrib={
-                        f"{{{content_types_default_namespace}}}PartName": "/" + target,
-                        f"{{{content_types_default_namespace}}}ContentType": annotation.mime_type
+                    xml.etree.ElementTree.SubElement(root, f"{{{CONTENT_TYPES_NAMESPACE}}}Override", attrib={
+                        f"{{{CONTENT_TYPES_NAMESPACE}}}PartName": "/" + target,
+                        f"{{{CONTENT_TYPES_NAMESPACE}}}ContentType": annotation.mime_type
                     })
 
         # Output all that to the [Content_Types].xml file.
         document = xml.etree.ElementTree.ElementTree(root)
-        with archive.open(threemf_content_types_location, 'w') as f:
-            document.write(f, xml_declaration=True, encoding='UTF-8', default_namespace=content_types_default_namespace)
+        with archive.open(CONTENT_TYPES_LOCATION, 'w') as f:
+            document.write(f, xml_declaration=True, encoding='UTF-8', default_namespace=CONTENT_TYPES_NAMESPACE)
 
     def store(self):
         """

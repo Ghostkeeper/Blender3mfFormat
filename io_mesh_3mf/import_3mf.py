@@ -29,12 +29,12 @@ import zipfile  # To read the 3MF files which are secretly zip archives.
 from .annotations import Annotations, ContentType, Relationship  # To use annotations to decide on what to import.
 from .constants import (  # Constants associated with the 3MF file format.
     conflicting_mustpreserve_contents,
-    threemf_content_types_location,
-    threemf_default_unit,
-    threemf_model_mimetype,
-    threemf_namespaces,
-    threemf_rels_mimetype,
-    threemf_supported_extensions
+    CONTENT_TYPES_LOCATION,
+    MODEL_DEFAULT_UNIT,
+    MODEL_MIMETYPE,
+    MODEL_NAMESPACES,
+    RELS_MIMETYPE,
+    SUPPORTED_EXTENSIONS
 )
 from .metadata import MetadataEntry, Metadata  # To store and serialize metadata.
 from .unit_conversions import blender_to_metre, threemf_to_metre  # To convert to Blender's units.
@@ -120,13 +120,13 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
             files_by_content_type = self.read_archive(path)  # Get the files from the archive.
 
             # File metadata.
-            for rels_file in files_by_content_type.get(threemf_rels_mimetype, []):
+            for rels_file in files_by_content_type.get(RELS_MIMETYPE, []):
                 annotations.add_rels(rels_file)
             annotations.add_content_types(files_by_content_type)
             self.must_preserve(files_by_content_type, annotations)
 
             # Read the model data.
-            for model_file in files_by_content_type.get(threemf_model_mimetype, []):
+            for model_file in files_by_content_type.get(MODEL_MIMETYPE, []):
                 try:
                     document = xml.etree.ElementTree.ElementTree(file=model_file)
                 except xml.etree.ElementTree.ParseError as e:
@@ -212,12 +212,12 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
         result = []
 
         try:
-            with archive.open(threemf_content_types_location) as f:
+            with archive.open(CONTENT_TYPES_LOCATION) as f:
                 try:
                     root = xml.etree.ElementTree.ElementTree(file=f)
                 except xml.etree.ElementTree.ParseError as e:
                     log.warning(
-                        f"{threemf_content_types_location} has malformed XML"
+                        f"{CONTENT_TYPES_LOCATION} has malformed XML"
                         f"(position {e.position[0]}:{e.position[1]}).")
                     root = None
 
@@ -237,13 +237,13 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
                         match_regex = re.compile(r".*\." + re.escape(default_node.attrib["Extension"]))
                         result.append((match_regex, default_node.attrib["ContentType"]))
         except KeyError:  # ZipFile reports that the content types file doesn't exist.
-            log.warning(f"{threemf_content_types_location} file missing!")
+            log.warning(f"{CONTENT_TYPES_LOCATION} file missing!")
 
         # This parser should be robust to slightly broken files and retrieve what we can.
         # In case the document is broken or missing, here we'll append the default ones for 3MF.
         # If the content types file was fine, this gets least priority so the actual data still wins.
-        result.append((re.compile(r".*\.rels"), threemf_rels_mimetype))
-        result.append((re.compile(r".*\.model"), threemf_model_mimetype))
+        result.append((re.compile(r".*\.rels"), RELS_MIMETYPE))
+        result.append((re.compile(r".*\.model"), MODEL_MIMETYPE))
 
         return result
 
@@ -261,7 +261,7 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
         result = {}
         for file_info in archive.filelist:
             file_path = file_info.filename
-            if file_path == threemf_content_types_location:  # Don't index this one.
+            if file_path == CONTENT_TYPES_LOCATION:  # Don't index this one.
                 continue
             for pattern, content_type in content_types:  # Process in the correct order!
                 if pattern.fullmatch(file_path):
@@ -333,7 +333,7 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
         """
         extensions = required_extensions.split(" ")
         extensions = set(filter(lambda x: x != "", extensions))
-        return extensions <= threemf_supported_extensions
+        return extensions <= SUPPORTED_EXTENSIONS
 
     def unit_scale(self, context, root):
         """
@@ -349,7 +349,7 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
         if context.scene.unit_settings.scale_length != 0:
             scale /= context.scene.unit_settings.scale_length  # Apply the global scale of the units in Blender.
 
-        threemf_unit = root.attrib.get("unit", threemf_default_unit)
+        threemf_unit = root.attrib.get("unit", MODEL_DEFAULT_UNIT)
         blender_unit = context.scene.unit_settings.length_unit
         scale *= threemf_to_metre[threemf_unit]  # Convert 3MF units to metre.
         scale /= blender_to_metre[blender_unit]  # Convert metre to Blender's units.
@@ -370,7 +370,7 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
         else:
             metadata = Metadata()  # Create a new Metadata object.
 
-        for metadata_node in node.iterfind("./3mf:metadata", threemf_namespaces):
+        for metadata_node in node.iterfind("./3mf:metadata", MODEL_NAMESPACES):
             if "name" not in metadata_node.attrib:
                 log.warning("Metadata entry without name is discarded.")
                 continue  # This attribute has no name, so there's no key by which I can save the metadata.
@@ -394,7 +394,7 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
         The materials will be stored in `self.resource_materials` until it gets used to build the items.
         :param root: The root of an XML document that may contain materials.
         """
-        for basematerials_item in root.iterfind("./3mf:resources/3mf:basematerials", threemf_namespaces):
+        for basematerials_item in root.iterfind("./3mf:resources/3mf:basematerials", MODEL_NAMESPACES):
             try:
                 material_id = basematerials_item.attrib["id"]
             except KeyError:
@@ -409,7 +409,7 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
             index = 0
 
             # "Base" must be the stupidest name for a material resource. Oh well.
-            for base_item in basematerials_item.iterfind("./3mf:base", threemf_namespaces):
+            for base_item in basematerials_item.iterfind("./3mf:base", MODEL_NAMESPACES):
                 name = base_item.attrib.get("name", "3MF Material")
                 color = base_item.attrib.get("displaycolor")
                 if color is not None:
@@ -444,7 +444,7 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
         This stores them in the resource_objects field.
         :param root: The root node of a 3dmodel.model XML file.
         """
-        for object_node in root.iterfind("./3mf:resources/3mf:object", threemf_namespaces):
+        for object_node in root.iterfind("./3mf:resources/3mf:object", MODEL_NAMESPACES):
             try:
                 objectid = object_node.attrib["id"]
             except KeyError:
@@ -469,7 +469,7 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
             triangles, materials = self.read_triangles(object_node, material, pid)
             components = self.read_components(object_node)
             metadata = Metadata()
-            for metadata_node in object_node.iterfind("./3mf:metadatagroup", threemf_namespaces):
+            for metadata_node in object_node.iterfind("./3mf:metadatagroup", MODEL_NAMESPACES):
                 metadata = self.read_metadata(metadata_node, metadata)
             if "partnumber" in object_node.attrib:
                 # Blender has no way to ensure that custom properties get preserved if a mesh is split up, but for most
@@ -502,7 +502,7 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
         :return: List of vertices in that object. Each vertex is a tuple of 3 floats for X, Y and Z.
         """
         result = []
-        for vertex in object_node.iterfind("./3mf:mesh/3mf:vertices/3mf:vertex", threemf_namespaces):
+        for vertex in object_node.iterfind("./3mf:mesh/3mf:vertices/3mf:vertex", MODEL_NAMESPACES):
             attrib = vertex.attrib
             try:
                 x = float(attrib.get("x", 0))
@@ -538,7 +538,7 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
         """
         vertices = []
         materials = []
-        for triangle in object_node.iterfind("./3mf:mesh/3mf:triangles/3mf:triangle", threemf_namespaces):
+        for triangle in object_node.iterfind("./3mf:mesh/3mf:triangles/3mf:triangle", MODEL_NAMESPACES):
             attrib = triangle.attrib
             try:
                 v1 = int(attrib["v1"])
@@ -583,7 +583,7 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
         :return: List of components in this object node.
         """
         result = []
-        for component_node in object_node.iterfind("./3mf:components/3mf:component", threemf_namespaces):
+        for component_node in object_node.iterfind("./3mf:components/3mf:component", MODEL_NAMESPACES):
             try:
                 objectid = component_node.attrib["objectid"]
             except KeyError:  # ID is required.
@@ -644,7 +644,7 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
         :return: A sequence of Blender Objects that need to be placed in the
         scene. Each mesh gets transformed appropriately.
         """
-        for build_item in root.iterfind("./3mf:build/3mf:item", threemf_namespaces):
+        for build_item in root.iterfind("./3mf:build/3mf:item", MODEL_NAMESPACES):
             try:
                 objectid = build_item.attrib["objectid"]
                 resource_object = self.resource_objects[objectid]
@@ -653,7 +653,7 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
                 continue  # Ignore this invalid item.
 
             metadata = Metadata()
-            for metadata_node in build_item.iterfind("./3mf:metadatagroup", threemf_namespaces):
+            for metadata_node in build_item.iterfind("./3mf:metadatagroup", MODEL_NAMESPACES):
                 metadata = self.read_metadata(metadata_node, metadata)
             if "partnumber" in build_item.attrib:
                 metadata["3mf:partnumber"] = MetadataEntry(
