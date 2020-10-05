@@ -168,8 +168,7 @@ class TestImport3MF(unittest.TestCase):
 
     def test_read_content_types_empty(self):
         """
-        Tests reading an archive where the content types file doesn't define any
-        content types.
+        Tests reading an archive where the content types file doesn't define any content types.
         """
         archive = zipfile.ZipFile(self.black_hole, 'w')
         archive.writestr(threemf_content_types_location, "")  # Completely empty file.
@@ -216,14 +215,14 @@ class TestImport3MF(unittest.TestCase):
 
     def test_read_content_types_custom_defaults(self):
         """
-        Tests reading an archive with customised content type defaults.
+        Tests reading an archive with customized content type defaults.
         """
         archive = zipfile.ZipFile(self.black_hole, 'w')
         archive.writestr(threemf_content_types_location, """<?xml version="1.0" encoding="UTF-8"?>
 <Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
     <Default Extension="txt" ContentType="text/plain" />
     <Override PartName="/path/to/file.jpg" ContentType="image/thumbnail" />
-</Types>""")  # A customised content types specification, with one default and one override.
+</Types>""")  # A customized content types specification, with one default and one override.
         result = self.importer.read_content_types(archive)
 
         # In order to verify if the regexes are correct, transform the output to list the regex pattern rather than the
@@ -236,24 +235,24 @@ class TestImport3MF(unittest.TestCase):
         self.assertLess(
             custom_index,
             rels_index,
-            "Customised defaults must have higher priority than the fallbacks that were added "
+            "Customized defaults must have higher priority than the fallbacks that were added "
             "in case of a corrupt [Content_Types].xml file.")
         self.assertLess(
             custom_index,
             model_index,
-            "Customised defaults must have higher priority than the fallbacks that were added "
+            "Customized defaults must have higher priority than the fallbacks that were added "
             "in case of a corrupt [Content_Types].xml file.")
 
     def test_read_content_types_custom_overrides(self):
         """
-        Tests reading an archive with customised content type overrides.
+        Tests reading an archive with customized content type overrides.
         """
         archive = zipfile.ZipFile(self.black_hole, 'w')
         archive.writestr(threemf_content_types_location, """<?xml version="1.0" encoding="UTF-8"?>
 <Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
     <Default Extension="txt" ContentType="text/plain" />
     <Override PartName="/path/to/file.jpg" ContentType="image/thumbnail" />
-</Types>""")  # A customised content types specification, with one default and one override.
+</Types>""")  # A customized content types specification, with one default and one override.
         result = self.importer.read_content_types(archive)
 
         # In order to verify if the regexes are correct, transform the output to list the regex pattern rather than the
@@ -678,8 +677,7 @@ class TestImport3MF(unittest.TestCase):
 
     def test_read_metadata_combined(self):
         """
-        Tests combining an existing metadata set with new metadata from the
-        document.
+        Tests combining an existing metadata set with new metadata from the document.
         """
         object_node = xml.etree.ElementTree.Element(f"{{{threemf_default_namespace}}}object")
         metadata_node = xml.etree.ElementTree.SubElement(object_node, f"{{{threemf_default_namespace}}}metadata")
@@ -730,7 +728,7 @@ class TestImport3MF(unittest.TestCase):
         """
         Tests reading a simple material from a <basematerials> tag.
 
-        This material has no name or colour. The importer uses defaults.
+        This material has no name or color. The importer uses defaults.
         """
         root = xml.etree.ElementTree.Element(f"{{{threemf_default_namespace}}}model")
         resources = xml.etree.ElementTree.SubElement(root, f"{{{threemf_default_namespace}}}resources")
@@ -744,13 +742,13 @@ class TestImport3MF(unittest.TestCase):
 
         ground_truth = {
             "material-set": {
-                0: io_mesh_3mf.import_3mf.ResourceMaterial(name="3MF Material", colour=None)
+                0: io_mesh_3mf.import_3mf.ResourceMaterial(name="3MF Material", color=None)
             }
         }
         self.assertDictEqual(
             self.importer.resource_materials,
             ground_truth,
-            "There is one material, with a default name and no colour.")
+            "There is one material, with a default name and no color.")
 
     def test_read_materials_multiple(self):
         """
@@ -769,8 +767,8 @@ class TestImport3MF(unittest.TestCase):
 
         ground_truth = {
             "material-set": {
-                0: io_mesh_3mf.import_3mf.ResourceMaterial(name="PLA", colour=None),
-                1: io_mesh_3mf.import_3mf.ResourceMaterial(name="BLA", colour=None)
+                0: io_mesh_3mf.import_3mf.ResourceMaterial(name="PLA", color=None),
+                1: io_mesh_3mf.import_3mf.ResourceMaterial(name="BLA", color=None)
             }
         }
         self.assertDictEqual(
@@ -778,26 +776,26 @@ class TestImport3MF(unittest.TestCase):
             ground_truth,
             "There are two materials, each with their own names.")
 
-    def test_read_materials_colour(self):
+    def test_read_materials_color(self):
         """
-        Test reading the colour from a material.
+        Test reading the color from a material.
         """
-        # Ground truth for what each colour should translate to when reading from the 3MF document.
-        colour_translation = {
-            None: None,  # Missing colour.
+        # Ground truth for what each color should translate to when reading from the 3MF document.
+        color_translation = {
+            None: None,  # Missing color.
             "#4080C0": (0x40 / 255, 0x80 / 255, 0xC0 / 255, 1.0),  # Correct case.
             "4080C0": (0x40 / 255, 0x80 / 255, 0xC0 / 255, 1.0),  # Strictly incorrect, but we'll allow it.
             "#FFC08040": (1.0, 0xC0 / 255, 0x80 / 255, 0x40 / 255),  # Correct case with alpha.
             "FFC08040": (1.0, 0xC0 / 255, 0x80 / 255, 0x40 / 255),  # Strictly incorrect. With alpha.
-            "ABCD": (0.0, 0.0, 0xAB / 255, 0xCD / 255),  # Not enough characters. Interpret as web colours.
+            "ABCD": (0.0, 0.0, 0xAB / 255, 0xCD / 255),  # Not enough characters. Interpret as web colors.
             "ABCDEFABCDEF": (0xEF / 255, 0xAB / 255, 0xCD / 255, 0xEF / 255),  # Too many characters.
             "ffc080": (0xFF / 255, 0xc0 / 255, 0x80 / 255, 1.0),  # Lowercase characters.
             "": None,  # Doesn't parse.
             "3MF3MF": None  # Doesn't parse, since M is out of range for a hexadecimal number.
         }
 
-        for threemf_colour, blender_colour in colour_translation.items():
-            with self.subTest(threemf_colour=threemf_colour, blender_colour=blender_colour):
+        for threemf_color, blender_color in color_translation.items():
+            with self.subTest(threemf_color=threemf_color, blender_color=blender_color):
                 root = xml.etree.ElementTree.Element(f"{{{threemf_default_namespace}}}model")
                 resources = xml.etree.ElementTree.SubElement(root, f"{{{threemf_default_namespace}}}resources")
                 basematerials = xml.etree.ElementTree.SubElement(
@@ -805,7 +803,7 @@ class TestImport3MF(unittest.TestCase):
                     f"{{{threemf_default_namespace}}}basematerials",
                     attrib={"id": "material-set"})
                 xml.etree.ElementTree.SubElement(basematerials, f"{{{threemf_default_namespace}}}base", attrib={
-                    "displaycolor": threemf_colour
+                    "displaycolor": threemf_color
                 })
 
                 self.importer.resource_materials = {}
@@ -813,7 +811,7 @@ class TestImport3MF(unittest.TestCase):
 
                 ground_truth = {
                     "material-set": {
-                        0: io_mesh_3mf.import_3mf.ResourceMaterial(name="3MF Material", colour=blender_colour)
+                        0: io_mesh_3mf.import_3mf.ResourceMaterial(name="3MF Material", color=blender_color)
                     }
                 }
                 self.assertDictEqual(self.importer.resource_materials, ground_truth)
@@ -858,10 +856,10 @@ class TestImport3MF(unittest.TestCase):
 
         ground_truth = {
             "set1": {
-                0: io_mesh_3mf.import_3mf.ResourceMaterial(name="3MF Material", colour=None)
+                0: io_mesh_3mf.import_3mf.ResourceMaterial(name="3MF Material", color=None)
             },
             "set2": {
-                0: io_mesh_3mf.import_3mf.ResourceMaterial(name="3MF Material", colour=None)
+                0: io_mesh_3mf.import_3mf.ResourceMaterial(name="3MF Material", color=None)
             }
         }
         self.assertDictEqual(
@@ -899,12 +897,12 @@ class TestImport3MF(unittest.TestCase):
         ground_truth = [  # List of options which are allowed.
             {
                 "set1": {
-                    0: io_mesh_3mf.import_3mf.ResourceMaterial(name="First material", colour=None)
+                    0: io_mesh_3mf.import_3mf.ResourceMaterial(name="First material", color=None)
                 }
             },
             {
                 "set1": {
-                    0: io_mesh_3mf.import_3mf.ResourceMaterial(name="Second material", colour=None)
+                    0: io_mesh_3mf.import_3mf.ResourceMaterial(name="Second material", color=None)
                 }
             }
         ]
@@ -981,8 +979,7 @@ class TestImport3MF(unittest.TestCase):
 
     def test_read_vertices_broken_coordinates(self):
         """
-        Tests reading vertices where some coordinate is not a floating point
-        value.
+        Tests reading vertices where some coordinate is not a floating point value.
         """
         object_node = xml.etree.ElementTree.Element(f"{{{threemf_default_namespace}}}object")
         mesh_node = xml.etree.ElementTree.SubElement(object_node, f"{{{threemf_default_namespace}}}mesh")
@@ -1112,7 +1109,7 @@ class TestImport3MF(unittest.TestCase):
             "v2": "2",
             "v3": "3"
         })
-        default_material = io_mesh_3mf.import_3mf.ResourceMaterial(name="PLA", colour=None)
+        default_material = io_mesh_3mf.import_3mf.ResourceMaterial(name="PLA", color=None)
         self.importer.resource_materials["material-set"] = {1: default_material}
 
         _, materials = self.importer.read_triangles(object_node, default_material, "")
@@ -1137,9 +1134,9 @@ class TestImport3MF(unittest.TestCase):
             "v3": "3",
             "pid": "material-set"
         })
-        default_material = io_mesh_3mf.import_3mf.ResourceMaterial(name="PLA", colour=None)
+        default_material = io_mesh_3mf.import_3mf.ResourceMaterial(name="PLA", color=None)
         self.importer.resource_materials["material-set"] = {
-            0: io_mesh_3mf.import_3mf.ResourceMaterial(name="Other material", colour=None),  # DON'T default this one.
+            0: io_mesh_3mf.import_3mf.ResourceMaterial(name="Other material", color=None),  # DON'T default this one.
             1: default_material
         }
 
@@ -1166,8 +1163,8 @@ class TestImport3MF(unittest.TestCase):
             "v3": "3",
             "p1": "1"
         })
-        default_material = io_mesh_3mf.import_3mf.ResourceMaterial(name="PLA", colour=None)
-        correct_material = io_mesh_3mf.import_3mf.ResourceMaterial(name="BLA", colour=None)
+        default_material = io_mesh_3mf.import_3mf.ResourceMaterial(name="PLA", color=None)
+        correct_material = io_mesh_3mf.import_3mf.ResourceMaterial(name="BLA", color=None)
         self.importer.resource_materials["material-set"] = {
             0: default_material,  # Supplied as the default, but it should NOT choose this one.
             1: correct_material
@@ -1195,8 +1192,8 @@ class TestImport3MF(unittest.TestCase):
             "pid": "alternative",
             "p1": "0"
         })
-        default_material = io_mesh_3mf.import_3mf.ResourceMaterial(name="PLA", colour=None)
-        correct_material = io_mesh_3mf.import_3mf.ResourceMaterial(name="BLA", colour=None)
+        default_material = io_mesh_3mf.import_3mf.ResourceMaterial(name="PLA", color=None)
+        correct_material = io_mesh_3mf.import_3mf.ResourceMaterial(name="BLA", color=None)
         self.importer.resource_materials = {
             "material-set": {
                 0: default_material,  # Supplied as the default, but it should NOT choose this one.
@@ -1229,7 +1226,7 @@ class TestImport3MF(unittest.TestCase):
             "v3": "3",
             "p1": "999"  # Way out of range for the material-set material group.
         })
-        default_material = io_mesh_3mf.import_3mf.ResourceMaterial(name="PLA", colour=None)
+        default_material = io_mesh_3mf.import_3mf.ResourceMaterial(name="PLA", color=None)
         self.importer.resource_materials["material-set"] = {
             0: default_material
         }
@@ -1258,7 +1255,7 @@ class TestImport3MF(unittest.TestCase):
             "v3": "3",
             "p1": "strawberry"  # Not integer.
         })
-        default_material = io_mesh_3mf.import_3mf.ResourceMaterial(name="PLA", colour=None)
+        default_material = io_mesh_3mf.import_3mf.ResourceMaterial(name="PLA", color=None)
         self.importer.resource_materials["material-set"] = {
             0: default_material
         }
@@ -1389,8 +1386,7 @@ class TestImport3MF(unittest.TestCase):
 
     def test_parse_transformation_broken(self):
         """
-        Tests parsing a transformation matrix containing elements that are not
-        proper floats.
+        Tests parsing a transformation matrix containing elements that are not proper floats.
         """
         transform_str = "1.1 1.2 1.3 2.1 lead 2.3 3.1 3.2 3.3 4.1 4.2 4.3"
         ground_truth = mathutils.Matrix([
@@ -1730,8 +1726,7 @@ class TestImport3MF(unittest.TestCase):
         """
         Tests building an object with a component that is transformed.
 
-        The component's transformation must be the multiplication of both
-        objects' transformations.
+        The component's transformation must be the multiplication of both objects' transformations.
         """
         # A model with a component that got transformed.
         with_transformed_component = io_mesh_3mf.import_3mf.ResourceObject(

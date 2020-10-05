@@ -12,8 +12,8 @@
 # <pep8 compliant>
 
 """
-Allows running all tests by calling `python3 -m unittest test` from the base directory.
-This imports all test classes so that they get run then.
+Allows running all tests by calling `python3 -m unittest test` from the base directory. This imports all test classes so
+that they get run then.
 """
 
 import sys  # To mock entire packages.

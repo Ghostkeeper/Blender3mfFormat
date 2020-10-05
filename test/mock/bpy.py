@@ -14,9 +14,8 @@
 """
 This module contains mocks for Blender's API.
 
-The mocks in this module are meant to be very basic mocks. They will not return
-anything special or do anything. They are just meant to remove the basic import
-errors and add the missing names.
+The mocks in this module are meant to be very basic mocks. They will not return anything special or do anything. They
+are just meant to remove the basic import errors and add the missing names.
 """
 
 
@@ -34,8 +33,8 @@ class MockExportHelper:
 
 class MockPrincipledBSDFWrapper:
     """
-    Transparent wrapper for materials, replacing Blender's
-    PrincipledBSDFWrapper but then doesn't alter the colour space at all.
+    Transparent wrapper for materials, replacing Blender's PrincipledBSDFWrapper but then doesn't alter the color space
+    at all.
     """
     def __init__(self, material, is_readonly=False):
         self.material = material

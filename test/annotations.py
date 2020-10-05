@@ -168,7 +168,7 @@ class TestAnnotations(unittest.TestCase):
         """
         Tests adding a relationships file with a relationship in it.
         """
-        # Construct a relationships file with a different base path
+        # Construct a relationships file with a different base path.
         root = xml.etree.ElementTree.Element(f"{{{rels_default_namespace}}}Relationships")
         xml.etree.ElementTree.SubElement(root, f"{{{rels_default_namespace}}}Relationship", attrib={
             "Target": "/path/to/thumbnail.png",
@@ -367,7 +367,7 @@ class TestAnnotations(unittest.TestCase):
             if relationship.attrib["Target"] == "/" + threemf_3dmodel_location:
                 continue  # We already tested this one in a different test.
             elif relationship.attrib["Target"] == "/file.txt":
-                self.assertEqual(relationship.attrib["Type"], "nsp", "This is the customised relationship we added.")
+                self.assertEqual(relationship.attrib["Type"], "nsp", "This is the customized relationship we added.")
             else:
                 self.fail(f"We didn't add this relationship: {str(relationship)}")
 
@@ -431,8 +431,7 @@ class TestAnnotations(unittest.TestCase):
 
     def test_write_content_types_single(self):
         """
-        Test writing content types when there is a single annotated file in the
-        archive.
+        Test writing content types when there is a single annotated file in the archive.
         """
         archive = unittest.mock.MagicMock()
         file = io.BytesIO()  # Simulate the [Content_Types].xml file.
@@ -667,7 +666,7 @@ class TestAnnotations(unittest.TestCase):
                 "annotation": 'content_type'
             }]},
             {"unknown annotation type": [{
-                "annotation": "something the add-on doesn't recognise"
+                "annotation": "something the add-on doesn't recognize"
             }]}
         ]
         mock = unittest.mock.MagicMock()

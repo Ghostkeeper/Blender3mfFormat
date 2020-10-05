@@ -12,8 +12,8 @@
 # <pep8 compliant>
 
 import bpy  # To store the annotations long-term in the Blender context.
-import collections  # Namedtuple data structure for annotations, and Counter to write optimised content types.
-import json  # To serialise the data for long-term storage in the Blender scene.
+import collections  # Namedtuple data structure for annotations, and Counter to write optimized content types.
+import json  # To serialize the data for long-term storage in the Blender scene.
 import logging  # Reporting parsing errors.
 import os.path  # To parse target paths in relationships.
 import urllib.parse  # To parse relative target paths in relationships.
@@ -46,7 +46,7 @@ class Annotations:
     This is a collection of annotations for a 3MF document. It annotates the files in the archive with metadata
     information.
 
-    The class contains serialisation and deserialisation functions in order to be able to load and save the annotations
+    The class contains serialisation and deserialization functions in order to be able to load and save the annotations
     from/to a 3MF archive, and to load and save the annotations in the Blender scene.
 
     The annotations are stored in the `self.annotations` dictionary. The keys of this dictionary are the targets of the
@@ -71,8 +71,8 @@ class Annotations:
         Add relationships to this collection from a file stream containing a .rels file from a 3MF archive.
 
         A relationship is treated as a file annotation, because it only contains a file that the relationship is
-        targetting, and a meaningless namespace. The relationship also originates from a source, indicated by the path
-        to the relationship file. This will also get stored, so that it can be properly restored later.
+        targeting, and a meaningless namespace. The relationship also originates from a source, indicated by the path to
+        the relationship file. This will also get stored, so that it can be properly restored later.
 
         Duplicate relationships won't get stored.
         :param rels_file: A file stream containing a .rels file.
@@ -161,7 +161,6 @@ class Annotations:
         current_id = 0  # Have an incrementing ID number to make all relationship IDs unique across the whole archive.
 
         # First sort all relationships by their source, so that we know which relationship goes into which file.
-
         # We always want to create a .rels file for the archive root, with our default relationships.
         rels_by_source = {"/": set()}
 
@@ -204,8 +203,7 @@ class Annotations:
 
     def write_content_types(self, archive):
         """
-        Write a [Content_Types].xml file to a 3MF archive, containing all of the
-        content types that we have assigned.
+        Write a [Content_Types].xml file to a 3MF archive, containing all of the content types that we have assigned.
         :param archive: A zip archive to add the content types to.
         """
         # First sort all of the content types by their extension, so that we can find out what the most common content
@@ -265,31 +263,30 @@ class Annotations:
         """
         Stores this `Annotations` instance in the Blender scene.
 
-        The instance will serialise itself and put that data in a hidden JSON
-        file in the scene. This way the data can survive until it needs to be
-        saved to a 3MF document again, even when shared through a Blend file.
+        The instance will serialize itself and put that data in a hidden JSON file in the scene. This way the data can
+        survive until it needs to be saved to a 3MF document again, even when shared through a Blend file.
         """
         # Generate a JSON document containing all annotations.
         document = {}
         for target, annotations in self.annotations.items():
-            serialised_annotations = []
+            serialized_annotations = []
             for annotation in annotations:
                 if type(annotation) == Relationship:
-                    serialised_annotations.append({
+                    serialized_annotations.append({
                         "annotation": 'relationship',
                         "namespace": annotation.namespace,
                         "source": annotation.source
                     })
                 elif type(annotation) == ContentType:
-                    serialised_annotations.append({
+                    serialized_annotations.append({
                         "annotation": 'content_type',
                         "mime_type": annotation.mime_type
                     })
                 elif annotation == ConflictingContentType:
-                    serialised_annotations.append({
+                    serialized_annotations.append({
                         "annotation": 'content_type_conflict'
                     })
-            document[target] = serialised_annotations
+            document[target] = serialized_annotations
 
         # Store this in the Blender context.
         if ANNOTATION_FILE in bpy.data.texts:
@@ -301,9 +298,8 @@ class Annotations:
         """
         Retrieves any existing annotations from the Blender scene.
 
-        This looks for a serialised annotation file in the Blender data. If it
-        exists, it parses that file and retrieves the data from it, restoring
-        the state of the annotations collection that stored that file.
+        This looks for a serialized annotation file in the Blender data. If it exists, it parses that file and retrieves
+        the data from it, restoring the state of the annotations collection that stored that file.
         """
         # If there's nothing stored in the current scene, this clears the state of the annotations.
         self.annotations.clear()

@@ -16,7 +16,7 @@ import bpy  # The Blender API.
 import bpy.props  # To define metadata properties for the operator.
 import bpy.types  # This class is an operator in Blender, and to find meshes in the scene.
 import bpy_extras.io_utils  # Helper functions to export meshes more easily.
-import bpy_extras.node_shader_utils  # Converting material colours to sRGB.
+import bpy_extras.node_shader_utils  # Converting material colors to sRGB.
 import collections  # Counter, to find the most common material of an object.
 import itertools
 import logging  # To debug and log progress.
@@ -76,7 +76,7 @@ class Export3MF(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
 
     def __init__(self):
         """
-        Initialise some fields with defaults before starting.
+        Initialize some fields with defaults before starting.
         """
         super().__init__()
         self.next_resource_id = 1  # Which resource ID to generate for the next object.
@@ -137,8 +137,7 @@ class Export3MF(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
         """
         Creates an empty 3MF archive.
 
-        The archive is complete according to the 3MF specs except that the
-        actual 3dmodel.model file is missing.
+        The archive is complete according to the 3MF specs except that the actual 3dmodel.model file is missing.
         :param filepath: The path to write the file to.
         :return: A zip archive that other functions can add things to.
         """
@@ -180,11 +179,9 @@ class Export3MF(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
         """
         Get the scaling factor we need to transform the document to millimetres.
         :param context: The Blender context to get the unit from.
-        :return: Floating point value that we need to scale this model by. A
-        small number (<1) means that we need to make the coordinates in the 3MF
-        file smaller than the coordinates in Blender. A large number (>1) means
-        we need to make the coordinates in the file larger than the coordinates
-        in Blender.
+        :return: Floating point value that we need to scale this model by. A small number (<1) means that we need to
+        make the coordinates in the 3MF file smaller than the coordinates in Blender. A large number (>1) means we need
+        to make the coordinates in the file larger than the coordinates in Blender.
         """
         scale = self.global_scale
 
@@ -202,21 +199,17 @@ class Export3MF(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
         """
         Write the materials on the specified blender objects to a 3MF document.
 
-        We'll write all materials to one single <basematerials> tag in the
-        resources.
+        We'll write all materials to one single <basematerials> tag in the resources.
 
-        Aside from writing the materials to the document, this function also
-        returns a mapping from the names of the materials in Blender (which must
-        be unique) to the index in the <basematerials> material group. Using
-        that mapping, the objects and triangles can write down an index
-        referring to the list of <base> tags.
+        Aside from writing the materials to the document, this function also returns a mapping from the names of the
+        materials in Blender (which must be unique) to the index in the <basematerials> material group. Using that
+        mapping, the objects and triangles can write down an index referring to the list of <base> tags.
 
-        Since the <base> material can only hold a colour, we'll write the
-        diffuse colour of the material to the file.
+        Since the <base> material can only hold a color, we'll write the diffuse color of the material to the file.
         :param resources_element: A <resources> node from a 3MF document.
-        :param blender_objects: A list of Blender objects that may have
-        materials which we need to write to the document.
-        :return: A mapping from material name to the index
+        :param blender_objects: A list of Blender objects that may have materials which we need to write to the
+        document.
+        :return: A mapping from material name to the index of that material in the <basematerials> tag.
         """
         name_to_index = {}  # The output list, mapping from material name to indexes in the <basematerials> tag.
         next_index = 0
@@ -232,18 +225,18 @@ class Export3MF(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
                 if material_name in name_to_index:  # Already have this material through another object.
                     continue
 
-                # Wrap this material into a principled render node, to convert its colour to sRGB.
+                # Wrap this material into a principled render node, to convert its color to sRGB.
                 principled = bpy_extras.node_shader_utils.PrincipledBSDFWrapper(material, is_readonly=True)
-                colour = principled.base_color
-                red = min(255, round(colour[0] * 255))
-                green = min(255, round(colour[1] * 255))
-                blue = min(255, round(colour[2] * 255))
+                color = principled.base_color
+                red = min(255, round(color[0] * 255))
+                green = min(255, round(color[1] * 255))
+                blue = min(255, round(color[2] * 255))
                 alpha = principled.alpha
                 if alpha >= 1.0:  # Completely opaque. Leave out the alpha component.
-                    colour_hex = "#%0.2X%0.2X%0.2X" % (red, green, blue)
+                    color_hex = "#%0.2X%0.2X%0.2X" % (red, green, blue)
                 else:
                     alpha = min(255, round(alpha * 255))
-                    colour_hex = "#%0.2X%0.2X%0.2X%0.2X" % (red, green, blue, alpha)
+                    color_hex = "#%0.2X%0.2X%0.2X%0.2X" % (red, green, blue, alpha)
 
                 if basematerials_element is None:
                     basematerials_element = xml.etree.ElementTree.SubElement(
@@ -253,7 +246,7 @@ class Export3MF(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
                         })
                 xml.etree.ElementTree.SubElement(basematerials_element, f"{{{threemf_default_namespace}}}base", attrib={
                     f"{{{threemf_default_namespace}}}name": material_name,
-                    f"{{{threemf_default_namespace}}}displaycolor": colour_hex
+                    f"{{{threemf_default_namespace}}}displaycolor": color_hex
                 })
                 name_to_index[material_name] = next_index
                 next_index += 1
@@ -265,10 +258,8 @@ class Export3MF(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
         Writes a group of objects into the 3MF archive.
         :param root: An XML root element to write the objects into.
         :param resources_element: An XML element to write resources into.
-        :param blender_objects: A list of Blender objects that need to be
-        written to that XML element.
-        :param global_scale: A scaling factor to apply to all objects to convert
-        the units.
+        :param blender_objects: A list of Blender objects that need to be written to that XML element.
+        :param global_scale: A scaling factor to apply to all objects to convert the units.
         """
         transformation = mathutils.Matrix.Scale(global_scale, 4)
 
@@ -302,21 +293,16 @@ class Export3MF(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
 
     def write_object_resource(self, resources_element, blender_object):
         """
-        Write a single Blender object and all of its children to the resources
-        of a 3MF document.
+        Write a single Blender object and all of its children to the resources of a 3MF document.
 
-        If the object contains a mesh it'll get written to the document as an
-        object with a mesh resource. If the object contains children it'll get
-        written to the document as an object with components. If the object
-        contains both, two objects will be written; one with the mesh and
-        another with the components. The mesh then gets added as a component of
-        the object with components.
-        :param resources_element: The <resources> element of the 3MF document to
-        write into.
+        If the object contains a mesh it'll get written to the document as an object with a mesh resource. If the object
+        contains children it'll get written to the document as an object with components. If the object contains both,
+        two objects will be written; one with the mesh and another with the components. The mesh then gets added as a
+        component of the object with components.
+        :param resources_element: The <resources> element of the 3MF document to write into.
         :param blender_object: A Blender object to write to that XML element.
-        :return: A tuple, containing the object ID of the newly written
-        resource and a transformation matrix that this resource must be saved
-        with.
+        :return: A tuple, containing the object ID of the newly written resource and a transformation matrix that this
+        resource must be saved with.
         """
         new_resource_id = self.next_resource_id
         self.next_resource_id += 1
@@ -345,7 +331,7 @@ class Export3MF(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
                     continue
                 # Recursively write children to the resources.
                 child_id, child_transformation = self.write_object_resource(resources_element, child)
-                # Use pseudoinverse for safety, but the epsilon then doesn't matter since it'll get multiplied by 0
+                # Use pseudo-inverse for safety, but the epsilon then doesn't matter since it'll get multiplied by 0
                 # later anyway then.
                 child_transformation = mesh_transformation.inverted_safe() @ child_transformation
                 component_element = xml.etree.ElementTree.SubElement(

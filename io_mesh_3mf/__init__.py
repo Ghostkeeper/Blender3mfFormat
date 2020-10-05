@@ -27,7 +27,6 @@ Import and export 3MF files in Blender.
 """
 
 # Reload functionality.
-# Apparently this is a convention in Blender add-ons. Monkey see, monkey do.
 if "bpy" in locals():
     import importlib
     if "import_3mf" in locals():

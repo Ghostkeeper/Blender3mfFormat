@@ -60,8 +60,8 @@ class TestExport3MF(unittest.TestCase):
         """
         Tests creating an empty archive.
 
-        While the archive may be void of 3D data, it still has some metadata
-        files in it. This tests if those files are created correctly.
+        While the archive may be void of 3D data, it still has some metadata files in it. This tests if those files are
+        created correctly.
         """
         file_path = None
         try:
@@ -95,8 +95,7 @@ class TestExport3MF(unittest.TestCase):
 
     def test_unit_scale_global(self):
         """
-        Tests whether the global scaling factor is taken into account with the
-        scale.
+        Tests whether the global scaling factor is taken into account with the scale.
         """
         global_scale = 1.1  # The global scale setting is set to 110%.
         self.exporter.global_scale = global_scale
@@ -213,23 +212,23 @@ class TestExport3MF(unittest.TestCase):
         self.assertEqual(base_element.attrib[f"{{{threemf_default_namespace}}}name"], "Navel lint")
         self.assertDictEqual(result, {"Navel lint": 0})
 
-    def test_write_material_colour(self):
+    def test_write_material_color(self):
         """
-        Tests writing material colours.
+        Tests writing material colors.
 
-        This tests various colours
+        This tests various colors with some special properties.
         """
         ground_truth = {
-            (0.1, 0.2, 0.3, 0.4): "#1A334C66",  # Basic colour values and rounding.
-            (1.0, 1.0, 1.0, 0.5): "#FFFFFF80",  # Maximum colour values.
-            (0.0, 0.0, 0.0, 0.0): "#00000000",  # Minimum colour values.
-            (0.1, 0.2, 0.3, 0.0): "#1A334C00",  # Colours even though the material is completely transparent.
+            (0.1, 0.2, 0.3, 0.4): "#1A334C66",  # Basic color values and rounding.
+            (1.0, 1.0, 1.0, 0.5): "#FFFFFF80",  # Maximum color values.
+            (0.0, 0.0, 0.0, 0.0): "#00000000",  # Minimum color values.
+            (0.1, 0.2, 0.3, 0.0): "#1A334C00",  # Colors even though the material is completely transparent.
             (0.5, 0.5, 0.5, 0.5): "#80808080",  # Rounding.
             (0.5, 0.5, 0.5, 1.0): "#808080",  # Alpha is 100%, so it's omitted.
-            (0.1, 0.2, 0.3, 1.0): "#1A334C",  # Basic colour values with 100% alpha.
+            (0.1, 0.2, 0.3, 1.0): "#1A334C",  # Basic color values with 100% alpha.
             (2.0, 3.0, 4.0, 1.0): "#FFFFFF",  # Clipped to 100% value.
             (3.0, 4.0, 5.0, 6.0): "#FFFFFF"  # Even alpha is clipped to 100% value, and then omitted.
-            # The function doesn't need to deal with colour values below 0, since Blender doesn't support those.
+            # The function doesn't need to deal with color values below 0, since Blender doesn't support those.
         }
 
         for input, output in ground_truth.items():
@@ -275,8 +274,7 @@ class TestExport3MF(unittest.TestCase):
 
     def test_write_material_multiple(self):
         """
-        Test writing an object with multiple materials and multiple objects with
-        different materials.
+        Test writing an object with multiple materials and multiple objects with different materials.
         """
         resources_element = xml.etree.ElementTree.Element(f"{{{threemf_default_namespace}}}resources")
         material1_slot = unittest.mock.MagicMock()
@@ -448,8 +446,7 @@ class TestExport3MF(unittest.TestCase):
         """
         Tests applying the transformations to the written build items.
 
-        This tests both the global scale as well as a scale applied to the
-        object itself.
+        This tests both the global scale as well as a scale applied to the object itself.
         """
         root = xml.etree.ElementTree.Element(f"{{{threemf_default_namespace}}}model")
         resources_element = xml.etree.ElementTree.SubElement(root, f"{{{threemf_default_namespace}}}resources")
@@ -641,8 +638,7 @@ class TestExport3MF(unittest.TestCase):
 
     def test_write_object_resource_children_mesh(self):
         """
-        Tests writing an object resource that has both child components and mesh
-        data.
+        Tests writing an object resource that has both child components and mesh data.
 
         While the 3MF importer doesn't produce this, the user could.
         """
@@ -900,10 +896,9 @@ class TestExport3MF(unittest.TestCase):
         """
         Tests writing vertices when there are no vertices.
 
-        Note that this never occurs in the field, because the function is not
-        called when there are no vertices. There will not even be a <mesh>
-        element then. We merely test this for defensive coding. The function
-        should be reliable as a stand-alone routine regardless of input.
+        Note that this never occurs in the field, because the function is not called when there are no vertices. There
+        will not even be a <mesh> element then. We merely test this for defensive coding. The function should be
+        reliable as a stand-alone routine regardless of input.
         """
         mesh_element = xml.etree.ElementTree.Element(f"{{{threemf_default_namespace}}}mesh")
         vertices = []
@@ -951,8 +946,8 @@ class TestExport3MF(unittest.TestCase):
         """
         Tests writing triangles when there are no triangles in the mesh.
 
-        Contrary to the similar test for writing vertices, this may actually
-        happen in the field, if a mesh consists of only vertices or edges.
+        Contrary to the similar test for writing vertices, this may actually happen in the field, if a mesh consists of
+        only vertices or edges.
         """
         mesh_element = xml.etree.ElementTree.Element(f"{{{threemf_default_namespace}}}mesh")
         triangles = []

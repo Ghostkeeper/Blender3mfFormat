@@ -70,8 +70,7 @@ class TestMetadata(unittest.TestCase):
 
     def test_override_preserve(self):
         """
-        Tests the overriding of the preserve attribute if metadata entries are
-        compatible.
+        Tests the overriding of the preserve attribute if metadata entries are compatible.
         """
         self.metadata["duplicate"] = io_mesh_3mf.metadata.MetadataEntry(
             name="duplicate",
@@ -99,8 +98,7 @@ class TestMetadata(unittest.TestCase):
 
     def test_store_incompatible_value(self):
         """
-        Tests storing metadata entries that are incompatible with each other
-        because they have different values.
+        Tests storing metadata entries that are incompatible with each other because they have different values.
         """
         self.metadata["duplicate"] = io_mesh_3mf.metadata.MetadataEntry(
             name="duplicate",
@@ -129,8 +127,7 @@ class TestMetadata(unittest.TestCase):
 
     def test_store_incompatible_type(self):
         """
-        Tests storing metadata entries that are incompatible with each other
-        because they have different types.
+        Tests storing metadata entries that are incompatible with each other because they have different types.
         """
         self.metadata["duplicate"] = io_mesh_3mf.metadata.MetadataEntry(
             name="duplicate",

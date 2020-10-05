@@ -17,7 +17,7 @@ import bpy.ops  # To adjust the camera to fit models.
 import bpy.props  # To define metadata properties for the operator.
 import bpy.types  # This class is an operator in Blender.
 import bpy_extras.io_utils  # Helper functions to import meshes more easily.
-import bpy_extras.node_shader_utils  # Getting correct colour spaces for materials.
+import bpy_extras.node_shader_utils  # Getting correct color spaces for materials.
 import logging  # To debug and log progress.
 import collections  # For namedtuple.
 import mathutils  # For the transformation matrices.
@@ -36,7 +36,7 @@ from .constants import (  # Constants associated with the 3MF file format.
     threemf_rels_mimetype,
     threemf_supported_extensions
 )
-from .metadata import MetadataEntry, Metadata  # To store and serialise metadata.
+from .metadata import MetadataEntry, Metadata  # To store and serialize metadata.
 from .unit_conversions import blender_to_metre, threemf_to_metre  # To convert to Blender's units.
 
 log = logging.getLogger(__name__)
@@ -48,7 +48,7 @@ ResourceObject = collections.namedtuple("ResourceObject", [
     "components",
     "metadata"])
 Component = collections.namedtuple("Component", ["resource_object", "transformation"])
-ResourceMaterial = collections.namedtuple("ResourceMaterial", ["name", "colour"])
+ResourceMaterial = collections.namedtuple("ResourceMaterial", ["name", "color"])
 
 
 class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
@@ -71,7 +71,7 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
 
     def __init__(self):
         """
-        Initialises the importer with empty fields.
+        Initializes the importer with empty fields.
         """
         super().__init__()
         self.resource_objects = {}  # Dictionary mapping resource IDs to ResourceObjects.
@@ -171,14 +171,12 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
         """
         Creates file streams from all the files in the archive.
 
-        The results are sorted by their content types. Consumers of this data
-        can pick the content types that they know from the file and process
-        those.
+        The results are sorted by their content types. Consumers of this data can pick the content types that they know
+        from the file and process those.
         :param path: The path to the archive to read.
-        :return: A dictionary with all of the resources in the archive by
-        content type. The keys in this dictionary are the different content
-        types available in the file. The values in this dictionary are lists of
-        input streams referring to files in the archive.
+        :return: A dictionary with all of the resources in the archive by content type. The keys in this dictionary are
+        the different content types available in the file. The values in this dictionary are lists of input streams
+        referring to files in the archive.
         """
         result = {}
         try:
@@ -413,27 +411,27 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
             # "Base" must be the stupidest name for a material resource. Oh well.
             for base_item in basematerials_item.iterfind("./3mf:base", threemf_namespaces):
                 name = base_item.attrib.get("name", "3MF Material")
-                colour = base_item.attrib.get("displaycolor")
-                if colour is not None:
-                    # Parse the colour. It's a hexadecimal number indicating RGB or RGBA.
-                    colour = colour.lstrip("#")  # Should start with a #. We'll be lenient if it's not.
+                color = base_item.attrib.get("displaycolor")
+                if color is not None:
+                    # Parse the color. It's a hexadecimal number indicating RGB or RGBA.
+                    color = color.lstrip("#")  # Should start with a #. We'll be lenient if it's not.
                     try:
-                        colour_int = int(colour, 16)
+                        color_int = int(color, 16)
                         # Separate out up to four bytes from this int, from right to left.
-                        b1 = (colour_int & 0x000000FF) / 255
-                        b2 = ((colour_int & 0x0000FF00) >> 8) / 255
-                        b3 = ((colour_int & 0x00FF0000) >> 16) / 255
-                        b4 = ((colour_int & 0xFF000000) >> 24) / 255
-                        if len(colour) == 6:  # RGB format.
-                            colour = (b3, b2, b1, 1.0)  # b1, b2 and b3 are B, G, R respectively. b4 is always 0.
+                        b1 = (color_int & 0x000000FF) / 255
+                        b2 = ((color_int & 0x0000FF00) >> 8) / 255
+                        b3 = ((color_int & 0x00FF0000) >> 16) / 255
+                        b4 = ((color_int & 0xFF000000) >> 24) / 255
+                        if len(color) == 6:  # RGB format.
+                            color = (b3, b2, b1, 1.0)  # b1, b2 and b3 are B, G, R respectively. b4 is always 0.
                         else:  # RGBA format, or invalid.
-                            colour = (b4, b3, b2, b1)  # b1, b2, b3 and b4 are A, B, G, R respectively.
+                            color = (b4, b3, b2, b1)  # b1, b2, b3 and b4 are A, B, G, R respectively.
                     except ValueError:
-                        log.warning(f"Invalid colour for material {name} of resource {material_id}: {colour}")
-                        colour = None  # Don't add a colour for this material.
+                        log.warning(f"Invalid color for material {name} of resource {material_id}: {color}")
+                        color = None  # Don't add a color for this material.
 
                 # Input is valid. Create a resource.
-                self.resource_materials[material_id][index] = ResourceMaterial(name=name, colour=colour)
+                self.resource_materials[material_id][index] = ResourceMaterial(name=name, color=color)
                 index += 1
 
             if len(self.resource_materials[material_id]) == 0:
@@ -441,8 +439,7 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
 
     def read_objects(self, root):
         """
-        Reads all repeatable build objects from the resources of an XML root
-        node.
+        Reads all repeatable build objects from the resources of an XML root node.
 
         This stores them in the resource_objects field.
         :param root: The root node of a 3dmodel.model XML file.
@@ -705,8 +702,8 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
                     material = bpy.data.materials.new(triangle_material.name)
                     material.use_nodes = True
                     principled = bpy_extras.node_shader_utils.PrincipledBSDFWrapper(material, is_readonly=False)
-                    principled.base_color = triangle_material.colour[:3]
-                    principled.alpha = triangle_material.colour[3]
+                    principled.base_color = triangle_material.color[:3]
+                    principled.alpha = triangle_material.color[3]
                     self.resource_to_material[triangle_material] = material
                 else:
                     material = self.resource_to_material[triangle_material]

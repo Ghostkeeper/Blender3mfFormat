@@ -5,7 +5,7 @@ For the first stable release, the full core 3MF specification is implemented.
 Features
 ----
 * Support for importing materials, and applying them to triangles of your meshes.
-* Support for exporting materials from Blender with a diffuse colour.
+* Support for exporting materials from Blender with a diffuse color.
 * Metadata is now retained when editing existing 3MF files.
 * Relationships are retained when editing existing 3MF files.
 * Content types are retained when editing existing 3MF files.
@@ -27,7 +27,7 @@ Features
 * Vertex coordinates are written more compactly.
 * Warn the user if the 3MF document requires 3MF extensions that are not present.
 * When exporting, you can now configure the number of decimals to write.
-* Material colours are rendered in Blender with a BSDF node, and converted back to sRGB when exporting.
+* Material colors are rendered in Blender with a BSDF node, and converted back to sRGB when exporting.
 * The exported 3MF archive is now compressed with the Deflate algorithm.
 * Allow installation via .zip file.
 
