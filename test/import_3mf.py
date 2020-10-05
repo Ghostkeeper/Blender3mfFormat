@@ -33,12 +33,7 @@ bpy.types.Operator = MockOperator
 bpy_extras.io_utils.ImportHelper = MockImportHelper
 bpy_extras.io_utils.ExportHelper = MockExportHelper
 import io_mesh_3mf.import_3mf  # Now we may safely import the unit under test.
-from io_mesh_3mf.constants import (
-    CONTENT_TYPES_LOCATION,
-    MODEL_NAMESPACE,
-    MODEL_MIMETYPE,
-    RELS_MIMETYPE
-)
+from io_mesh_3mf.constants import *
 # To compare the metadata objects created by the code under test.
 from io_mesh_3mf.metadata import Metadata, MetadataEntry
 

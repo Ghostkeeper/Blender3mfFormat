@@ -32,11 +32,7 @@ bpy_extras.io_utils.ImportHelper = MockImportHelper
 bpy_extras.io_utils.ExportHelper = MockExportHelper
 bpy_extras.node_shader_utils.PrincipledBSDFWrapper = MockPrincipledBSDFWrapper
 import io_mesh_3mf.export_3mf  # Now we may safely import the unit under test.
-from io_mesh_3mf.constants import (
-    CONTENT_TYPES_LOCATION,
-    MODEL_NAMESPACE,
-    MODEL_NAMESPACES
-)
+from io_mesh_3mf.constants import *
 from io_mesh_3mf.metadata import MetadataEntry
 
 
@@ -71,7 +67,7 @@ class TestExport3MF(unittest.TestCase):
 
             self.assertSetEqual(
                 set(archive.namelist()),
-                {"_rels/.rels", CONTENT_TYPES_LOCATION},
+                {RELS_FOLDER + "/.rels", CONTENT_TYPES_LOCATION},
                 "There may only be these two files.")
         finally:
             if file_path is not None:

@@ -25,12 +25,7 @@ import xml.etree.ElementTree  # To write XML documents with the 3D model data.
 import zipfile  # To write zip archives, the shell of the 3MF file.
 
 from .annotations import Annotations  # To store file annotations
-from .constants import (
-    conflicting_mustpreserve_contents,
-    MODEL_LOCATION,
-    MODEL_NAMESPACE,
-    MODEL_DEFAULT_UNIT
-)
+from .constants import *
 from .metadata import Metadata  # To store metadata from the Blender scene into the 3MF file.
 from .unit_conversions import blender_to_metre, threemf_to_metre
 

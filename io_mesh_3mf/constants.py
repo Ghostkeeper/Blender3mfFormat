@@ -25,6 +25,7 @@ conflicting_mustpreserve_contents = "<Conflicting MustPreserve file!>"
 # Default storage locations.
 MODEL_LOCATION = "3D/3dmodel.model"  # Conventional location for the 3D model data.
 CONTENT_TYPES_LOCATION = "[Content_Types].xml"  # Location of the content types definition.
+RELS_FOLDER = "_rels"  # Folder name to store relationships files in.
 
 # Relationship types.
 MODEL_REL = "http://schemas.microsoft.com/3dmanufacturing/2013/01/3dmodel"  # Relationship type of 3D models.

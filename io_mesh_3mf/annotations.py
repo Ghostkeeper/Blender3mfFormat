@@ -19,16 +19,7 @@ import os.path  # To parse target paths in relationships.
 import urllib.parse  # To parse relative target paths in relationships.
 import xml.etree.ElementTree  # To parse the relationships files.
 
-from .constants import (
-    CONTENT_TYPES_NAMESPACE,  # Namespace for writing content types files.
-    RELS_NAMESPACE,  # Namespace for writing relationships files.
-    RELS_NAMESPACES,  # Namespaces for reading relationships files.
-    CONTENT_TYPES_LOCATION,  # Location of content types file.
-    MODEL_LOCATION,  # Target of default relationship.
-    MODEL_REL,  # Known relationship.
-    RELS_MIMETYPE,  # Known content types.
-    MODEL_MIMETYPE
-)
+from .constants import *
 
 
 # These are the different types of annotations we can store.
@@ -79,7 +70,7 @@ class Annotations:
         """
         # Relationships are evaluated relative to the path that the _rels folder around the .rels file is on. If any.
         base_path = os.path.dirname(rels_file.name) + "/"
-        if os.path.basename(os.path.dirname(base_path)) == "_rels":
+        if os.path.basename(os.path.dirname(base_path)) == RELS_FOLDER:
             base_path = os.path.dirname(os.path.dirname(base_path)) + "/"
 
         try:
@@ -197,7 +188,7 @@ class Annotations:
             document = xml.etree.ElementTree.ElementTree(root)
 
             # Write that XML document to a file.
-            rels_file = source + "_rels/.rels"  # _rels folder in the "source" folder.
+            rels_file = source + RELS_FOLDER + "/.rels"  # _rels folder in the "source" folder.
             with archive.open(rels_file, 'w') as f:
                 document.write(f, xml_declaration=True, encoding='UTF-8', default_namespace=RELS_NAMESPACE)
 

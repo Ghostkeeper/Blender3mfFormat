@@ -27,15 +27,7 @@ import xml.etree.ElementTree  # To parse the 3dmodel.model file.
 import zipfile  # To read the 3MF files which are secretly zip archives.
 
 from .annotations import Annotations, ContentType, Relationship  # To use annotations to decide on what to import.
-from .constants import (  # Constants associated with the 3MF file format.
-    conflicting_mustpreserve_contents,
-    CONTENT_TYPES_LOCATION,
-    MODEL_DEFAULT_UNIT,
-    MODEL_MIMETYPE,
-    MODEL_NAMESPACES,
-    RELS_MIMETYPE,
-    SUPPORTED_EXTENSIONS
-)
+from .constants import *
 from .metadata import MetadataEntry, Metadata  # To store and serialize metadata.
 from .unit_conversions import blender_to_metre, threemf_to_metre  # To convert to Blender's units.
 

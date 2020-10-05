@@ -29,16 +29,7 @@ bpy.types.Operator = MockOperator
 bpy_extras.io_utils.ImportHelper = MockImportHelper
 bpy_extras.io_utils.ExportHelper = MockExportHelper
 import io_mesh_3mf.annotations  # Now finally we can import the unit under test.
-from io_mesh_3mf.constants import (
-    CONTENT_TYPES_NAMESPACES,
-    RELS_NAMESPACE,
-    RELS_NAMESPACES,
-    THUMBNAIL_REL,
-    MODEL_LOCATION,
-    MODEL_REL,
-    MODEL_MIMETYPE,
-    RELS_MIMETYPE
-)
+from io_mesh_3mf.constants import *
 
 
 class TestAnnotations(unittest.TestCase):
@@ -83,7 +74,7 @@ class TestAnnotations(unittest.TestCase):
         """
         # Construct an empty rels file.
         root = xml.etree.ElementTree.Element(f"{{{RELS_NAMESPACE}}}Relationships")
-        rels_file = self.xml_to_filestream(root, "_rels/.rels")
+        rels_file = self.xml_to_filestream(root, RELS_FOLDER + "/.rels")
 
         self.annotations.add_rels(rels_file)
 
@@ -102,7 +93,7 @@ class TestAnnotations(unittest.TestCase):
             "Target": "/path/to/thumbnail.png",
             "Type": THUMBNAIL_REL
         })
-        rels_file = self.xml_to_filestream(root, "_rels/.rels")
+        rels_file = self.xml_to_filestream(root, RELS_FOLDER + "/.rels")
 
         self.annotations.add_rels(rels_file)
 
@@ -124,7 +115,7 @@ class TestAnnotations(unittest.TestCase):
                 "Target": "/path/to/thumbnail.png",
                 "Type": THUMBNAIL_REL
             })
-        rels_file = self.xml_to_filestream(root, "_rels/.rels")
+        rels_file = self.xml_to_filestream(root, RELS_FOLDER + "/.rels")
 
         self.annotations.add_rels(rels_file)
         rels_file.seek(0)
@@ -155,7 +146,7 @@ class TestAnnotations(unittest.TestCase):
             # Missing target.
             "Type": THUMBNAIL_REL
         })
-        rels_file = self.xml_to_filestream(root, "_rels/.rels")
+        rels_file = self.xml_to_filestream(root, RELS_FOLDER + "/.rels")
 
         self.annotations.add_rels(rels_file)
 
@@ -175,7 +166,7 @@ class TestAnnotations(unittest.TestCase):
             "Type": THUMBNAIL_REL
         })
         # The _rels directory is NOT in the root of the archive.
-        rels_file = self.xml_to_filestream(root, "metadata/_rels/.rels")
+        rels_file = self.xml_to_filestream(root, "metadata/" + RELS_FOLDER + "/.rels")
 
         self.annotations.add_rels(rels_file)
 
@@ -247,7 +238,7 @@ class TestAnnotations(unittest.TestCase):
         model_file = io.BytesIO()
         model_file.name = "3D/3dmodel.model"
         rels_file = io.BytesIO()
-        rels_file.name = "_rels/.rels"
+        rels_file.name = RELS_FOLDER + "/.rels"
         files_by_content_type = {
             MODEL_MIMETYPE: {model_file},
             RELS_MIMETYPE: {rels_file}
@@ -382,7 +373,7 @@ class TestAnnotations(unittest.TestCase):
         custom_file = io.BytesIO()
         custom_file.close = lambda: None
         # Return the correct file handle depending on which file is opened.
-        archive.open = lambda fname, *args, **kwargs: custom_file if fname == "3D/_rels/.rels" else root_file
+        archive.open = lambda fname, *args, **kwargs: custom_file if fname == "3D/" + RELS_FOLDER + "/.rels" else root_file
 
         self.annotations.annotations["file.txt"] = {io_mesh_3mf.annotations.Relationship(namespace="nsp", source="3D/")}
         self.annotations.write_rels(archive)
