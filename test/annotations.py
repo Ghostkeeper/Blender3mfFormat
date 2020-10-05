@@ -416,13 +416,13 @@ class TestAnnotations(unittest.TestCase):
             "There are two content types defined by the add-on itself, which are always present.")
         # Python doesn't support XPath expressions that match on multiple attributes, so we'll have to resort to two
         # checks here.
-        rels_tags = root.findall(f"ct:Default[@Extension='rels']", namespaces=content_types_namespaces)
+        rels_tags = root.findall("ct:Default[@Extension='rels']", namespaces=content_types_namespaces)
         self.assertEqual(len(rels_tags), 1, "There is one content type specification for .rels files.")
         self.assertEqual(
             rels_tags[0].attrib["ContentType"],
             threemf_rels_mimetype,
             "The MIME type of the .rels file must be filled in correctly.")
-        model_tags = root.findall(f"ct:Default[@Extension='model']", namespaces=content_types_namespaces)
+        model_tags = root.findall("ct:Default[@Extension='model']", namespaces=content_types_namespaces)
         self.assertEqual(len(model_tags), 1, "There is one content type specification for .model files.")
         self.assertEqual(
             model_tags[0].attrib["ContentType"],
