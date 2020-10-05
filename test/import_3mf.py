@@ -373,7 +373,7 @@ class TestImport3MF(unittest.TestCase):
             "http://a http://a"  # Duplicates are ignored.
         ]
 
-        with unittest.mock.patch("io_mesh_3mf.import_3mf.threemf_supported_extensions", {"http://a", "http://b"}):
+        with unittest.mock.patch("io_mesh_3mf.import_3mf.SUPPORTED_EXTENSIONS", {"http://a", "http://b"}):
             for document_requirements in supported_documents:
                 with self.subTest(document_requirements=document_requirements):
                     self.assertTrue(
@@ -391,7 +391,7 @@ class TestImport3MF(unittest.TestCase):
             "  http://c    http://a  http://d"  # Whitespace around them.
         ]
 
-        with unittest.mock.patch("io_mesh_3mf.import_3mf.threemf_supported_extensions", {"http://a", "http://b"}):
+        with unittest.mock.patch("io_mesh_3mf.import_3mf.SUPPORTED_EXTENSIONS", {"http://a", "http://b"}):
             for document_requirements in not_supported_documents:
                 with self.subTest(document_requirements=document_requirements):
                     self.assertFalse(
