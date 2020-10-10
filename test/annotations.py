@@ -296,7 +296,7 @@ class TestAnnotations(unittest.TestCase):
 
         file.seek(0)
         root = xml.etree.ElementTree.ElementTree(file=file).getroot()
-        relationships = root.findall("rel:Relationship", namespaces=RELS_NAMESPACES)
+        relationships = root.findall(RELS_RELATIONSHIP_FIND, namespaces=RELS_NAMESPACES)
         self.assertEqual(
             len(relationships),
             1,
@@ -328,7 +328,7 @@ class TestAnnotations(unittest.TestCase):
 
         file.seek(0)
         root = xml.etree.ElementTree.ElementTree(file=file).getroot()
-        relationships = root.findall("rel:Relationship", namespaces=RELS_NAMESPACES)
+        relationships = root.findall(RELS_RELATIONSHIP_FIND, namespaces=RELS_NAMESPACES)
         self.assertEqual(
             len(relationships),
             1,
@@ -349,7 +349,7 @@ class TestAnnotations(unittest.TestCase):
 
         file.seek(0)
         root = xml.etree.ElementTree.ElementTree(file=file).getroot()
-        relationships = root.findall("rel:Relationship", namespaces=RELS_NAMESPACES)
+        relationships = root.findall(RELS_RELATIONSHIP_FIND, namespaces=RELS_NAMESPACES)
         self.assertEqual(
             len(relationships),
             2,
@@ -373,14 +373,15 @@ class TestAnnotations(unittest.TestCase):
         custom_file = io.BytesIO()
         custom_file.close = lambda: None
         # Return the correct file handle depending on which file is opened.
-        archive.open = lambda fname, *args, **kwargs: custom_file if fname == "3D/" + RELS_FOLDER + "/.rels" else root_file
+        archive.open = lambda fname, *args, **kwargs:\
+            custom_file if fname == "3D/" + RELS_FOLDER + "/.rels" else root_file
 
         self.annotations.annotations["file.txt"] = {io_mesh_3mf.annotations.Relationship(namespace="nsp", source="3D/")}
         self.annotations.write_rels(archive)
 
         custom_file.seek(0)
         root = xml.etree.ElementTree.ElementTree(file=custom_file).getroot()
-        relationships = root.findall("rel:Relationship", namespaces=RELS_NAMESPACES)
+        relationships = root.findall(RELS_RELATIONSHIP_FIND, namespaces=RELS_NAMESPACES)
         self.assertEqual(len(relationships), 1, "Only the custom relationship got saved to this file.")
         self.assertEqual(relationships[0].attrib["Target"], "/file.txt", "The target of the relationship is absolute.")
         self.assertEqual(relationships[0].attrib["Type"], "nsp", "This is the namespace we added.")

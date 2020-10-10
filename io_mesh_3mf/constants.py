@@ -53,3 +53,4 @@ RELS_NAMESPACE = "http://schemas.openxmlformats.org/package/2006/relationships"
 RELS_NAMESPACES = {  # Namespaces used for the rels files.
     "rel": RELS_NAMESPACE
 }
+RELS_RELATIONSHIP_FIND = "rel:Relationship"

@@ -80,7 +80,7 @@ class Annotations:
                 f"Relationship file {rels_file.name} has malformed XML (position {e.position[0]}:{e.position[1]}).")
             return  # Skip this file.
 
-        for relationship_node in root.iterfind("rel:Relationship", RELS_NAMESPACES):
+        for relationship_node in root.iterfind(RELS_RELATIONSHIP_FIND, RELS_NAMESPACES):
             try:
                 target = relationship_node.attrib["Target"]
                 namespace = relationship_node.attrib["Type"]
