@@ -60,6 +60,7 @@ class TestExport3MF(unittest.TestCase):
         created correctly.
         """
         file_path = None
+        archive = None
         try:
             file_handle, file_path = tempfile.mkstemp()
             os.close(file_handle)
@@ -70,6 +71,8 @@ class TestExport3MF(unittest.TestCase):
                 {RELS_FOLDER + "/.rels", CONTENT_TYPES_LOCATION},
                 "There may only be these two files.")
         finally:
+            if archive is not None:
+                archive.close()
             if file_path is not None:
                 os.remove(file_path)
 
