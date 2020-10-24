@@ -76,6 +76,7 @@ class Export3MF(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
         super().__init__()
         self.next_resource_id = 1  # Which resource ID to generate for the next object.
         self.num_written = 0  # How many objects we've written to the file.
+        self.material_resource_id = -1  # We write one material. This is the resource ID of that material.
         self.material_name_to_index = {}  # For each material in Blender, the index in the 3MF materials group.
 
     def execute(self, context):
@@ -88,6 +89,7 @@ class Export3MF(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
         """
         # Reset state.
         self.next_resource_id = 1  # Starts counting at 1 for some inscrutable reason.
+        self.material_resource_id = -1
         self.num_written = 0
 
         archive = self.create_archive(self.filepath)
@@ -234,10 +236,12 @@ class Export3MF(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
                     color_hex = "#%0.2X%0.2X%0.2X%0.2X" % (red, green, blue, alpha)
 
                 if basematerials_element is None:
+                    self.material_resource_id = str(self.next_resource_id)
+                    self.next_resource_id += 1
                     basematerials_element = xml.etree.ElementTree.SubElement(
                         resources_element,
                         f"{{{MODEL_NAMESPACE}}}basematerials", attrib={
-                            f"{{{MODEL_NAMESPACE}}}id": "material0"
+                            f"{{{MODEL_NAMESPACE}}}id": self.material_resource_id
                         })
                 xml.etree.ElementTree.SubElement(basematerials_element, f"{{{MODEL_NAMESPACE}}}base", attrib={
                     f"{{{MODEL_NAMESPACE}}}name": material_name,
@@ -388,8 +392,8 @@ class Export3MF(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
                 # most_common_material_list_index is an index referring to our own list of materials that we put in the
                 # resources.
                 most_common_material_list_index = self.material_name_to_index[most_common_material.name]
-                # We always only write one group of materials. So always use "material0".
-                object_element.attrib[f"{{{MODEL_NAMESPACE}}}pid"] = "material0"
+                # We always only write one group of materials. The resource ID was determined when it was written.
+                object_element.attrib[f"{{{MODEL_NAMESPACE}}}pid"] = str(self.material_resource_id)
                 object_element.attrib[f"{{{MODEL_NAMESPACE}}}pindex"] = str(most_common_material_list_index)
 
             self.write_vertices(mesh_element, mesh.vertices)
