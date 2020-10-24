@@ -774,6 +774,7 @@ class TestExport3MF(unittest.TestCase):
         # Mock these two subroutines for this test. Don't want to actually go and fill this with data.
         self.exporter.write_vertices = unittest.mock.MagicMock()
         self.exporter.write_triangles = unittest.mock.MagicMock()
+        self.exporter.material_resource_id = "999"  # Simulate having written a material.
 
         resources_element = xml.etree.ElementTree.Element(f"{{{MODEL_NAMESPACE}}}resources")
         blender_object = unittest.mock.MagicMock()
@@ -797,8 +798,8 @@ class TestExport3MF(unittest.TestCase):
         object_element = object_elements[0]
         self.assertEqual(
             object_element.attrib[f"{{{MODEL_NAMESPACE}}}pid"],
-            "material0",
-            "The material ID is hard-coded to 'material0'")
+            "999",
+            "We simulated having written a material with ID 999.")
         self.assertEqual(
             object_element.attrib[f"{{{MODEL_NAMESPACE}}}pindex"],
             "0",
@@ -811,6 +812,7 @@ class TestExport3MF(unittest.TestCase):
         """
         # Mock these two subroutines for this test. Don't want to actually go and fill this with data.
         self.exporter.write_vertices = unittest.mock.MagicMock()
+        self.exporter.material_resource_id = "999"  # Simulate having written a material.
 
         resources_element = xml.etree.ElementTree.Element(f"{{{MODEL_NAMESPACE}}}resources")
         blender_object = unittest.mock.MagicMock()
@@ -844,8 +846,8 @@ class TestExport3MF(unittest.TestCase):
         object_element = object_elements[0]
         self.assertEqual(
             object_element.attrib[f"{{{MODEL_NAMESPACE}}}pid"],
-            "material0",
-            "The material ID is hard-coded to 'material0'")
+            "999",
+            "We simulated having written a material with ID 999.")
         self.assertEqual(
             object_element.attrib[f"{{{MODEL_NAMESPACE}}}pindex"],
             "1",
