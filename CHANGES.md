@@ -1,4 +1,8 @@
-1.0 - Big Bang
+1.0.1 - Bug Fixes
+====
+* Fix the resource ID of exported materials to be integer.
+
+1.0.0 - Big Bang
 ====
 For the first stable release, the full core 3MF specification is implemented.
 
@@ -43,7 +47,7 @@ Bug Fixes
 * No longer create meshes when an object has no vertices or faces.
 * Transformation matrices and vertex coordinates will no longer use scientific notation for big or tiny numbers.
 
-0.2 - Get Out
+0.2.0 - Get Out
 ====
 This is another pre-release where the goal is to implement exporting 3MF files from Blender.
 
@@ -64,7 +68,7 @@ Bug Fixes
 ----
 * The unit is now applied after the 3MF file's own transformations, so that models end up in the correct position.
 
-0.1 - Come On In
+0.1.0 - Come On In
 ====
 This is a minimum viable product release where the goal is to reliably import at least the geometry of a 3MF file into Blender.
 
