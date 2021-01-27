@@ -717,8 +717,8 @@ class TestExport3MF(unittest.TestCase):
         blender_object.to_mesh().loop_triangles = original_triangles
 
         # Give the object's mesh some metadata.
-        blender_object.data.name = "Sergeant Reckless"
-        blender_object.data["Description"] = MetadataEntry(
+        blender_object.name = "Sergeant Reckless"
+        blender_object["Description"] = MetadataEntry(
             name="Description",
             datatype="some_type",
             preserve=False,

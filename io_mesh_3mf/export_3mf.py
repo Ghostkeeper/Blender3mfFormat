@@ -309,7 +309,7 @@ class Export3MF(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
         object_element.attrib[f"{{{MODEL_NAMESPACE}}}id"] = str(new_resource_id)
 
         metadata = Metadata()
-        metadata.retrieve(blender_object.data)
+        metadata.retrieve(blender_object)
         if "3mf:object_type" in metadata:
             object_type = metadata["3mf:object_type"].value
             if object_type != "model":  # Only write if not the default.
