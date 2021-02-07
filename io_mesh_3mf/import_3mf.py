@@ -49,7 +49,7 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
     """
 
     # Metadata.
-    bl_idname = "import_mesh.3mf"
+    bl_idname = "import_mesh.threemf"
     bl_label = "Import 3MF"
     bl_description = "Load a 3MF scene"
     bl_options = {'UNDO'}
