@@ -29,6 +29,31 @@ The following options are available when exporting to 3MF:
 * Apply modifiers: Apply the modifiers to the mesh data before exporting. This embeds these modifiers permanently in the file. If this is disabled, the unmodified meshes will be saved to the 3MF file instead.
 * Precision: Number of decimals to use for coordinates in the 3MF file. Greater precision will result in a larger file size.
 
+Scripting
+----
+From a script, you can import a 3MF mesh by executing the following function call:
+
+```
+bpy.ops.import_mesh.threemf(filepath="/path/to/file.3mf")
+```
+
+This import function has two relevant parameters:
+* `filepath`: A path to the 3MF file to import.
+* `global_scale` (default `1`): A scaling factor to apply to the scene after importing. All of the mesh data loaded from the 3MF files will get scaled by this factor from the origin of the coordinate system.
+
+You can export a 3MF mesh by executing the following function call:
+
+```
+bpy.ops.export_mesh.threemf(filepath="/path/to/file.3mf")
+```
+
+This export function has five relevant parameters:
+* `filepath`: The location to store the 3MF file.
+* `use_selection` (default `False`): Only export the objects that are selected. Other objects will not be included in the 3MF file.
+* `global_scale` (default `1`): A scaling factor to apply to the models in the 3MF file. The models are scaled by this factor from the coordinate origin.
+* `use_mesh_modifiers` (default `True`): Apply the modifiers to the mesh data before exporting. This embeds these modifiers permanently in the file. If this is disabled, the unmodified meshes will be saved to the 3MF file instead.
+* `coordinate_precision` (default `4`): Number of decimals to use for coordinates in the 3MF file. Greater precision will result in a larger file size.
+
 Support
 ----
 This add-on currently supports the full [3MF Core Specification](https://github.com/3MFConsortium/spec_core/blob/1.2.3/3MF%20Core%20Specification.md) version 1.2.3. However there are a number of places where it deviates from the specification on purpose.
