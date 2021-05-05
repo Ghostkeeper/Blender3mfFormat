@@ -14,6 +14,8 @@ To install this add-on, currently you need to tell Blender where to find a .zip 
 3. Click on the Install... button at the top. Navigate to the .zip you downloaded.
 4. Under the "Testing" category, find the add-on called "Import-Export: 3MF format". Make sure that it's enabled. (Note: If searching with the search box, exclude the "Import-Export" text since this is the category, not part of the add-on name. Just search for "3MF" instead.)
 
+The add-on is being considered for inclusion in Blender as a community add-on [here](https://developer.blender.org/T84154). This would make it easier to install.
+
 Usage
 ----
 When this add-on is installed, a new entry will appear under the File -> Import menu called "3D Manufacturing Format". When you click that, you'll be able to select 3MF files to import into your Blender scene. A new entry will also appear under the File -> Export menu with the same name. This allows you to export your scene to a 3MF file.
