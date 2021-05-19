@@ -134,13 +134,14 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
                     # Still continue processing even though the spec says not to. Our aim is to retrieve whatever
                     # information we can.
 
+                path_to_file, filename = os.path.split(path)
                 scale_unit = self.unit_scale(context, root)
                 self.resource_objects = {}
                 self.resource_materials = {}
                 scene_metadata = self.read_metadata(root, scene_metadata)
                 self.read_materials(root)
                 self.read_objects(root)
-                self.build_items(root, scale_unit)
+                self.build_items(root, scale_unit, filename)
 
         scene_metadata.store(bpy.context.scene)
         annotations.store()
@@ -626,7 +627,7 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
             result[row][col] = component_float
         return result
 
-    def build_items(self, root, scale_unit):
+    def build_items(self, root, scale_unit, filename=None):
         """
         Builds the scene. This places objects with certain transformations in
         the scene.
@@ -657,9 +658,9 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
             transform = mathutils.Matrix.Scale(scale_unit, 4)
             transform @= self.parse_transformation(build_item.attrib.get("transform", ""))
 
-            self.build_object(resource_object, transform, metadata, [objectid])
+            self.build_object(resource_object, transform, metadata, [objectid], filename=filename)
 
-    def build_object(self, resource_object, transformation, metadata, objectid_stack_trace, parent=None):
+    def build_object(self, resource_object, transformation, metadata, objectid_stack_trace, parent=None, filename=None):
         """
         Converts a resource object into a Blender object.
 
@@ -713,7 +714,7 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
                 mesh.polygons[triangle_index].material_index = materials_to_index[triangle_material]
 
         # Create an object.
-        blender_object = bpy.data.objects.new("3MF Object", mesh)
+        blender_object = bpy.data.objects.new(str(filename), mesh)
         self.num_loaded += 1
         if parent is not None:
             blender_object.parent = parent
