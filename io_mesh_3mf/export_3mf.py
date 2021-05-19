@@ -21,6 +21,7 @@ import collections  # Counter, to find the most common material of an object.
 import itertools
 import logging  # To debug and log progress.
 import mathutils  # For the transformation matrices.
+import os.path  # To take file paths relative to the selected directory.
 import xml.etree.ElementTree  # To write XML documents with the 3D model data.
 import zipfile  # To write zip archives, the shell of the 3MF file.
 
@@ -68,6 +69,13 @@ class Export3MF(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
         default=4,
         min=0,
         max=12)
+    batch_mode: bpy.props.EnumProperty(
+        name="Batch Mode",
+        items=(
+            ('OFF', "Off", "All data in one file"),
+            ('OBJECT', "Object", "Each object as a file"),
+        ),
+    )
 
     def __init__(self):
         """
@@ -78,6 +86,10 @@ class Export3MF(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
         self.num_written = 0  # How many objects we've written to the file.
         self.material_resource_id = -1  # We write one material. This is the resource ID of that material.
         self.material_name_to_index = {}  # For each material in Blender, the index in the 3MF materials group.
+
+    @property
+    def check_extension(self):
+        return self.batch_mode == 'OFF'
 
     def execute(self, context):
         """
@@ -91,10 +103,6 @@ class Export3MF(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
         self.next_resource_id = 1  # Starts counting at 1 for some inscrutable reason.
         self.material_resource_id = -1
         self.num_written = 0
-
-        archive = self.create_archive(self.filepath)
-        if archive is None:
-            return {'CANCELLED'}
 
         if self.use_selection:
             blender_objects = context.selected_objects
@@ -112,18 +120,42 @@ class Export3MF(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
         scene_metadata.retrieve(bpy.context.scene)
         self.write_metadata(root, scene_metadata)
 
-        resources_element = xml.etree.ElementTree.SubElement(root, f"{{{MODEL_NAMESPACE}}}resources")
-        self.material_name_to_index = self.write_materials(resources_element, blender_objects)
-        self.write_objects(root, resources_element, blender_objects, global_scale)
+        if self.batch_mode == 'OFF':
+            archive = self.create_archive(self.filepath)
+            if archive is None:
+                return {'CANCELLED'}
+            resources_element = xml.etree.ElementTree.SubElement(root, f"{{{MODEL_NAMESPACE}}}resources")
+            self.material_name_to_index = self.write_materials(resources_element, blender_objects)
+            self.write_objects(root, resources_element, blender_objects, global_scale)
 
-        document = xml.etree.ElementTree.ElementTree(root)
-        with archive.open(MODEL_LOCATION, 'w') as f:
-            document.write(f, xml_declaration=True, encoding='UTF-8', default_namespace=MODEL_NAMESPACE)
-        try:
-            archive.close()
-        except EnvironmentError as e:
-            log.error(f"Unable to complete writing to 3MF archive: {e}")
-            return {'CANCELLED'}
+            document = xml.etree.ElementTree.ElementTree(root)
+            with archive.open(MODEL_LOCATION, 'w') as f:
+                document.write(f, xml_declaration=True, encoding='UTF-8', default_namespace=MODEL_NAMESPACE)
+            try:
+                archive.close()
+            except EnvironmentError as e:
+                log.error(f"Unable to complete writing to 3MF archive: {e}")
+                return {'CANCELLED'}
+        elif self.batch_mode == 'OBJECT':
+            for export_object in blender_objects:
+                prefix = os.path.splitext(self.filepath)[0]
+
+                archive = self.create_archive(prefix + bpy.path.clean_name(export_object.name) + ".3mf")
+                if archive is None:
+                    return {'CANCELLED'}
+
+                resources_element = xml.etree.ElementTree.SubElement(root, f"{{{MODEL_NAMESPACE}}}resources")
+                self.material_name_to_index = self.write_materials(resources_element, [export_object])
+                self.write_objects(root, resources_element, [export_object], global_scale)
+
+                document = xml.etree.ElementTree.ElementTree(root)
+                with archive.open(MODEL_LOCATION, 'w') as f:
+                    document.write(f, xml_declaration=True, encoding='UTF-8', default_namespace=MODEL_NAMESPACE)
+                try:
+                    archive.close()
+                except EnvironmentError as e:
+                    log.error(f"Unable to complete writing to 3MF archive: {e}")
+                    return {'CANCELLED'}
 
         log.info(f"Exported {self.num_written} objects to 3MF archive {self.filepath}.")
         return {'FINISHED'}
