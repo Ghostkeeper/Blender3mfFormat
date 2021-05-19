@@ -339,8 +339,8 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
         """
         scale = self.global_scale
 
-        if context.scene.unit_settings.scale_length != 0:
-            scale /= context.scene.unit_settings.scale_length  # Apply the global scale of the units in Blender.
+        #if context.scene.unit_settings.scale_length != 0:
+        #    scale /= context.scene.unit_settings.scale_length  # Apply the global scale of the units in Blender.
 
         threemf_unit = root.attrib.get("unit", MODEL_DEFAULT_UNIT)
         blender_unit = context.scene.unit_settings.length_unit
