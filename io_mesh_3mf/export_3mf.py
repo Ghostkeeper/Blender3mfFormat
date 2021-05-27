@@ -111,16 +111,16 @@ class Export3MF(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
 
         global_scale = self.unit_scale(context)
 
-        # Due to an open bug in Python 3.7 (Blender's version) we need to prefix all elements with the namespace.
-        # Bug: https://bugs.python.org/issue17088
-        # Workaround: https://stackoverflow.com/questions/4997848/4999510#4999510
-        root = xml.etree.ElementTree.Element(f"{{{MODEL_NAMESPACE}}}model")
-
-        scene_metadata = Metadata()
-        scene_metadata.retrieve(bpy.context.scene)
-        self.write_metadata(root, scene_metadata)
-
         if self.batch_mode == 'OFF':
+            # Due to an open bug in Python 3.7 (Blender's version) we need to prefix all elements with the namespace.
+            # Bug: https://bugs.python.org/issue17088
+            # Workaround: https://stackoverflow.com/questions/4997848/4999510#4999510
+            root = xml.etree.ElementTree.Element(f"{{{MODEL_NAMESPACE}}}model")
+
+            scene_metadata = Metadata()
+            scene_metadata.retrieve(bpy.context.scene)
+            self.write_metadata(root, scene_metadata)
+
             archive = self.create_archive(self.filepath)
             if archive is None:
                 return {'CANCELLED'}
@@ -138,8 +138,16 @@ class Export3MF(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
                 return {'CANCELLED'}
         elif self.batch_mode == 'OBJECT':
             for export_object in blender_objects:
-                prefix = os.path.splitext(self.filepath)[0]
+                # Due to an open bug in Python 3.7 (Blender's version) we need to prefix all elements with the namespace.
+                # Bug: https://bugs.python.org/issue17088
+                # Workaround: https://stackoverflow.com/questions/4997848/4999510#4999510
+                root = xml.etree.ElementTree.Element(f"{{{MODEL_NAMESPACE}}}model")
 
+                scene_metadata = Metadata()
+                scene_metadata.retrieve(bpy.context.scene)
+                self.write_metadata(root, scene_metadata)
+
+                prefix = os.path.splitext(self.filepath)[0]
                 archive = self.create_archive(prefix + bpy.path.clean_name(export_object.name) + ".3mf")
                 if archive is None:
                     return {'CANCELLED'}
