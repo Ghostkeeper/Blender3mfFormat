@@ -135,6 +135,7 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
                     # information we can.
 
                 path_to_file, filename = os.path.split(path)
+                filename = os.path.splitext(filename)[0]
                 scale_unit = self.unit_scale(context, root)
                 self.resource_objects = {}
                 self.resource_materials = {}
