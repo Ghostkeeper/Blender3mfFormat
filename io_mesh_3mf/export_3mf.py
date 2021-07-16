@@ -99,10 +99,6 @@ class Export3MF(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
         :param context: The Blender context.
         :return: A set of status flags to indicate whether the write succeeded or not.
         """
-        # Reset state.
-        self.next_resource_id = 1  # Starts counting at 1 for some inscrutable reason.
-        self.material_resource_id = -1
-        self.num_written = 0
 
         if self.use_selection:
             blender_objects = context.selected_objects
@@ -112,6 +108,10 @@ class Export3MF(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
         global_scale = self.unit_scale(context)
 
         if self.batch_mode == 'OFF':
+            # Reset state.
+            self.next_resource_id = 1  # Starts counting at 1 for some inscrutable reason.
+            self.material_resource_id = -1
+            self.num_written = 0
             # Due to an open bug in Python 3.7 (Blender's version) we need to prefix all elements with the namespace.
             # Bug: https://bugs.python.org/issue17088
             # Workaround: https://stackoverflow.com/questions/4997848/4999510#4999510
@@ -141,6 +141,12 @@ class Export3MF(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
                 # Due to an open bug in Python 3.7 (Blender's version) we need to prefix all elements with the namespace.
                 # Bug: https://bugs.python.org/issue17088
                 # Workaround: https://stackoverflow.com/questions/4997848/4999510#4999510
+                
+                # Reset state.
+                self.next_resource_id = 1  # Starts counting at 1 for some inscrutable reason.
+                self.material_resource_id = -1
+                self.num_written = 0
+                
                 root = xml.etree.ElementTree.Element(f"{{{MODEL_NAMESPACE}}}model")
 
                 scene_metadata = Metadata()
