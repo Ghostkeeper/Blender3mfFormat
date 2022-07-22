@@ -6,7 +6,7 @@ This is a Blender add-on that allows importing and exporting 3MF files.
 
 Installation
 ----
-This add-on requires Blender 2.80 or newer.
+This add-on requires Blender 2.80 or newer. It is tested on version 2.80, 2.83, 2.93 3.0 and 3.3.
 
 To install this add-on, currently you need to tell Blender where to find a .zip archive with the add-on inside.
 1. Download the latest release from the [releases page](https://github.com/Ghostkeeper/Blender3mfFormat/releases/latest). This is a .zip archive.
