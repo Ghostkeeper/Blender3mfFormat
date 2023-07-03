@@ -73,7 +73,7 @@ def unregister():
         bpy.utils.unregister_class(cls)
 
     bpy.types.TOPBAR_MT_file_import.remove(menu_import)
-    bpy.types.TOPBAR_MT_file_export.append(menu_export)
+    bpy.types.TOPBAR_MT_file_export.remove(menu_export)
 
 
 # Allow the add-on to be ran directly without installation.
