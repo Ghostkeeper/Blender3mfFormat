@@ -38,7 +38,8 @@ ResourceObject = collections.namedtuple("ResourceObject", [
     "triangles",
     "materials",
     "components",
-    "metadata"])
+    "metadata",
+    "name"])
 Component = collections.namedtuple("Component", ["resource_object", "transformation"])
 ResourceMaterial = collections.namedtuple("ResourceMaterial", ["name", "color"])
 
@@ -134,13 +135,15 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
                     # Still continue processing even though the spec says not to. Our aim is to retrieve whatever
                     # information we can.
 
+                path_to_file, filename = os.path.split(path)
+                filename = os.path.splitext(filename)[0]
                 scale_unit = self.unit_scale(context, root)
                 self.resource_objects = {}
                 self.resource_materials = {}
                 scene_metadata = self.read_metadata(root, scene_metadata)
                 self.read_materials(root)
-                self.read_objects(root)
-                self.build_items(root, scale_unit)
+                self.read_objects(root, filename)
+                self.build_items(root, scale_unit, filename)
 
         scene_metadata.store(bpy.context.scene)
         annotations.store()
@@ -338,8 +341,8 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
         """
         scale = self.global_scale
 
-        if context.scene.unit_settings.scale_length != 0:
-            scale /= context.scene.unit_settings.scale_length  # Apply the global scale of the units in Blender.
+        #if context.scene.unit_settings.scale_length != 0:
+        #    scale /= context.scene.unit_settings.scale_length  # Apply the global scale of the units in Blender.
 
         threemf_unit = root.attrib.get("unit", MODEL_DEFAULT_UNIT)
         blender_unit = context.scene.unit_settings.length_unit
@@ -367,7 +370,7 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
                 log.warning("Metadata entry without name is discarded.")
                 continue  # This attribute has no name, so there's no key by which I can save the metadata.
             name = metadata_node.attrib["name"]
-            preserve_str = metadata_node.attrib.get("preserve", "0")
+            preserve_str = metadata_node.attrib.get("preserve", "1")
             # We don't use this ourselves since we always preserve, but the preserve attribute itself will also be
             # preserved.
             preserve = preserve_str != "0" and preserve_str.lower() != "false"
@@ -429,7 +432,7 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
             if len(self.resource_materials[material_id]) == 0:
                 del self.resource_materials[material_id]  # Don't leave empty material sets hanging.
 
-    def read_objects(self, root):
+    def read_objects(self, root, filename):
         """
         Reads all repeatable build objects from the resources of an XML root node.
 
@@ -442,6 +445,12 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
             except KeyError:
                 log.warning("Object resource without ID!")
                 continue  # ID is required, otherwise the build can't refer to it.
+
+            try:
+                objectname = object_node.attrib["name"]
+            except KeyError:
+                log.warning("Object has no Name!")
+                objectname = filename
 
             pid = object_node.attrib.get("pid")  # Material ID.
             pindex = object_node.attrib.get("pindex")  # Index within a collection of materials.
@@ -482,7 +491,8 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
                 triangles=triangles,
                 materials=materials,
                 components=components,
-                metadata=metadata)
+                metadata=metadata, 
+                name=objectname)
 
     def read_vertices(self, object_node):
         """
@@ -626,7 +636,7 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
             result[row][col] = component_float
         return result
 
-    def build_items(self, root, scale_unit):
+    def build_items(self, root, scale_unit, filename=None):
         """
         Builds the scene. This places objects with certain transformations in
         the scene.
@@ -657,9 +667,9 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
             transform = mathutils.Matrix.Scale(scale_unit, 4)
             transform @= self.parse_transformation(build_item.attrib.get("transform", ""))
 
-            self.build_object(resource_object, transform, metadata, [objectid])
+            self.build_object(resource_object, transform, metadata, [objectid], filename=filename)
 
-    def build_object(self, resource_object, transformation, metadata, objectid_stack_trace, parent=None):
+    def build_object(self, resource_object, transformation, metadata, objectid_stack_trace, parent=None, filename=None):
         """
         Converts a resource object into a Blender object.
 
@@ -677,11 +687,13 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
         """
         # Create a mesh if there is mesh data here.
         mesh = None
+        blender_object = None
+
         if resource_object.triangles:
             mesh = bpy.data.meshes.new("3MF Mesh")
             mesh.from_pydata(resource_object.vertices, [], resource_object.triangles)
             mesh.update()
-            resource_object.metadata.store(mesh)
+
 
             # Mapping resource materials to indices in the list of materials for this specific mesh.
             materials_to_index = {}
@@ -713,7 +725,12 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
                 mesh.polygons[triangle_index].material_index = materials_to_index[triangle_material]
 
         # Create an object.
-        blender_object = bpy.data.objects.new("3MF Object", mesh)
+        if resource_object.name is None:
+            blender_object = bpy.data.objects.new(str(filename), mesh)
+        else:
+            blender_object = bpy.data.objects.new(str(resource_object.name), mesh)
+        resource_object.metadata.store(blender_object)
+
         self.num_loaded += 1
         if parent is not None:
             blender_object.parent = parent
@@ -721,7 +738,6 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
         bpy.context.collection.objects.link(blender_object)
         bpy.context.view_layer.objects.active = blender_object
         blender_object.select_set(True)
-        metadata.store(blender_object)
         if "3mf:object_type" in resource_object.metadata\
                 and resource_object.metadata["3mf:object_type"].value in {"solidsupport", "support"}:
             # Don't render support meshes.
