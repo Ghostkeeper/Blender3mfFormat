@@ -117,7 +117,7 @@ class Export3MF(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
         self.write_objects(root, resources_element, blender_objects, global_scale)
 
         document = xml.etree.ElementTree.ElementTree(root)
-        with archive.open(MODEL_LOCATION, 'w') as f:
+        with archive.open(MODEL_LOCATION, 'w', force_zip64=True) as f:
             document.write(f, xml_declaration=True, encoding='UTF-8', default_namespace=MODEL_NAMESPACE)
         try:
             archive.close()
