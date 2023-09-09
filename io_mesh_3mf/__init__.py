@@ -18,7 +18,6 @@ bl_info = {
     "blender": (2, 80, 0),
     "location": "File > Import-Export",
     "description": "Import-Export 3MF files",
-    "support": 'TESTING',
     "category": "Import-Export"
 }
 
