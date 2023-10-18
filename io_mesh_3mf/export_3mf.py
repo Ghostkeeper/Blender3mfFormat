@@ -68,6 +68,10 @@ class Export3MF(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
         default=4,
         min=0,
         max=12)
+    use_color_group: bpy.props.BoolProperty(
+        name="Use Color Group",
+        description="Specify object material colors in Color Group instead of Base Material",
+        default=False)
 
     def __init__(self):
         """
@@ -108,12 +112,17 @@ class Export3MF(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
         # Workaround: https://stackoverflow.com/questions/4997848/4999510#4999510
         root = xml.etree.ElementTree.Element(f"{{{MODEL_NAMESPACE}}}model")
 
+        # Include 3MF Materials Extension namespace if using Color Group
+        if self.use_color_group == True:
+            xml.etree.ElementTree.register_namespace("m", MODEL_MATERIALS_EXTENSION_NAMESPACE)
+
         scene_metadata = Metadata()
         scene_metadata.retrieve(bpy.context.scene)
         self.write_metadata(root, scene_metadata)
 
         resources_element = xml.etree.ElementTree.SubElement(root, f"{{{MODEL_NAMESPACE}}}resources")
-        self.material_name_to_index = self.write_materials(resources_element, blender_objects)
+
+        self.material_name_to_index = self.write_materials(resources_element, blender_objects, self.use_color_group)
         self.write_objects(root, resources_element, blender_objects, global_scale)
 
         document = xml.etree.ElementTree.ElementTree(root)
@@ -192,7 +201,7 @@ class Export3MF(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
 
         return scale
 
-    def write_materials(self, resources_element, blender_objects):
+    def write_materials(self, resources_element, blender_objects, use_color_group):
         """
         Write the materials on the specified blender objects to a 3MF document.
 
@@ -240,12 +249,12 @@ class Export3MF(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
                     self.next_resource_id += 1
                     basematerials_element = xml.etree.ElementTree.SubElement(
                         resources_element,
-                        f"{{{MODEL_NAMESPACE}}}basematerials", attrib={
+                        f"{{{MODEL_NAMESPACE}}}basematerials" if use_color_group != True else f"{{{MODEL_MATERIALS_EXTENSION_NAMESPACE}}}colorgroup", attrib={
                             f"{{{MODEL_NAMESPACE}}}id": self.material_resource_id
                         })
-                xml.etree.ElementTree.SubElement(basematerials_element, f"{{{MODEL_NAMESPACE}}}base", attrib={
+                xml.etree.ElementTree.SubElement(basematerials_element, f"{{{MODEL_NAMESPACE}}}base" if use_color_group != True else f"{{{MODEL_MATERIALS_EXTENSION_NAMESPACE}}}color", attrib={
                     f"{{{MODEL_NAMESPACE}}}name": material_name,
-                    f"{{{MODEL_NAMESPACE}}}displaycolor": color_hex
+                    f"{{{MODEL_NAMESPACE}}}displaycolor" if use_color_group != True else f"{{{MODEL_NAMESPACE}}}color": color_hex
                 })
                 name_to_index[material_name] = next_index
                 next_index += 1
@@ -307,6 +316,8 @@ class Export3MF(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
         self.next_resource_id += 1
         object_element = xml.etree.ElementTree.SubElement(resources_element, f"{{{MODEL_NAMESPACE}}}object")
         object_element.attrib[f"{{{MODEL_NAMESPACE}}}id"] = str(new_resource_id)
+        if len(blender_object.name) > 0:
+            object_element.attrib[f"{{{MODEL_NAMESPACE}}}name"] = blender_object.name # Add object.name attribute for named object support in Prusaslicer
 
         metadata = Metadata()
         metadata.retrieve(blender_object)
