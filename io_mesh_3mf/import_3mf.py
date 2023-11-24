@@ -149,8 +149,12 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
             if area.type == 'VIEW_3D':
                 for region in area.regions:
                     if region.type == 'WINDOW':
-                        override = {'area': area, 'region': region, 'edit_object': bpy.context.edit_object}
-                        bpy.ops.view3d.view_selected(override)
+                        context = bpy.context.copy()
+                        context['area'] = area
+                        context['region'] = region
+                        context['edit_object'] = bpy.context.edit_object
+                        with bpy.context.temp_override(**context):
+                            bpy.ops.view3d.view_selected()
 
         log.info(f"Imported {self.num_loaded} objects from 3MF files.")
 
