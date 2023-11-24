@@ -149,12 +149,18 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
             if area.type == 'VIEW_3D':
                 for region in area.regions:
                     if region.type == 'WINDOW':
-                        context = bpy.context.copy()
-                        context['area'] = area
-                        context['region'] = region
-                        context['edit_object'] = bpy.context.edit_object
-                        with bpy.context.temp_override(**context):
-                            bpy.ops.view3d.view_selected()
+                        try:
+                            # Since Blender 3.2:
+                            context = bpy.context.copy()
+                            context['area'] = area
+                            context['region'] = region
+                            context['edit_object'] = bpy.context.edit_object
+                            with bpy.context.temp_override(**context):
+                                bpy.ops.view3d.view_selected()
+                        except AttributeError:  # temp_override doesn't exist before Blender 3.2.
+                            # Before Blender 3.2:
+                            override = {'area': area, 'region': region, 'edit_object': bpy.context.edit_object}
+                            bpy.ops.view3d.view_selected(override)
 
         log.info(f"Imported {self.num_loaded} objects from 3MF files.")
 
