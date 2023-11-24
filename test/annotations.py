@@ -372,7 +372,7 @@ class TestAnnotations(unittest.TestCase):
         custom_file = io.BytesIO()
         custom_file.close = lambda: None
         # Return the correct file handle depending on which file is opened.
-        archive.open = lambda fname, *args, **kwargs:\
+        archive.open = lambda fname, *args, **kwargs: \
             custom_file if fname == "3D/" + RELS_FOLDER + "/.rels" else root_file
 
         self.annotations.annotations["file.txt"] = {io_mesh_3mf.annotations.Relationship(namespace="nsp", source="3D/")}
