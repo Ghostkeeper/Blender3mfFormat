@@ -282,13 +282,13 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
         preserved_files = set()  # Find all files which must be preserved according to the annotations.
         for target, its_annotations in annotations.annotations.items():
             for annotation in its_annotations:
-                if type(annotation) == Relationship:
+                if type(annotation) is Relationship:
                     if annotation.namespace in {
                         "http://schemas.openxmlformats.org/package/2006/relationships/mustpreserve",
                         "http://schemas.microsoft.com/3dmanufacturing/2013/01/printticket"
                     }:
                         preserved_files.add(target)
-                elif type(annotation) == ContentType:
+                elif type(annotation) is ContentType:
                     if annotation.mime_type == "application/vnd.ms-printing.printticket+xml":
                         preserved_files.add(target)
 

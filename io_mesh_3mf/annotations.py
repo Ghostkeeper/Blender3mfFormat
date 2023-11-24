@@ -126,7 +126,7 @@ class Annotations:
                 if ConflictingContentType in self.annotations[filename]:
                     # Content type was already conflicting through multiple previous files. It'll stay in conflict.
                     continue
-                content_type_annotations = list(filter(lambda annotation: type(annotation) == ContentType,
+                content_type_annotations = list(filter(lambda annotation: type(annotation) is ContentType,
                                                        self.annotations[filename]))
                 if any(content_type_annotations) and content_type_annotations[0].mime_type != content_type:
                     # There was already a content type and it is different from this one.
@@ -261,13 +261,13 @@ class Annotations:
         for target, annotations in self.annotations.items():
             serialized_annotations = []
             for annotation in annotations:
-                if type(annotation) == Relationship:
+                if type(annotation) is Relationship:
                     serialized_annotations.append({
                         "annotation": 'relationship',
                         "namespace": annotation.namespace,
                         "source": annotation.source
                     })
-                elif type(annotation) == ContentType:
+                elif type(annotation) is ContentType:
                     serialized_annotations.append({
                         "annotation": 'content_type',
                         "mime_type": annotation.mime_type
