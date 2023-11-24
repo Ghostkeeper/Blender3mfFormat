@@ -12,7 +12,7 @@ To install this add-on, currently you need to tell Blender where to find a .zip 
 1. Download the latest release from the [releases page](https://github.com/Ghostkeeper/Blender3mfFormat/releases/latest). This is a .zip archive.
 2. In Blender, go to Edit -> Preferences and open the Add-ons tab on the left.
 3. Click on the Install... button at the top. Navigate to the .zip you downloaded.
-4. Under the "Testing" category, find the add-on called "Import-Export: 3MF format". Make sure that it's enabled. (Note: If searching with the search box, exclude the "Import-Export" text since this is the category, not part of the add-on name. Just search for "3MF" instead.)
+4. Under the "Community" category, find the add-on called "Import-Export: 3MF format". Make sure that it's enabled. (Note: If searching with the search box, exclude the "Import-Export" text since this is the category, not part of the add-on name. Just search for "3MF" instead.)
 
 The add-on is being considered for inclusion in Blender as a community add-on [here](https://developer.blender.org/T84154). This would make it easier to install.
 
