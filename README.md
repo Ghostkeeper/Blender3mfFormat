@@ -64,4 +64,4 @@ The 3MF specification demands that consumers of 3MF files (i.e. importing 3MF fi
 
 The 3MF specification is also not designed to handle loading multiple 3MF files at once, or to load 3MF files into existing scenes together with other 3MF files. This add-on will try to load as much as possible, but if there are conflicts with parts of the files, it will load neither. One example is the scene metadata such as the title of the scene. If loading two files with the same title, that title is kept. However when combining files with multiple titles, no title will be loaded.
 
-No 3MF extensions are currently supported. That is a goal for future development.
+No 3MF format extensions are currently supported. That is a goal for future development.
