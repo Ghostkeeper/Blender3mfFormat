@@ -112,7 +112,7 @@ class Export3MF(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
         root = xml.etree.ElementTree.Element(f"{{{MODEL_NAMESPACE}}}model")
 
         # Include 3MF Materials Extension namespace if using Color Group
-        if self.use_color_group == True:
+        if self.use_color_group is True:
             xml.etree.ElementTree.register_namespace("m", MODEL_MATERIALS_EXTENSION_NAMESPACE)
 
         scene_metadata = Metadata()
@@ -210,7 +210,8 @@ class Export3MF(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
         materials in Blender (which must be unique) to the index in the <basematerials> material group. Using that
         mapping, the objects and triangles can write down an index referring to the list of <base> tags.
 
-        Since the <base> or <color> material can only hold a color, we'll write the diffuse color of the material to the file.
+        Since the <base> or <color> material can only hold a color, we'll write the diffuse color of the material to
+        the file.
         :param resources_element: A <resources> node from a 3MF document.
         :param blender_objects: A list of Blender objects that may have materials which we need to write to the
         document.
@@ -248,18 +249,18 @@ class Export3MF(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
                     self.next_resource_id += 1
                     basematerials_element = xml.etree.ElementTree.SubElement(
                         resources_element,
-                        f"{{{MODEL_NAMESPACE}}}basematerials" if use_color_group != True else \
-                            f"{{{MODEL_MATERIALS_EXTENSION_NAMESPACE}}}colorgroup", attrib={
+                        f"{{{MODEL_NAMESPACE}}}basematerials" if use_color_group is not True else
+                        f"{{{MODEL_MATERIALS_EXTENSION_NAMESPACE}}}colorgroup", attrib={
                             f"{{{MODEL_NAMESPACE}}}id": self.material_resource_id
                         })
                 xml.etree.ElementTree.SubElement(
-                    basematerials_element, 
-                    f"{{{MODEL_NAMESPACE}}}base" if use_color_group != True else \
-                        f"{{{MODEL_MATERIALS_EXTENSION_NAMESPACE}}}color", attrib={
-                            f"{{{MODEL_NAMESPACE}}}name": material_name,
-                            f"{{{MODEL_NAMESPACE}}}displaycolor" if use_color_group != True else \
-                                f"{{{MODEL_NAMESPACE}}}color": color_hex
-                })
+                    basematerials_element,
+                    f"{{{MODEL_NAMESPACE}}}base" if use_color_group is not True else
+                    f"{{{MODEL_MATERIALS_EXTENSION_NAMESPACE}}}color", attrib={
+                        f"{{{MODEL_NAMESPACE}}}name": material_name,
+                        f"{{{MODEL_NAMESPACE}}}displaycolor" if use_color_group is not True else
+                        f"{{{MODEL_NAMESPACE}}}color": color_hex
+                    })
                 name_to_index[material_name] = next_index
                 next_index += 1
 
