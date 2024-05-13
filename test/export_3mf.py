@@ -177,7 +177,7 @@ class TestExport3MF(unittest.TestCase):
         result = self.exporter.write_materials(resources_element, [], use_color_group=True)
 
         self.assertListEqual(
-            list(resources_element.iterfind("3mf:colorgroup", MODEL_NAMESPACES)),
+            list(resources_element.iterfind("m:colorgroup", MODEL_NAMESPACES)),
             [],
             "There were no objects to write, so there are no materials, and it should not write a material group.")
         self.assertDictEqual(result, {}, "There are no materials, so nothing gets an index assigned.")
@@ -192,12 +192,21 @@ class TestExport3MF(unittest.TestCase):
         object2 = unittest.mock.MagicMock()
         object2.material_slots = []
 
-        result = self.exporter.write_materials(resources_element, [object1, object2])
+        result = self.exporter.write_materials(resources_element, [object1, object2], use_color_group=False)
 
         self.assertListEqual(
             list(resources_element.iterfind("3mf:basematerials", MODEL_NAMESPACES)),
             [],
             "None of the objects have materials, so we should not even create an (empty) basematerials tag.")
+        self.assertDictEqual(result, {}, "There are no materials, so nothing gets an index assigned.")
+
+        # Test optional Color Group
+        result = self.exporter.write_materials(resources_element, [object1, object2], use_color_group=True)
+
+        self.assertListEqual(
+            list(resources_element.iterfind("m:colorgroup", MODEL_NAMESPACES)),
+            [],
+            "None of the objects have materials, so we should not even create an (empty) colorgroup tag.")
         self.assertDictEqual(result, {}, "There are no materials, so nothing gets an index assigned.")
 
     def test_write_material_name(self):
@@ -222,7 +231,7 @@ class TestExport3MF(unittest.TestCase):
         # Test optional Color Group
         result = self.exporter.write_materials(resources_element, [blender_object], use_color_group=True)
 
-        color_elements = list(resources_element.iterfind("3mf:colorgroup/3mf:color", MODEL_NAMESPACES))
+        color_elements = list(resources_element.iterfind("m:colorgroup/m:color", MODEL_NAMESPACES))
         self.assertEqual(len(color_elements), 1, "There must be a <color> tag, since there is a material on this object.")
         color_element = color_elements[0]
         self.assertEqual(color_element.attrib[f"{{{MODEL_NAMESPACE}}}name"], "Navel lint")
