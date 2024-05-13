@@ -1,13 +1,12 @@
 # Blender add-on to import and export 3MF files.
 # Copyright (C) 2020 Ghostkeeper
-# This add-on is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General
-# Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option)
-# any later version.
+# This add-on is free software; you can redistribute it and/or modify it under the terms of the GNU General Public
+# License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later
+# version.
 # This add-on is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
-# warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for
-# details.
-# You should have received a copy of the GNU Affero General Public License along with this plug-in. If not, see
-# <https://gnu.org/licenses/>.
+# warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+# You should have received a copy of the GNU General Public License along with this program; if not, write to the Free
+# Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 # <pep8 compliant>
 
@@ -150,8 +149,18 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
             if area.type == 'VIEW_3D':
                 for region in area.regions:
                     if region.type == 'WINDOW':
-                        override = {'area': area, 'region': region, 'edit_object': bpy.context.edit_object}
-                        bpy.ops.view3d.view_selected(override)
+                        try:
+                            # Since Blender 3.2:
+                            context = bpy.context.copy()
+                            context['area'] = area
+                            context['region'] = region
+                            context['edit_object'] = bpy.context.edit_object
+                            with bpy.context.temp_override(**context):
+                                bpy.ops.view3d.view_selected()
+                        except AttributeError:  # temp_override doesn't exist before Blender 3.2.
+                            # Before Blender 3.2:
+                            override = {'area': area, 'region': region, 'edit_object': bpy.context.edit_object}
+                            bpy.ops.view3d.view_selected(override)
 
         log.info(f"Imported {self.num_loaded} objects from 3MF files.")
 
@@ -283,13 +292,13 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
         preserved_files = set()  # Find all files which must be preserved according to the annotations.
         for target, its_annotations in annotations.annotations.items():
             for annotation in its_annotations:
-                if type(annotation) == Relationship:
+                if type(annotation) is Relationship:
                     if annotation.namespace in {
                         "http://schemas.openxmlformats.org/package/2006/relationships/mustpreserve",
                         "http://schemas.microsoft.com/3dmanufacturing/2013/01/printticket"
                     }:
                         preserved_files.add(target)
-                elif type(annotation) == ContentType:
+                elif type(annotation) is ContentType:
                     if annotation.mime_type == "application/vnd.ms-printing.printticket+xml":
                         preserved_files.add(target)
 

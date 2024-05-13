@@ -1,3 +1,8 @@
+1.0.2 - Bug Fixes
+====
+* Fix support in newer Blender versions, up to 4.0.
+* Run tests using Python 3.10.
+
 1.0.1 - Bug Fixes
 ====
 * Fix the resource ID of exported materials to be integer.

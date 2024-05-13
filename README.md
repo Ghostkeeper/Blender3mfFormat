@@ -12,8 +12,7 @@ To install this add-on, currently you need to tell Blender where to find a .zip 
 1. Download the latest release from the [releases page](https://github.com/Ghostkeeper/Blender3mfFormat/releases/latest). This is a .zip archive.
 2. In Blender, go to Edit -> Preferences and open the Add-ons tab on the left.
 3. Click on the Install... button at the top. Navigate to the .zip you downloaded.
-4. Find the add-on called "Import-Export: 3MF format". Make sure that it's enabled. (Note: If searching with the search box, exclude the "Import-Export" text since this is the category, not part of the add-on name. Just search for "3MF" instead.)
-5. If add-on does not show up, manually move `io_mesh_3mf` folder to `C:\Users\%USER%\AppData\Roaming\Blender Foundation\Blender\X.X\scripts\addons` or `C:\Program Files\Blender Foundation\Blender X.X\X.X\scripts\addons` or equivalent for your operating system and reload Blender before enabled in Preferences. 
+4. Under the "Community" category, find the add-on called "Import-Export: 3MF format". Make sure that it's enabled. (Note: If searching with the search box, exclude the "Import-Export" text since this is the category, not part of the add-on name. Just search for "3MF" instead.)
 
 The add-on is being considered for inclusion in Blender as a community add-on [here](https://developer.blender.org/T84154). This would make it easier to install.
 
@@ -65,4 +64,4 @@ The 3MF specification demands that consumers of 3MF files (i.e. importing 3MF fi
 
 The 3MF specification is also not designed to handle loading multiple 3MF files at once, or to load 3MF files into existing scenes together with other 3MF files. This add-on will try to load as much as possible, but if there are conflicts with parts of the files, it will load neither. One example is the scene metadata such as the title of the scene. If loading two files with the same title, that title is kept. However when combining files with multiple titles, no title will be loaded.
 
-No 3MF extensions are currently supported. That is a goal for future development.
+No 3MF format extensions are currently supported. That is a goal for future development.
