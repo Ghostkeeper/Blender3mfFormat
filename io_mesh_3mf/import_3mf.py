@@ -443,7 +443,7 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
                 del self.resource_materials[material_id]  # Don't leave empty material sets hanging.
 
         # Import materials using Color Group if enabled by user
-        if use_color_group == True:
+        if use_color_group is True:
             for colorgroup_item in root.iterfind("./3mf:resources/m:colorgroup", MODEL_NAMESPACES):
                 try:
                     material_id = colorgroup_item.attrib["id"]
