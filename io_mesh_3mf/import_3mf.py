@@ -444,15 +444,15 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
 
         # Import materials using Color Group if enabled by user
         if use_color_group == True:
-          for colorgroup_item in root.iterfind("./3mf:resources/m:colorgroup", MODEL_NAMESPACES):
-            try:
-                material_id = colorgroup_item.attrib["id"]
-            except KeyError:
-                log.warning("Encountered a colorgroup item without resource ID.")
-                continue  # Need to have an ID, or no item can reference to the materials. Skip this one.
-            if material_id in self.resource_materials:
-                log.warning(f"Duplicate material ID: {material_id}")
-                continue
+            for colorgroup_item in root.iterfind("./3mf:resources/m:colorgroup", MODEL_NAMESPACES):
+                try:
+                    material_id = colorgroup_item.attrib["id"]
+                except KeyError:
+                    log.warning("Encountered a colorgroup item without resource ID.")
+                    continue  # Need to have an ID, or no item can reference to the materials. Skip this one.
+                if material_id in self.resource_materials:
+                    log.warning(f"Duplicate material ID: {material_id}")
+                    continue
 
             # Use a dictionary mapping indices to resources, because some indices may be skipped due to being invalid.
             self.resource_materials[material_id] = {}
