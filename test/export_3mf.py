@@ -353,7 +353,7 @@ class TestExport3MF(unittest.TestCase):
                 material_name,
                 f"At index {material_index} in the order of the tags we should store material {material_name}, "
                 f"according to our mapping.")
-            
+
         # Test optional Color Groups
         result = self.exporter.write_materials(resources_element, [object1, object2], use_color_group=True)
 
