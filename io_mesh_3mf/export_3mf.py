@@ -317,7 +317,7 @@ class Export3MF(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
         object_element.attrib[f"{{{MODEL_NAMESPACE}}}id"] = str(new_resource_id)
         if len(blender_object.name) > 0:
             # Add object.name attribute for named object support in Prusaslicer
-            object_element.attrib[f"{{{MODEL_NAMESPACE}}}name"] = blender_object.name 
+            object_element.attrib[f"{{{MODEL_NAMESPACE}}}name"] = blender_object.name
 
         metadata = Metadata()
         metadata.retrieve(blender_object)
