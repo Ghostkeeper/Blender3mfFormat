@@ -59,6 +59,10 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
     files: bpy.props.CollectionProperty(name="File Path", type=bpy.types.OperatorFileListElement)
     directory: bpy.props.StringProperty(subtype='DIR_PATH')
     global_scale: bpy.props.FloatProperty(name="Scale", default=1.0, soft_min=0.001, soft_max=1000.0, min=1e-6, max=1e6)
+    use_color_group: bpy.props.BoolProperty(
+        name="Use Color Group",
+        description="Import object material colors from Color Group. Overrides any Base Materials with same id found.",
+        default=False)
 
     def __init__(self):
         """
@@ -413,6 +417,51 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
             for base_item in basematerials_item.iterfind("./3mf:base", MODEL_NAMESPACES):
                 name = base_item.attrib.get("name", "3MF Material")
                 color = base_item.attrib.get("displaycolor")
+                if color is not None:
+                    # Parse the color. It's a hexadecimal number indicating RGB or RGBA.
+                    color = color.lstrip("#")  # Should start with a #. We'll be lenient if it's not.
+                    try:
+                        color_int = int(color, 16)
+                        # Separate out up to four bytes from this int, from right to left.
+                        b1 = (color_int & 0x000000FF) / 255
+                        b2 = ((color_int & 0x0000FF00) >> 8) / 255
+                        b3 = ((color_int & 0x00FF0000) >> 16) / 255
+                        b4 = ((color_int & 0xFF000000) >> 24) / 255
+                        if len(color) == 6:  # RGB format.
+                            color = (b3, b2, b1, 1.0)  # b1, b2 and b3 are B, G, R respectively. b4 is always 0.
+                        else:  # RGBA format, or invalid.
+                            color = (b4, b3, b2, b1)  # b1, b2, b3 and b4 are A, B, G, R respectively.
+                    except ValueError:
+                        log.warning(f"Invalid color for material {name} of resource {material_id}: {color}")
+                        color = None  # Don't add a color for this material.
+
+                # Input is valid. Create a resource.
+                self.resource_materials[material_id][index] = ResourceMaterial(name=name, color=color)
+                index += 1
+
+            if len(self.resource_materials[material_id]) == 0:
+                del self.resource_materials[material_id]  # Don't leave empty material sets hanging.
+
+        # Import materials using colorgroup if enabled by user
+        if self.use_color_group == True:
+          for colorgroup_item in root.iterfind("./3mf:resources/m:colorgroup", MODEL_NAMESPACES):
+            try:
+                material_id = colorgroup_item.attrib["id"]
+            except KeyError:
+                log.warning("Encountered a colorgroup item without resource ID.")
+                continue  # Need to have an ID, or no item can reference to the materials. Skip this one.
+            if material_id in self.resource_materials:
+                log.warning(f"Duplicate material ID: {material_id}")
+                continue
+
+            # Use a dictionary mapping indices to resources, because some indices may be skipped due to being invalid.
+            self.resource_materials[material_id] = {}
+            index = 0
+
+            # "Base" must be the stupidest name for a material resource. Oh well.
+            for color_item in colorgroup_item.iterfind("./m:color", MODEL_NAMESPACES):
+                name = color_item.attrib.get("name", "3MF Material")
+                color = color_item.attrib.get("color")
                 if color is not None:
                     # Parse the color. It's a hexadecimal number indicating RGB or RGBA.
                     color = color.lstrip("#")  # Should start with a #. We'll be lenient if it's not.
