@@ -248,12 +248,17 @@ class Export3MF(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
                     self.next_resource_id += 1
                     basematerials_element = xml.etree.ElementTree.SubElement(
                         resources_element,
-                        f"{{{MODEL_NAMESPACE}}}basematerials" if use_color_group != True else f"{{{MODEL_MATERIALS_EXTENSION_NAMESPACE}}}colorgroup", attrib={
+                        f"{{{MODEL_NAMESPACE}}}basematerials" if use_color_group != True else \
+                            f"{{{MODEL_MATERIALS_EXTENSION_NAMESPACE}}}colorgroup", attrib={
                             f"{{{MODEL_NAMESPACE}}}id": self.material_resource_id
                         })
-                xml.etree.ElementTree.SubElement(basematerials_element, f"{{{MODEL_NAMESPACE}}}base" if use_color_group != True else f"{{{MODEL_MATERIALS_EXTENSION_NAMESPACE}}}color", attrib={
-                    f"{{{MODEL_NAMESPACE}}}name": material_name,
-                    f"{{{MODEL_NAMESPACE}}}displaycolor" if use_color_group != True else f"{{{MODEL_NAMESPACE}}}color": color_hex
+                xml.etree.ElementTree.SubElement(
+                    basematerials_element, 
+                    f"{{{MODEL_NAMESPACE}}}base" if use_color_group != True else \
+                        f"{{{MODEL_MATERIALS_EXTENSION_NAMESPACE}}}color", attrib={
+                            f"{{{MODEL_NAMESPACE}}}name": material_name,
+                            f"{{{MODEL_NAMESPACE}}}displaycolor" if use_color_group != True else \
+                                f"{{{MODEL_NAMESPACE}}}color": color_hex
                 })
                 name_to_index[material_name] = next_index
                 next_index += 1
