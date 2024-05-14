@@ -462,7 +462,7 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
                 except KeyError:
                     log.warning(
                         f"Object with ID {objectid} refers to material collection {pid} with index {pindex}"
-                        f"which doesn't exist.")
+                        f" which doesn't exist.")
                 except ValueError:
                     log.warning(f"Object with ID {objectid} specifies material index {pindex}, which is not integer.")
 
