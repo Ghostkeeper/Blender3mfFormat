@@ -148,7 +148,7 @@ class Metadata:
             name = metadata_entry.name
             value = metadata_entry.value
             if name == "Title":  # Has a built-in ID property for objects as well as scenes.
-                blender_object.name = value
+                blender_object.name = value if value is not None else ""
             elif name == "3mf:partnumber":
                 # Special case: This is always a string and doesn't need the preserve attribute. We can simplify this to
                 # make it easier to edit.
