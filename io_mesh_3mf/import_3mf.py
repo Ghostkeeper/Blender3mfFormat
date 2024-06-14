@@ -107,6 +107,10 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
         if bpy.ops.object.select_all.poll():
             bpy.ops.object.select_all(action='DESELECT')  # Deselect other files.
 
+        items_to_build = []
+        self.resource_objects = {}
+        self.resource_materials = {}
+
         for path in paths:
             files_by_content_type = self.read_archive(path)  # Get the files from the archive.
 
@@ -134,12 +138,14 @@ class Import3MF(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
                     # information we can.
 
                 scale_unit = self.unit_scale(context, root)
-                self.resource_objects = {}
-                self.resource_materials = {}
                 scene_metadata = self.read_metadata(root, scene_metadata)
                 self.read_materials(root)
                 self.read_objects(root)
-                self.build_items(root, scale_unit)
+
+                items_to_build.append((root, scale_unit))
+            
+        for item_to_build in items_to_build:
+            self.build_items(item_to_build[0], item_to_build[1])
 
         scene_metadata.store(bpy.context.scene)
         annotations.store()
