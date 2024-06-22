@@ -693,7 +693,7 @@ class TestImport3MF(unittest.TestCase):
         """
         root = xml.etree.ElementTree.Element(f"{{{MODEL_NAMESPACE}}}model")
 
-        self.importer.read_materials(root)
+        self.importer.read_materials(root, use_color_group=False)
 
         self.assertDictEqual(
             self.importer.resource_materials,
@@ -711,7 +711,7 @@ class TestImport3MF(unittest.TestCase):
             f"{{{MODEL_NAMESPACE}}}basematerials",
             attrib={"id": "material-set"})
 
-        self.importer.read_materials(root)
+        self.importer.read_materials(root, use_color_group=False)
 
         self.assertDictEqual(
             self.importer.resource_materials,
@@ -732,7 +732,7 @@ class TestImport3MF(unittest.TestCase):
             attrib={"id": "material-set"})
         xml.etree.ElementTree.SubElement(basematerials, f"{{{MODEL_NAMESPACE}}}base")
 
-        self.importer.read_materials(root)
+        self.importer.read_materials(root, use_color_group=False)
 
         ground_truth = {
             "material-set": {
@@ -757,7 +757,7 @@ class TestImport3MF(unittest.TestCase):
         xml.etree.ElementTree.SubElement(basematerials, f"{{{MODEL_NAMESPACE}}}base", attrib={"name": "PLA"})
         xml.etree.ElementTree.SubElement(basematerials, f"{{{MODEL_NAMESPACE}}}base", attrib={"name": "BLA"})
 
-        self.importer.read_materials(root)
+        self.importer.read_materials(root, use_color_group=False)
 
         ground_truth = {
             "material-set": {
@@ -801,7 +801,7 @@ class TestImport3MF(unittest.TestCase):
                 })
 
                 self.importer.resource_materials = {}
-                self.importer.read_materials(root)
+                self.importer.read_materials(root, use_color_group=False)
 
                 ground_truth = {
                     "material-set": {
@@ -820,7 +820,7 @@ class TestImport3MF(unittest.TestCase):
         # No ID in attrib!
         xml.etree.ElementTree.SubElement(basematerials, f"{{{MODEL_NAMESPACE}}}base")
 
-        self.importer.read_materials(root)
+        self.importer.read_materials(root, use_color_group=False)
 
         self.assertDictEqual(
             self.importer.resource_materials,
@@ -846,7 +846,7 @@ class TestImport3MF(unittest.TestCase):
             attrib={"id": "set2"})
         xml.etree.ElementTree.SubElement(base2, f"{{{MODEL_NAMESPACE}}}base")
 
-        self.importer.read_materials(root)
+        self.importer.read_materials(root, use_color_group=False)
 
         ground_truth = {
             "set1": {
@@ -885,7 +885,7 @@ class TestImport3MF(unittest.TestCase):
             f"{{{MODEL_NAMESPACE}}}base",
             attrib={"name": "Second material"})
 
-        self.importer.read_materials(root)
+        self.importer.read_materials(root, use_color_group=False)
 
         # The result may be either one of the materials. Both are valid results.
         ground_truth = [  # List of options which are allowed.

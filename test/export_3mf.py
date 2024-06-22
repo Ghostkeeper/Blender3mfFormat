@@ -165,10 +165,19 @@ class TestExport3MF(unittest.TestCase):
         """
         resources_element = xml.etree.ElementTree.Element(f"{{{MODEL_NAMESPACE}}}resources")
 
-        result = self.exporter.write_materials(resources_element, [])
+        result = self.exporter.write_materials(resources_element, [], use_color_group=False)
 
         self.assertListEqual(
             list(resources_element.iterfind("3mf:basematerials", MODEL_NAMESPACES)),
+            [],
+            "There were no objects to write, so there are no materials, and it should not write a material group.")
+        self.assertDictEqual(result, {}, "There are no materials, so nothing gets an index assigned.")
+
+        # Test optional Color Group
+        result = self.exporter.write_materials(resources_element, [], use_color_group=True)
+
+        self.assertListEqual(
+            list(resources_element.iterfind("m:colorgroup", MODEL_NAMESPACES)),
             [],
             "There were no objects to write, so there are no materials, and it should not write a material group.")
         self.assertDictEqual(result, {}, "There are no materials, so nothing gets an index assigned.")
@@ -183,12 +192,21 @@ class TestExport3MF(unittest.TestCase):
         object2 = unittest.mock.MagicMock()
         object2.material_slots = []
 
-        result = self.exporter.write_materials(resources_element, [object1, object2])
+        result = self.exporter.write_materials(resources_element, [object1, object2], use_color_group=False)
 
         self.assertListEqual(
             list(resources_element.iterfind("3mf:basematerials", MODEL_NAMESPACES)),
             [],
             "None of the objects have materials, so we should not even create an (empty) basematerials tag.")
+        self.assertDictEqual(result, {}, "There are no materials, so nothing gets an index assigned.")
+
+        # Test optional Color Group
+        result = self.exporter.write_materials(resources_element, [object1, object2], use_color_group=True)
+
+        self.assertListEqual(
+            list(resources_element.iterfind("m:colorgroup", MODEL_NAMESPACES)),
+            [],
+            "None of the objects have materials, so we should not even create an (empty) colorgroup tag.")
         self.assertDictEqual(result, {}, "There are no materials, so nothing gets an index assigned.")
 
     def test_write_material_name(self):
@@ -202,12 +220,22 @@ class TestExport3MF(unittest.TestCase):
         blender_object = unittest.mock.MagicMock()
         blender_object.material_slots = [material_slot]
 
-        result = self.exporter.write_materials(resources_element, [blender_object])
+        result = self.exporter.write_materials(resources_element, [blender_object], use_color_group=False)
 
         base_elements = list(resources_element.iterfind("3mf:basematerials/3mf:base", MODEL_NAMESPACES))
         self.assertEqual(len(base_elements), 1, "There must be a <base> tag, since there is a material on this object.")
         base_element = base_elements[0]
         self.assertEqual(base_element.attrib[f"{{{MODEL_NAMESPACE}}}name"], "Navel lint")
+        self.assertDictEqual(result, {"Navel lint": 0})
+
+        # Test optional Color Group
+        result = self.exporter.write_materials(resources_element, [blender_object], use_color_group=True)
+
+        color_elements = list(resources_element.iterfind("m:colorgroup/m:color", MODEL_NAMESPACES))
+        self.assertEqual(len(color_elements), 1, "There must be a <color> tag, \
+                         since there is a material on this object.")
+        color_element = color_elements[0]
+        self.assertEqual(color_element.attrib[f"{{{MODEL_NAMESPACE}}}name"], "Navel lint")
         self.assertDictEqual(result, {"Navel lint": 0})
 
     def test_write_material_color(self):
@@ -238,7 +266,7 @@ class TestExport3MF(unittest.TestCase):
                 blender_object = unittest.mock.MagicMock()
                 blender_object.material_slots = [material_slot]
 
-                self.exporter.write_materials(resources_element, [blender_object])
+                self.exporter.write_materials(resources_element, [blender_object], use_color_group=False)
 
                 base_elements = list(resources_element.iterfind("3mf:basematerials/3mf:base", MODEL_NAMESPACES))
                 self.assertEqual(
@@ -247,6 +275,17 @@ class TestExport3MF(unittest.TestCase):
                     "There must be a <base> tag, since there is a material on this object.")
                 base_element = base_elements[0]
                 self.assertEqual(base_element.attrib[f"{{{MODEL_NAMESPACE}}}displaycolor"], output)
+
+                # Test optional Color Groups
+                self.exporter.write_materials(resources_element, [blender_object], use_color_group=True)
+
+                color_elements = list(resources_element.iterfind("m:colorgroup/m:color", MODEL_NAMESPACES))
+                self.assertEqual(
+                    len(color_elements),
+                    1,
+                    "There must be a <color> tag, since there is a material on this object.")
+                base_element = color_elements[0]
+                self.assertEqual(base_element.attrib[f"{{{MODEL_NAMESPACE}}}color"], output)
 
     def test_write_material_duplicate(self):
         """
@@ -261,11 +300,21 @@ class TestExport3MF(unittest.TestCase):
         object2 = unittest.mock.MagicMock()
         object2.material_slots = [material_slot]  # Same material as object 1.
 
-        result = self.exporter.write_materials(resources_element, [object1, object2])
+        result = self.exporter.write_materials(resources_element, [object1, object2], use_color_group=False)
 
         base_elements = list(resources_element.iterfind("3mf:basematerials/3mf:base", MODEL_NAMESPACES))
         self.assertEqual(
             len(base_elements),
+            1,
+            "Both objects used the same material, so there should only be 1 material written.")
+        self.assertDictEqual(result, {"Putty": 0})
+
+        # Test optional Color Groups
+        result = self.exporter.write_materials(resources_element, [object1, object2], use_color_group=True)
+
+        color_elements = list(resources_element.iterfind("m:colorgroup/m:color", MODEL_NAMESPACES))
+        self.assertEqual(
+            len(color_elements),
             1,
             "Both objects used the same material, so there should only be 1 material written.")
         self.assertDictEqual(result, {"Putty": 0})
@@ -286,7 +335,7 @@ class TestExport3MF(unittest.TestCase):
         object2 = unittest.mock.MagicMock()
         object2.material_slots = [material2_slot]  # Same material as what's included in object 1.
 
-        result = self.exporter.write_materials(resources_element, [object1, object2])
+        result = self.exporter.write_materials(resources_element, [object1, object2], use_color_group=False)
 
         base_elements = list(resources_element.iterfind("3mf:basematerials/3mf:base", MODEL_NAMESPACES))
         self.assertEqual(
@@ -302,6 +351,27 @@ class TestExport3MF(unittest.TestCase):
         for material_name, material_index in result.items():
             self.assertEqual(
                 base_elements[material_index].attrib[f"{{{MODEL_NAMESPACE}}}name"],
+                material_name,
+                f"At index {material_index} in the order of the tags we should store material {material_name}, "
+                f"according to our mapping.")
+
+        # Test optional Color Groups
+        result = self.exporter.write_materials(resources_element, [object1, object2], use_color_group=True)
+
+        color_elements = list(resources_element.iterfind("m:colorgroup/m:color", MODEL_NAMESPACES))
+        self.assertEqual(
+            len(color_elements),
+            2,
+            "There are two materials being used, in 3 slots across different objects. But two unique materials.")
+        self.assertEqual(
+            len(result),
+            2,
+            "Since there are two materials, there must also be two mapped indices.")
+
+        # Make sure that the indices are correct.
+        for material_name, material_index in result.items():
+            self.assertEqual(
+                color_elements[material_index].attrib[f"{{{MODEL_NAMESPACE}}}name"],
                 material_name,
                 f"At index {material_index} in the order of the tags we should store material {material_name}, "
                 f"according to our mapping.")
